@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import BookCard from '@/components/BookCard';
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Flame, Heart, Clock, Users, ShoppingBag } from "lucide-react";
 
 const books = [
   {title: "A Tale of Two Cities", author: "Charles Dickens", tags: ["classic", "historical", "fiction"], preview: "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair."},
@@ -48,63 +45,19 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white">
-      <nav className="w-64 bg-black p-4">
-        <h1 className="text-2xl font-bold mb-8">Book Burn</h1>
-        <ul>
-          <li className="mb-4">
-            <Link to="/" className="flex items-center text-white hover:text-gray-300">
-              <BookOpen className="mr-2" />
-              Covers
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/match" className="flex items-center text-purple-500 hover:text-purple-300">
-              <Flame className="mr-2" />
-              Match
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/favorites" className="flex items-center text-white hover:text-gray-300">
-              <Heart className="mr-2" />
-              Favorites
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/recent" className="flex items-center text-white hover:text-gray-300">
-              <Clock className="mr-2" />
-              Recent
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/friends" className="flex items-center text-white hover:text-gray-300">
-              <Users className="mr-2" />
-              Friends
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <main className="flex-1 p-4">
-        <header className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Match</h2>
-          <div className="flex items-center">
-            <Button variant="ghost" className="mr-2">
-              <Users className="h-6 w-6" />
-            </Button>
-            <Button variant="ghost">
-              <ShoppingBag className="h-6 w-6" />
-            </Button>
-          </div>
-        </header>
-        {recommendedBooks.length > 0 && (
-          <BookCard
-            book={recommendedBooks[currentBookIndex]}
-            onBurn={() => handleAction('burn')}
-            onLike={() => handleAction('like')}
-            onFavorite={() => handleAction('favorite')}
-          />
-        )}
-      </main>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-4xl font-bold mb-6">Book Burn</h1>
+      <p className="text-xl text-gray-300 mb-8">
+        Swipe through book previews and find your next favorite read!
+      </p>
+      {recommendedBooks.length > 0 && (
+        <BookCard
+          book={recommendedBooks[currentBookIndex]}
+          onBurn={() => handleAction('burn')}
+          onLike={() => handleAction('like')}
+          onFavorite={() => handleAction('favorite')}
+        />
+      )}
     </div>
   );
 };
