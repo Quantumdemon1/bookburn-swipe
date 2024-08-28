@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Flame, Heart, ThumbsUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import BookCover from '@/components/BookCover';
 
 const books = [
   { id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", coverUrl: "https://example.com/cover1.jpg" },
@@ -31,28 +29,12 @@ const Covers = () => {
         Swipe through book covers and find your next favorite read!
       </p>
       {books.length > 0 && (
-        <Card className="w-full max-w-4xl mx-auto bg-black text-white">
-          <CardContent className="p-6">
-            <div className="rounded-3xl bg-white text-black p-6 mb-6">
-              <img
-                src={books[currentBookIndex].coverUrl}
-                alt={`Cover of ${books[currentBookIndex].title}`}
-                className="w-full h-96 object-cover rounded-2xl"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <Button variant="ghost" onClick={() => handleAction('burn')} className="rounded-full p-4">
-                <Flame className="h-8 w-8 text-red-500" />
-              </Button>
-              <Button variant="ghost" onClick={() => handleAction('favorite')} className="rounded-full p-4">
-                <Heart className="h-8 w-8 text-white" />
-              </Button>
-              <Button variant="ghost" onClick={() => handleAction('like')} className="rounded-full p-4">
-                <ThumbsUp className="h-8 w-8 text-purple-500" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <BookCover
+          book={books[currentBookIndex]}
+          onBurn={() => handleAction('burn')}
+          onLike={() => handleAction('like')}
+          onFavorite={() => handleAction('favorite')}
+        />
       )}
     </div>
   );
