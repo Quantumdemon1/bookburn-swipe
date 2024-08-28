@@ -82,6 +82,13 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
               animate={burnClicked ? "animate" : ""}
             >
               <path d="M24 4C24 4 28 14 28 20C28 26 22 29 22 35C22 41 24 44 24 44C12 41 4 33 4 22C4 11.6406 12.6406 4 24 4Z" fill="#FF3B30"/>
+              <motion.path
+                d="M24 4C24 4 28 14 28 20C28 26 22 29 22 35C22 41 24 44 24 44C12 41 4 33 4 22C4 11.6406 12.6406 4 24 4Z"
+                fill="#FF3B30"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+              />
             </motion.svg>
             <span className="text-xs mt-1 text-red-500">BURN</span>
           </Button>
@@ -96,6 +103,13 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
               animate={saveClicked ? "animate" : ""}
             >
               <path d="M24 41.95L23.1 41.15C18.4 36.85 15 33.65 12.45 30.55C9.9 27.45 8.6 24.4 8.6 21.4C8.6 18.8 9.45 16.65 11.15 14.95C12.85 13.25 15 12.4 17.6 12.4C19.4 12.4 21.05 12.85 22.55 13.75C24.05 14.65 25.1 15.85 25.7 17.35H26.3C26.9 15.85 27.95 14.65 29.45 13.75C30.95 12.85 32.6 12.4 34.4 12.4C37 12.4 39.15 13.25 40.85 14.95C42.55 16.65 43.4 18.8 43.4 21.4C43.4 24.4 42.1 27.45 39.55 30.55C37 33.65 33.6 36.85 28.9 41.15L28 41.95H24Z" fill="#FFFFFF"/>
+              <motion.path
+                d="M24 41.95L23.1 41.15C18.4 36.85 15 33.65 12.45 30.55C9.9 27.45 8.6 24.4 8.6 21.4C8.6 18.8 9.45 16.65 11.15 14.95C12.85 13.25 15 12.4 17.6 12.4C19.4 12.4 21.05 12.85 22.55 13.75C24.05 14.65 25.1 15.85 25.7 17.35H26.3C26.9 15.85 27.95 14.65 29.45 13.75C30.95 12.85 32.6 12.4 34.4 12.4C37 12.4 39.15 13.25 40.85 14.95C42.55 16.65 43.4 18.8 43.4 21.4C43.4 24.4 42.1 27.45 39.55 30.55C37 33.65 33.6 36.85 28.9 41.15L28 41.95H24Z"
+                fill="#FFFFFF"
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ duration: 0.5 }}
+              />
             </motion.svg>
             <span className="text-xs mt-1 text-white">SAVE</span>
           </Button>
@@ -110,6 +124,13 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
               animate={likeClicked ? "animate" : ""}
             >
               <path d="M2 42H10V18H2V42ZM46 20C46 18.9 45.1 18 44 18H30.4L32.7 9.3C32.9 8.5 32.7 7.7 32.3 7.3C31.9 6.9 31.4 6.7 30.8 6.7L28.3 7.5L17.2 18H16V42H38C39.1 42 40 41.1 40 40L46 24C46 23.7 46 23.3 46 23V20Z" fill="#5856D6"/>
+              <motion.path
+                d="M2 42H10V18H2V42ZM46 20C46 18.9 45.1 18 44 18H30.4L32.7 9.3C32.9 8.5 32.7 7.7 32.3 7.3C31.9 6.9 31.4 6.7 30.8 6.7L28.3 7.5L17.2 18H16V42H38C39.1 42 40 41.1 40 40L46 24C46 23.7 46 23.3 46 23V20Z"
+                fill="#5856D6"
+                initial={{ rotate: 0 }}
+                animate={{ rotate: [0, 20, 0] }}
+                transition={{ duration: 0.5 }}
+              />
             </motion.svg>
             <span className="text-xs mt-1 text-indigo-500">LIKE</span>
           </Button>
