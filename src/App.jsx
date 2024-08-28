@@ -10,7 +10,7 @@ import Register from "./pages/Register";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isAuthenticated = false; // Replace with actual authentication check
+  const isAuthenticated = !!localStorage.getItem('currentUser');
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,24 @@ import { useToast } from "@/components/ui/use-toast";
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [users, setUsers] = useState([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    setUsers(storedUsers);
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (email === 'ken@enovatek.net' && password === 'admin') {
+    const user = users.find(u => u.email === email && u.password === password);
+    if (user) {
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
+      localStorage.setItem('currentUser', JSON.stringify(user));
       navigate('/');
     } else {
       toast({

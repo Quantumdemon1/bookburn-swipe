@@ -27,8 +27,10 @@ const Register = () => {
       });
       return;
     }
-    // Here you would typically call an API to register the user
-    console.log('Registering user:', { name, email, password });
+    const newUser = { name, email, password };
+    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const updatedUsers = [...existingUsers, newUser];
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
     toast({
       title: "Success",
       description: "Registration successful! Please log in.",
