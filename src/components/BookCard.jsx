@@ -1,9 +1,11 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Flame, Heart, ThumbsUp } from "lucide-react";
+import { Flame, Heart, ThumbsUp, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
+  const { addToCart } = useCart();
   return (
     <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
@@ -24,6 +26,13 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
             <ThumbsUp className="h-8 w-8 text-purple-500" />
           </Button>
         </div>
+        <Button 
+          onClick={() => addToCart(book)} 
+          className="w-full mt-4 bg-yellow-400 hover:bg-yellow-500 text-black"
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Add to Cart
+        </Button>
       </CardContent>
     </Card>
   );
