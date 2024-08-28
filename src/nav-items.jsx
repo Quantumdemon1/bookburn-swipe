@@ -1,6 +1,11 @@
-import { BookOpen, Flame, Heart, Clock, Users } from "lucide-react";
-import Index from "./pages/Index.jsx";
+import { BookOpen, Flame, Heart, Clock, Users, User, Settings } from "lucide-react";
+import Covers from "./pages/Covers.jsx";
+import Match from "./pages/Match.jsx";
 import Favorites from "./pages/Favorites.jsx";
+import Recent from "./pages/Recent.jsx";
+import Friends from "./pages/Friends.jsx";
+import Profile from "./pages/Profile.jsx";
+import SettingsPage from "./pages/Settings.jsx";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -10,13 +15,13 @@ export const navItems = [
     title: "Covers",
     to: "/",
     icon: <BookOpen className="h-4 w-4" />,
-    page: <Index />,
+    page: <Covers />,
   },
   {
     title: "Match",
     to: "/match",
     icon: <Flame className="h-4 w-4" />,
-    page: <Index />,
+    page: <Match />,
   },
   {
     title: "Favorites",
@@ -28,12 +33,24 @@ export const navItems = [
     title: "Recent",
     to: "/recent",
     icon: <Clock className="h-4 w-4" />,
-    page: <Index />, // Placeholder, create a new component for Recent if needed
+    page: <Recent />,
   },
   {
     title: "Friends",
     to: "/friends",
     icon: <Users className="h-4 w-4" />,
-    page: <Index />, // Placeholder, create a new component for Friends if needed
+    page: <Friends />,
+  },
+  {
+    title: "Profile",
+    to: "/profile",
+    icon: <User className="h-4 w-4" />,
+    page: <Profile />,
+  },
+  {
+    title: "Settings",
+    to: "/settings",
+    icon: <Settings className="h-4 w-4" />,
+    page: <SettingsPage />,
   },
 ];
