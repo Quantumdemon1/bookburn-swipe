@@ -3,11 +3,18 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Minus, Plus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const ShoppingCart = () => {
+const ShoppingCart = ({ onClose }) => {
   const { cart, removeFromCart, updateQuantity } = useCart();
+  const navigate = useNavigate();
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/checkout');
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -57,7 +64,7 @@ const ShoppingCart = () => {
                 <span className="font-semibold">Total:</span>
                 <span className="font-semibold">${total.toFixed(2)}</span>
               </div>
-              <Button className="w-full mt-4">Proceed to Checkout</Button>
+              <Button className="w-full mt-4" onClick={handleCheckout}>Proceed to Checkout</Button>
             </div>
           </>
         )}

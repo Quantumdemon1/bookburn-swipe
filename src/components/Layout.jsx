@@ -50,7 +50,7 @@ const Layout = ({ children }) => {
                   Review your items before checkout
                 </SheetDescription>
               </SheetHeader>
-              <ShoppingCart />
+              <ShoppingCart onClose={() => setIsCartOpen(false)} />
             </SheetContent>
           </Sheet>
           <DropdownMenu>
