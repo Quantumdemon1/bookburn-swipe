@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,28 @@ const Settings = () => {
   const [privateProfile, setPrivateProfile] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Load saved settings from localStorage
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    const savedEmailNotifications = localStorage.getItem('emailNotifications') !== 'false';
+    const savedPrivateProfile = localStorage.getItem('privateProfile') === 'true';
+
+    setDarkMode(savedDarkMode);
+    setEmailNotifications(savedEmailNotifications);
+    setPrivateProfile(savedPrivateProfile);
+
+    // Apply dark mode if it was saved
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
   const handleSaveSettings = () => {
-    // Here you would typically save these settings to a backend or local storage
+    // Save settings to localStorage
+    localStorage.setItem('darkMode', darkMode);
+    localStorage.setItem('emailNotifications', emailNotifications);
+    localStorage.setItem('privateProfile', privateProfile);
+
     toast({
       title: "Settings Saved",
       description: "Your preferences have been updated.",
@@ -22,14 +42,13 @@ const Settings = () => {
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
-    // Here you would typically apply the theme change
     document.documentElement.classList.toggle('dark');
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
-      <Card>
+      <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle>Preferences</CardTitle>
         </CardHeader>
