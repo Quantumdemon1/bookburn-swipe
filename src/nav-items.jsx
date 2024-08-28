@@ -1,11 +1,11 @@
-import { BookOpen, Flame, Heart, Clock, Users, User, Settings, LogIn, UserPlus, ShoppingCart } from "lucide-react";
+import { BookOpen, Flame, Heart, Clock, Users, User, LogIn, UserPlus, ShoppingCart, Star } from "lucide-react";
 import Covers from "./pages/Covers.jsx";
 import Match from "./pages/Match.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import Recent from "./pages/Recent.jsx";
 import Friends from "./pages/Friends.jsx";
 import Profile from "./pages/Profile.jsx";
-import SettingsPage from "./pages/Settings.jsx";
+import Ratings from "./pages/Ratings.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Checkout from "./pages/Checkout.jsx";
@@ -51,10 +51,10 @@ export const navItems = [
     page: <Profile />,
   },
   {
-    title: "Settings",
-    to: "/settings",
-    icon: <Settings className="h-4 w-4" />,
-    page: <SettingsPage />,
+    title: "Ratings",
+    to: "/ratings",
+    icon: <Star className="h-4 w-4" />,
+    page: <Ratings />,
   },
   {
     title: "Login",
