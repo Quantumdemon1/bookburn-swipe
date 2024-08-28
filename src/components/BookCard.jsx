@@ -5,10 +5,12 @@ import { Flame, Heart, ThumbsUp } from "lucide-react";
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   return (
-    <Card className="w-full max-w-md mx-auto bg-black text-white">
+    <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
         <div className="rounded-3xl bg-white text-black p-6 mb-6">
-          <p className="text-xl font-bold">{book.preview}</p>
+          <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
+          <p className="text-lg mb-4">by {book.author}</p>
+          <p className="text-xl">{book.preview}</p>
         </div>
         <div className="flex justify-between items-center">
           <Button variant="ghost" onClick={onBurn} className="rounded-full p-4">

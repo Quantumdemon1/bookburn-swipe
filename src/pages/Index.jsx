@@ -45,14 +45,16 @@ const Index = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-6">Book Burn</h1>
-      <p className="text-xl text-gray-300 mb-8">
+    <div className="max-w-5xl mx-auto">
+      <p className="text-sm text-gray-400 mb-4">
         Swipe through book previews and find your next favorite read!
       </p>
       {recommendedBooks.length > 0 && (
         <BookCard
-          book={recommendedBooks[currentBookIndex]}
+          book={{
+            ...recommendedBooks[currentBookIndex],
+            preview: recommendedBooks[currentBookIndex].preview.slice(0, 200) + (recommendedBooks[currentBookIndex].preview.length > 200 ? '...' : '')
+          }}
           onBurn={() => handleAction('burn')}
           onLike={() => handleAction('like')}
           onFavorite={() => handleAction('favorite')}

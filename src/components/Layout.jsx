@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, User, Settings } from 'lucide-react';
+import { Menu, User, Settings, BookOpen } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,12 +12,16 @@ import { Link } from 'react-router-dom';
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex min-h-screen">
-      <div className="p-4">
+    <div className="flex flex-col min-h-screen bg-black text-white">
+      <header className="bg-red-600 p-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <BookOpen className="h-8 w-8 mr-2" />
+          <h1 className="text-2xl font-bold">Book Burn</h1>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
@@ -39,7 +43,7 @@ const Layout = ({ children }) => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </header>
       <main className="flex-grow p-6">
         {children}
       </main>
