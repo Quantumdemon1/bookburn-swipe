@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, User, Settings, BookOpen } from 'lucide-react';
+import { Menu, Settings, BookOpen } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,13 +33,11 @@ const Layout = ({ children }) => {
                 </Link>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
