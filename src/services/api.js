@@ -1,4 +1,4 @@
-import { books } from '../utils/recommendationAlgorithm';
+import { books } from '../utils/recommendationAlgorithm.js';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
