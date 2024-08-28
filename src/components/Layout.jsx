@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Settings, BookOpen, ShoppingCart as CartIcon } from 'lucide-react';
+import { Menu, Settings, BookOpen, ShoppingCart as CartIcon, Moon, Sun } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,19 +19,28 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTheme } from 'next-themes';
 
 const Layout = ({ children }) => {
   const { cart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="bg-red-600 p-4 flex justify-between items-center">
         <div className="flex items-center">
           <BookOpen className="h-8 w-8 mr-2" />
           <h1 className="text-2xl font-bold">Book Burn</h1>
         </div>
         <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-2">
+            {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+          </Button>
           <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="mr-2 relative">

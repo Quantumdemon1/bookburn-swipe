@@ -56,17 +56,22 @@ export const updateUserPreferences = (bookId, action, value = null) => {
 };
 
 // Get book recommendations based on user preferences
-export const getRecommendations = () => {
+export const getRecommendations = (page = 1, limit = 10) => {
   // Load preferences from localStorage
   const storedPreferences = JSON.parse(localStorage.getItem('userPreferences'));
   if (storedPreferences) {
     userPreferences = storedPreferences;
   }
 
-  return books.map(book => ({
+  const sortedBooks = books.map(book => ({
     ...book,
     score: book.tags.reduce((sum, tag) => sum + (userPreferences[tag] || 1), 0)
   })).sort((a, b) => b.score - a.score);
+
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
+  return sortedBooks.slice(start, end);
 };
 
 // Get next recommended book
@@ -74,4 +79,14 @@ export const getNextRecommendation = (currentBookId) => {
   const recommendations = getRecommendations();
   const currentIndex = recommendations.findIndex(book => book.id === currentBookId);
   return recommendations[(currentIndex + 1) % recommendations.length];
+};
+
+// Search books
+export const searchBooks = (query) => {
+  const lowercaseQuery = query.toLowerCase();
+  return books.filter(book => 
+    book.title.toLowerCase().includes(lowercaseQuery) ||
+    book.author.toLowerCase().includes(lowercaseQuery) ||
+    book.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+  );
 };

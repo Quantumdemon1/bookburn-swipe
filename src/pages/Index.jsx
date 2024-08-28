@@ -1,65 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import BookCard from '@/components/BookCard';
+import SearchBar from '@/components/SearchBar';
 import { useToast } from "@/components/ui/use-toast";
-
-const books = [
-  {id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", tags: ["classic", "historical", "fiction"], preview: "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair.", price: 12.99},
-  {id: 2, title: "1984", author: "George Orwell", tags: ["dystopian", "political", "fiction"], preview: "It was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors of Victory Mansions, though not quickly enough to prevent a swirl of gritty dust from entering along with him.", price: 14.99},
-  {id: 3, title: "Pride and Prejudice", author: "Jane Austen", tags: ["romance", "classic", "fiction"], preview: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters.", price: 11.99},
-  {id: 4, title: "The Hobbit", author: "J.R.R. Tolkien", tags: ["fantasy", "adventure", "fiction"], preview: "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole, filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat: it was a hobbit-hole, and that means comfort.", price: 13.99},
-  {id: 5, title: "To Kill a Mockingbird", author: "Harper Lee", tags: ["classic", "coming-of-age", "fiction"], preview: "When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow. When it healed, and Jem's fears of never being able to play football were assuaged, he was seldom self-conscious about his injury. His left arm was somewhat shorter than his right; when he stood or walked, the back of his hand was at right angles to his body, his thumb parallel to his thigh.", price: 10.99}
-];
+import { useInView } from 'react-intersection-observer';
+import { getRecommendations, updateUserPreferences, searchBooks } from '@/utils/recommendationAlgorithm';
 
 const Index = () => {
-  const [currentBookIndex, setCurrentBookIndex] = useState(0);
-  const [likedTags, setLikedTags] = useState({});
-  const [recommendedBooks, setRecommendedBooks] = useState([...books]);
+  const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
+  const { ref, inView } = useInView({
+    threshold: 0,
+  });
+
+  const loadMoreBooks = useCallback(() => {
+    const newBooks = getRecommendations(page, 10);
+    setBooks(prevBooks => [...prevBooks, ...newBooks]);
+    setPage(prevPage => prevPage + 1);
+  }, [page]);
 
   useEffect(() => {
-    updateRecommendations();
-  }, [likedTags]);
-
-  const updateRecommendations = () => {
-    const sortedBooks = [...books].sort((a, b) => {
-      const aScore = a.tags.reduce((sum, tag) => sum + (likedTags[tag] || 0), 0);
-      const bScore = b.tags.reduce((sum, tag) => sum + (likedTags[tag] || 0), 0);
-      return bScore - aScore;
-    });
-    setRecommendedBooks(sortedBooks);
-    setCurrentBookIndex(0);
-  };
-
-  const handleAction = (action) => {
-    const currentBook = recommendedBooks[currentBookIndex];
-    if (action === 'like' || action === 'favorite') {
-      currentBook.tags.forEach(tag => {
-        setLikedTags(prev => ({ ...prev, [tag]: (prev[tag] || 0) + 1 }));
-      });
+    if (!isSearching) {
+      loadMoreBooks();
     }
+  }, [isSearching, loadMoreBooks]);
+
+  useEffect(() => {
+    if (inView && !isSearching) {
+      loadMoreBooks();
+    }
+  }, [inView, isSearching, loadMoreBooks]);
+
+  const handleAction = (bookId, action) => {
+    updateUserPreferences(bookId, action);
     toast({
       title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-      description: `${currentBook.title} by ${currentBook.author}`,
+      description: `Action taken on book ${bookId}`,
     });
-    setCurrentBookIndex((prevIndex) => (prevIndex + 1) % recommendedBooks.length);
+  };
+
+  const handleSearch = (query) => {
+    setIsSearching(true);
+    const searchResults = searchBooks(query);
+    setBooks(searchResults);
   };
 
   return (
     <div className="max-w-5xl mx-auto">
-      <p className="text-sm text-gray-400 mb-4">
-        Swipe through book previews and find your next favorite read!
+      <SearchBar onSearch={handleSearch} />
+      <p className="text-sm text-gray-400 my-4">
+        {isSearching ? "Search results:" : "Scroll through book previews and find your next favorite read!"}
       </p>
-      {recommendedBooks.length > 0 && (
+      {books.map((book, index) => (
         <BookCard
+          key={`${book.id}-${index}`}
           book={{
-            ...recommendedBooks[currentBookIndex],
-            preview: recommendedBooks[currentBookIndex].preview.slice(0, 200) + (recommendedBooks[currentBookIndex].preview.length > 200 ? '...' : '')
+            ...book,
+            preview: book.preview.slice(0, 200) + (book.preview.length > 200 ? '...' : '')
           }}
-          onBurn={() => handleAction('burn')}
-          onLike={() => handleAction('like')}
-          onFavorite={() => handleAction('favorite')}
+          onBurn={() => handleAction(book.id, 'burn')}
+          onLike={() => handleAction(book.id, 'like')}
+          onFavorite={() => handleAction(book.id, 'favorite')}
         />
-      )}
+      ))}
+      {!isSearching && <div ref={ref} className="h-10" />}
     </div>
   );
 };
