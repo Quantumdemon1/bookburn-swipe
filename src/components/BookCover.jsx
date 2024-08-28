@@ -61,7 +61,7 @@ const BookCover = ({ book, onBurn, onLike, onFavorite }) => {
               animate={saveClicked ? { scale: [1, 1.2, 1] } : {}}
               transition={{ duration: 0.5 }}
             >
-              <path d="M16 28C16 28 26 20 26 12C26 6.47715 21.5228 2 16 2C10.4772 2 6 6.47715 6 12C6 20 16 28 16 28Z" fill="#FFFFFF" />
+              <path d="M16 28L28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </motion.svg>
             <span className="text-xs mt-1 text-white">Save</span>
           </Button>
