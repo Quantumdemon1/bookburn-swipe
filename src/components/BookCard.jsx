@@ -16,14 +16,17 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
           <p className="text-sm text-gray-500 mt-2">Tags: {book.tags.join(', ')}</p>
         </div>
         <div className="flex justify-between items-center">
-          <Button variant="ghost" onClick={() => onBurn(book.id)} className="rounded-full p-4">
+          <Button variant="ghost" onClick={() => onBurn(book.id)} className="rounded-full p-4 flex flex-col items-center">
             <Flame className="h-8 w-8 text-red-500" />
+            <span className="text-xs mt-1 text-red-500">Burn</span>
           </Button>
-          <Button variant="ghost" onClick={() => onFavorite(book.id)} className="rounded-full p-4">
+          <Button variant="ghost" onClick={() => onFavorite(book.id)} className="rounded-full p-4 flex flex-col items-center">
             <Heart className="h-8 w-8 text-white" />
+            <span className="text-xs mt-1 text-white">Save</span>
           </Button>
-          <Button variant="ghost" onClick={() => onLike(book.id)} className="rounded-full p-4">
+          <Button variant="ghost" onClick={() => onLike(book.id)} className="rounded-full p-4 flex flex-col items-center">
             <ThumbsUp className="h-8 w-8 text-purple-500" />
+            <span className="text-xs mt-1 text-purple-500">Like</span>
           </Button>
         </div>
         <Button 
