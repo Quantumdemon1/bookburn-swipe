@@ -1,34 +1,33 @@
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
 
 const Friends = () => {
-  // In a real app, you'd fetch this data from a backend
   const friends = [
-    {name: "Alice Johnson", matchPercentage: 85, genres: ["Fantasy", "Sci-Fi"]},
-    {name: "Bob Smith", matchPercentage: 72, genres: ["Mystery", "Thriller"]},
-    {name: "Carol White", matchPercentage: 68, genres: ["Romance", "Historical Fiction"]},
-    {name: "David Brown", matchPercentage: 91, genres: ["Non-Fiction", "Biography"]},
-    {name: "Eve Green", matchPercentage: 79, genres: ["Classic Literature", "Poetry"]},
+    { id: 1, name: "Alice Johnson", avatar: "/placeholder.svg", matchPercentage: 85 },
+    { id: 2, name: "Bob Smith", avatar: "/placeholder.svg", matchPercentage: 72 },
+    { id: 3, name: "Carol Williams", avatar: "/placeholder.svg", matchPercentage: 68 },
   ];
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-6 text-white">Book Buddies</h2>
-      <div className="space-y-4">
-        {friends.map((friend, index) => (
-          <Card key={index} className="bg-gray-800">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-bold text-white">{friend.name}</h3>
-                <span className="text-green-500 font-bold">{friend.matchPercentage}% Match</span>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Friends with Similar Tastes</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {friends.map((friend) => (
+          <Card key={friend.id}>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <Avatar>
+                  <AvatarImage src={friend.avatar} alt={friend.name} />
+                  <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <CardTitle>{friend.name}</CardTitle>
               </div>
-              <p className="text-sm text-gray-400 mb-2">Favorite Genres: {friend.genres.join(", ")}</p>
-              <Button variant="outline" size="sm">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Friend
-              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-semibold">{friend.matchPercentage}% Match</p>
+              <Button className="w-full mt-4">View Profile</Button>
             </CardContent>
           </Card>
         ))}
