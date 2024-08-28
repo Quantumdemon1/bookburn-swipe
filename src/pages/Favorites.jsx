@@ -1,24 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, ShoppingCart, MessageSquare } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { updateUserPreferences } from '@/utils/recommendationAlgorithm';
 
 const Favorites = () => {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  const [favoriteBooks, setFavoriteBooks] = useState([
-    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", price: 12.99, rating: 4, format: "Paperback", review: "" },
-    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", price: 14.99, rating: 5, format: "Hardcover", review: "" },
-    { id: 3, title: "1984", author: "George Orwell", price: 11.99, rating: 4, format: "Kindle Edition", review: "" },
-    { id: 4, title: "Pride and Prejudice", author: "Jane Austen", price: 9.99, rating: 4, format: "Paperback", review: "" },
-    { id: 5, title: "The Catcher in the Rye", author: "J.D. Salinger", price: 13.99, rating: 3, format: "Hardcover", review: "" },
-  ]);
+  const [favoriteBooks, setFavoriteBooks] = useState([]);
+
+  useEffect(() => {
+    // Load favorite books from localStorage
+    const storedFavorites = JSON.parse(localStorage.getItem('favoriteBooks') || '[]');
+    setFavoriteBooks(storedFavorites);
+  }, []);
 
   const handleAddToCart = (book) => {
     addToCart(book);
@@ -34,21 +33,13 @@ const Favorites = () => {
         book.id === bookId ? { ...book, rating: newRating } : book
       )
     );
+    // Update localStorage
+    localStorage.setItem('favoriteBooks', JSON.stringify(favoriteBooks));
+    // Update user preferences for recommendations
+    updateUserPreferences(bookId, 'rate', newRating);
     toast({
       title: "Rating Updated",
       description: `You've rated this book ${newRating} stars.`,
-    });
-  };
-
-  const handleReview = (bookId, review) => {
-    setFavoriteBooks(books =>
-      books.map(book =>
-        book.id === bookId ? { ...book, review } : book
-      )
-    );
-    toast({
-      title: "Review Saved",
-      description: `Your review for this book has been saved.`,
     });
   };
 
@@ -90,25 +81,12 @@ const Favorites = () => {
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Add to Cart
               </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex-1">
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    Review
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Review {book.title}</DialogTitle>
-                  </DialogHeader>
-                  <Textarea
-                    placeholder="Write your review here..."
-                    value={book.review}
-                    onChange={(e) => handleReview(book.id, e.target.value)}
-                  />
-                  <Button onClick={() => handleReview(book.id, book.review)}>Save Review</Button>
-                </DialogContent>
-              </Dialog>
+              <Link to={`/reviews/write/${book.id}`}>
+                <Button variant="outline" className="flex-1">
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  Write Review
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         ))}

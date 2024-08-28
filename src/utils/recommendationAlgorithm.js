@@ -22,18 +22,47 @@ export const initializeUserPreferences = () => {
 };
 
 // Update user preferences based on action
-export const updateUserPreferences = (bookId, action) => {
+export const updateUserPreferences = (bookId, action, value = null) => {
   const book = books.find(b => b.id === bookId);
   if (!book) return;
 
-  const weight = action === 'like' ? 0.1 : action === 'burn' ? -0.1 : 0.2; // Favorite has higher weight
+  let weight;
+  switch (action) {
+    case 'like':
+      weight = 0.1;
+      break;
+    case 'burn':
+      weight = -0.1;
+      break;
+    case 'favorite':
+      weight = 0.2;
+      break;
+    case 'rate':
+      weight = (value - 3) * 0.05; // Adjust weight based on rating (1-5)
+      break;
+    case 'review':
+      weight = 0.15; // Reviewing a book indicates strong engagement
+      break;
+    default:
+      weight = 0;
+  }
+
   book.tags.forEach(tag => {
-    userPreferences[tag] = Math.max(0, Math.min(2, userPreferences[tag] + weight));
+    userPreferences[tag] = Math.max(0, Math.min(2, (userPreferences[tag] || 1) + weight));
   });
+
+  // Save updated preferences to localStorage
+  localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
 };
 
 // Get book recommendations based on user preferences
 export const getRecommendations = () => {
+  // Load preferences from localStorage
+  const storedPreferences = JSON.parse(localStorage.getItem('userPreferences'));
+  if (storedPreferences) {
+    userPreferences = storedPreferences;
+  }
+
   return books.map(book => ({
     ...book,
     score: book.tags.reduce((sum, tag) => sum + (userPreferences[tag] || 1), 0)
