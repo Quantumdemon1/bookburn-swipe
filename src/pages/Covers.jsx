@@ -24,7 +24,7 @@ const Covers = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <p className="text-xs text-gray-400 mb-4">
         Swipe through book covers and find your next favorite read!
       </p>
