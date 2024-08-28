@@ -1,10 +1,11 @@
-import { BookOpen, Flame, Heart, Clock, Users, User } from "lucide-react";
+import { BookOpen, Flame, Heart, Clock, Users, User, Settings } from "lucide-react";
 import Covers from "./pages/Covers.jsx";
 import Match from "./pages/Match.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import Recent from "./pages/Recent.jsx";
 import Friends from "./pages/Friends.jsx";
 import Profile from "./pages/Profile.jsx";
+import SettingsPage from "./pages/Settings.jsx";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -45,5 +46,11 @@ export const navItems = [
     to: "/profile",
     icon: <User className="h-4 w-4" />,
     page: <Profile />,
+  },
+  {
+    title: "Settings",
+    to: "/settings",
+    icon: <Settings className="h-4 w-4" />,
+    page: <SettingsPage />,
   },
 ];
