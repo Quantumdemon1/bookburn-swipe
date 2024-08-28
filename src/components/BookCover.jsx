@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 
 const BookCover = ({ book, onBurn, onLike, onFavorite }) => {
   const [burnClicked, setBurnClicked] = useState(false);
@@ -26,38 +25,6 @@ const BookCover = ({ book, onBurn, onLike, onFavorite }) => {
     onLike();
   };
 
-  const flameVariants = {
-    animate: {
-      y: [0, -10, 0],
-      opacity: [1, 0.5, 1],
-      transition: {
-        duration: 0.5,
-        repeat: 3,
-        repeatType: "reverse",
-      },
-    },
-  };
-
-  const heartVariants = {
-    animate: {
-      scale: [1, 1.4, 1],
-      transition: {
-        duration: 0.3,
-        times: [0, 0.5, 1],
-      },
-    },
-  };
-
-  const thumbsUpVariants = {
-    animate: {
-      rotate: [0, 20, 0],
-      transition: {
-        duration: 0.3,
-        times: [0, 0.5, 1],
-      },
-    },
-  };
-
   return (
     <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
@@ -69,47 +36,29 @@ const BookCover = ({ book, onBurn, onLike, onFavorite }) => {
           />
         </div>
         <div className="flex justify-between items-center">
-          <Button variant="ghost" onClick={handleBurn} className="rounded-full p-4 flex flex-col items-center">
-            <motion.svg
-              width="48"
-              height="48"
-              viewBox="0 0 48 48"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              variants={flameVariants}
-              animate={burnClicked ? "animate" : ""}
-            >
-              <path d="M24 4C24 4 28 14 28 20C28 26 22 29 22 35C22 41 24 44 24 44C12 41 4 33 4 22C4 11.6406 12.6406 4 24 4Z" fill="#FF3B30"/>
-            </motion.svg>
-            <span className="text-xs mt-1 text-red-500">BURN</span>
+          <Button
+            variant="ghost"
+            onClick={handleBurn}
+            className={`rounded-full p-4 flex flex-col items-center transition-transform ${burnClicked ? 'animate-burn' : ''}`}
+          >
+            <span className="text-4xl mb-1">🔥</span>
+            <span className="text-xs text-red-500">BURN</span>
           </Button>
-          <Button variant="ghost" onClick={handleSave} className="rounded-full p-4 flex flex-col items-center">
-            <motion.svg
-              width="48"
-              height="48"
-              viewBox="0 0 48 48"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              variants={heartVariants}
-              animate={saveClicked ? "animate" : ""}
-            >
-              <path d="M24 41.95L23.1 41.15C18.4 36.85 15 33.65 12.45 30.55C9.9 27.45 8.6 24.4 8.6 21.4C8.6 18.8 9.45 16.65 11.15 14.95C12.85 13.25 15 12.4 17.6 12.4C19.4 12.4 21.05 12.85 22.55 13.75C24.05 14.65 25.1 15.85 25.7 17.35H26.3C26.9 15.85 27.95 14.65 29.45 13.75C30.95 12.85 32.6 12.4 34.4 12.4C37 12.4 39.15 13.25 40.85 14.95C42.55 16.65 43.4 18.8 43.4 21.4C43.4 24.4 42.1 27.45 39.55 30.55C37 33.65 33.6 36.85 28.9 41.15L28 41.95H24Z" fill="#FFFFFF"/>
-            </motion.svg>
-            <span className="text-xs mt-1 text-white">SAVE</span>
+          <Button
+            variant="ghost"
+            onClick={handleSave}
+            className={`rounded-full p-4 flex flex-col items-center transition-transform ${saveClicked ? 'animate-save' : ''}`}
+          >
+            <span className="text-4xl mb-1">❤️</span>
+            <span className="text-xs text-white">SAVE</span>
           </Button>
-          <Button variant="ghost" onClick={handleLike} className="rounded-full p-4 flex flex-col items-center">
-            <motion.svg
-              width="48"
-              height="48"
-              viewBox="0 0 48 48"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              variants={thumbsUpVariants}
-              animate={likeClicked ? "animate" : ""}
-            >
-              <path d="M2 42H10V18H2V42ZM46 20C46 18.9 45.1 18 44 18H30.4L32.7 9.3C32.9 8.5 32.7 7.7 32.3 7.3C31.9 6.9 31.4 6.7 30.8 6.7L28.3 7.5L17.2 18H16V42H38C39.1 42 40 41.1 40 40L46 24C46 23.7 46 23.3 46 23V20Z" fill="#5856D6"/>
-            </motion.svg>
-            <span className="text-xs mt-1 text-indigo-500">LIKE</span>
+          <Button
+            variant="ghost"
+            onClick={handleLike}
+            className={`rounded-full p-4 flex flex-col items-center transition-transform ${likeClicked ? 'animate-like' : ''}`}
+          >
+            <span className="text-4xl mb-1">👍</span>
+            <span className="text-xs text-indigo-500">LIKE</span>
           </Button>
         </div>
       </CardContent>
