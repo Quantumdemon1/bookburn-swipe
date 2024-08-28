@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart, MessageSquare } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const Favorites = () => {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
   const [favoriteBooks, setFavoriteBooks] = useState([
-    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", price: 12.99, rating: 4, format: "Paperback" },
-    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", price: 14.99, rating: 5, format: "Hardcover" },
-    { id: 3, title: "1984", author: "George Orwell", price: 11.99, rating: 4, format: "Kindle Edition" },
-    { id: 4, title: "Pride and Prejudice", author: "Jane Austen", price: 9.99, rating: 4, format: "Paperback" },
-    { id: 5, title: "The Catcher in the Rye", author: "J.D. Salinger", price: 13.99, rating: 3, format: "Hardcover" },
+    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", price: 12.99, rating: 4, format: "Paperback", review: "" },
+    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", price: 14.99, rating: 5, format: "Hardcover", review: "" },
+    { id: 3, title: "1984", author: "George Orwell", price: 11.99, rating: 4, format: "Kindle Edition", review: "" },
+    { id: 4, title: "Pride and Prejudice", author: "Jane Austen", price: 9.99, rating: 4, format: "Paperback", review: "" },
+    { id: 5, title: "The Catcher in the Rye", author: "J.D. Salinger", price: 13.99, rating: 3, format: "Hardcover", review: "" },
   ]);
 
   const handleAddToCart = (book) => {
@@ -35,6 +37,18 @@ const Favorites = () => {
     toast({
       title: "Rating Updated",
       description: `You've rated this book ${newRating} stars.`,
+    });
+  };
+
+  const handleReview = (bookId, review) => {
+    setFavoriteBooks(books =>
+      books.map(book =>
+        book.id === bookId ? { ...book, review } : book
+      )
+    );
+    toast({
+      title: "Review Saved",
+      description: `Your review for this book has been saved.`,
     });
   };
 
@@ -68,19 +82,41 @@ const Favorites = () => {
               <p className="text-sm mb-2">{book.format}</p>
               <p className="text-2xl font-bold text-green-600">${book.price.toFixed(2)}</p>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex justify-between">
               <Button 
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
+                className="flex-1 mr-2 bg-yellow-400 hover:bg-yellow-500 text-black"
                 onClick={() => handleAddToCart(book)}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Add to Cart
               </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex-1">
+                    <MessageSquare className="w-5 h-5 mr-2" />
+                    Review
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Review {book.title}</DialogTitle>
+                  </DialogHeader>
+                  <Textarea
+                    placeholder="Write your review here..."
+                    value={book.review}
+                    onChange={(e) => handleReview(book.id, e.target.value)}
+                  />
+                  <Button onClick={() => handleReview(book.id, book.review)}>Save Review</Button>
+                </DialogContent>
+              </Dialog>
             </CardFooter>
           </Card>
         ))}
       </div>
       <div className="mt-8 text-center">
+        <Link to="/reviews" className="text-blue-500 hover:underline mr-4">
+          View All Reviews
+        </Link>
         <Link to="/ratings" className="text-blue-500 hover:underline">
           View and Edit All Ratings
         </Link>
