@@ -1,27 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
+import { api } from '@/services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setUsers(storedUsers);
-  }, []);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
+    setIsLoading(true);
+    try {
+      const { user } = await api.login(email, password);
       toast({
         title: "Login Successful",
         description: "Welcome back!",
@@ -29,12 +26,14 @@ const Login = () => {
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('isAuthenticated', 'true');
       navigate('/');
-    } else {
+    } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password",
+        description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,7 +69,9 @@ const Login = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700">Log In</Button>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Log In'}
+            </Button>
           </form>
           <div className="mt-4 text-center">
             <Link to="/register" className="text-red-400 hover:text-red-300">Don't have an account? Register</Link>
