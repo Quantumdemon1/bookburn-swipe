@@ -1,31 +1,24 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, ThumbsUp, Flame } from "lucide-react";
+import { Flame, Heart, ThumbsUp } from "lucide-react";
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-black text-white">
       <CardContent className="p-6">
-        <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
-        <p className="text-sm text-gray-500 mb-4">by {book.author}</p>
-        <div className="mb-4">
-          {book.tags.map((tag, index) => (
-            <span key={index} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
-              #{tag}
-            </span>
-          ))}
+        <div className="rounded-3xl bg-white text-black p-6 mb-6">
+          <p className="text-xl font-bold">{book.preview}</p>
         </div>
-        <p className="text-gray-700 mb-6">{book.preview}</p>
-        <div className="flex justify-between">
-          <Button variant="destructive" onClick={onBurn}>
-            <Flame className="mr-2 h-4 w-4" /> Burn
+        <div className="flex justify-between items-center">
+          <Button variant="ghost" onClick={onBurn} className="rounded-full p-4">
+            <Flame className="h-8 w-8 text-red-500" />
           </Button>
-          <Button variant="outline" onClick={onFavorite}>
-            <Heart className="mr-2 h-4 w-4" /> Favorite
+          <Button variant="ghost" onClick={onFavorite} className="rounded-full p-4">
+            <Heart className="h-8 w-8 text-white" />
           </Button>
-          <Button variant="default" onClick={onLike}>
-            <ThumbsUp className="mr-2 h-4 w-4" /> Like
+          <Button variant="ghost" onClick={onLike} className="rounded-full p-4">
+            <ThumbsUp className="h-8 w-8 text-purple-500" />
           </Button>
         </div>
       </CardContent>
