@@ -1,0 +1,48 @@
+// Simulated book database
+const books = [
+  {id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", tags: ["classic", "historical", "fiction"], preview: "It was the best of times, it was the worst of times..."},
+  {id: 2, title: "1984", author: "George Orwell", tags: ["dystopian", "political", "fiction"], preview: "It was a bright cold day in April, and the clocks were striking thirteen..."},
+  {id: 3, title: "Pride and Prejudice", author: "Jane Austen", tags: ["romance", "classic", "fiction"], preview: "It is a truth universally acknowledged..."},
+  {id: 4, title: "The Hobbit", author: "J.R.R. Tolkien", tags: ["fantasy", "adventure", "fiction"], preview: "In a hole in the ground there lived a hobbit..."},
+  {id: 5, title: "To Kill a Mockingbird", author: "Harper Lee", tags: ["classic", "coming-of-age", "fiction"], preview: "When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow..."},
+];
+
+// User preferences object to store tag weights
+let userPreferences = {};
+
+// Initialize user preferences
+export const initializeUserPreferences = () => {
+  books.forEach(book => {
+    book.tags.forEach(tag => {
+      if (!userPreferences[tag]) {
+        userPreferences[tag] = 1; // Neutral weight
+      }
+    });
+  });
+};
+
+// Update user preferences based on action
+export const updateUserPreferences = (bookId, action) => {
+  const book = books.find(b => b.id === bookId);
+  if (!book) return;
+
+  const weight = action === 'like' ? 0.1 : action === 'burn' ? -0.1 : 0.2; // Favorite has higher weight
+  book.tags.forEach(tag => {
+    userPreferences[tag] = Math.max(0, Math.min(2, userPreferences[tag] + weight));
+  });
+};
+
+// Get book recommendations based on user preferences
+export const getRecommendations = () => {
+  return books.map(book => ({
+    ...book,
+    score: book.tags.reduce((sum, tag) => sum + (userPreferences[tag] || 1), 0)
+  })).sort((a, b) => b.score - a.score);
+};
+
+// Get next recommended book
+export const getNextRecommendation = (currentBookId) => {
+  const recommendations = getRecommendations();
+  const currentIndex = recommendations.findIndex(book => book.id === currentBookId);
+  return recommendations[(currentIndex + 1) % recommendations.length];
+};
