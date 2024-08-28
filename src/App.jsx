@@ -6,11 +6,26 @@ import { navItems } from "./nav-items";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { useState, useEffect } from 'react';
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isAuthenticated = !!localStorage.getItem('currentUser');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const auth = localStorage.getItem('isAuthenticated') === 'true';
+      setIsAuthenticated(auth);
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

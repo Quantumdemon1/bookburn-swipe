@@ -27,6 +27,7 @@ const Login = () => {
         description: "Welcome back!",
       });
       localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('isAuthenticated', 'true');
       navigate('/');
     } else {
       toast({

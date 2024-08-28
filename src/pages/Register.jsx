@@ -31,11 +31,13 @@ const Register = () => {
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const updatedUsers = [...existingUsers, newUser];
     localStorage.setItem('users', JSON.stringify(updatedUsers));
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    localStorage.setItem('isAuthenticated', 'true');
     toast({
       title: "Success",
-      description: "Registration successful! Please log in.",
+      description: "Registration successful! You are now logged in.",
     });
-    navigate('/login');
+    navigate('/');
   };
 
   return (
