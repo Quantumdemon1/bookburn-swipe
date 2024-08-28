@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Book, Star, PenTool } from 'lucide-react';
+import EditProfile from '@/components/EditProfile';
 
 const Profile = () => {
-  const user = {
+  const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState({
     name: "John Doe",
     age: 28,
     avatar: "/placeholder.svg",
@@ -15,14 +17,31 @@ const Profile = () => {
     booksRead: 127,
     reviews: 45,
     rating: 4.7,
+  });
+
+  const handleEditProfile = () => {
+    setIsEditing(true);
   };
+
+  const handleSaveProfile = (updatedUser) => {
+    setUser(updatedUser);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return <EditProfile user={user} onSave={handleSaveProfile} onCancel={handleCancelEdit} />;
+  }
 
   return (
     <div className="container mx-auto p-4">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="relative">
           <div className="absolute top-4 right-4">
-            <Button variant="outline">Edit Profile</Button>
+            <Button variant="outline" onClick={handleEditProfile}>Edit Profile</Button>
           </div>
           <div className="flex flex-col items-center">
             <Avatar className="w-32 h-32 mb-4">
