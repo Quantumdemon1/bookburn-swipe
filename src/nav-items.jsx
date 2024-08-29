@@ -1,4 +1,4 @@
-import { BookOpen, Flame, Heart, Clock, Users, User, LogIn, UserPlus, ShoppingCart, Star, MessageSquare } from "lucide-react";
+import { BookOpen, Flame, Heart, Clock, Users, User, LogIn, UserPlus, ShoppingCart, Star, MessageSquare, Mail } from "lucide-react";
 import Covers from "./pages/Covers.jsx";
 import Match from "./pages/Match.jsx";
 import Favorites from "./pages/Favorites.jsx";
@@ -10,6 +10,7 @@ import Reviews from "./pages/Reviews.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Checkout from "./pages/Checkout.jsx";
+import Messages from "./pages/Messages.jsx";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -44,6 +45,12 @@ export const navItems = [
     to: "/friends",
     icon: <Users className="h-4 w-4" />,
     page: <Friends />,
+  },
+  {
+    title: "Messages",
+    to: "/messages",
+    icon: <Mail className="h-4 w-4" />,
+    page: <Messages />,
   },
   {
     title: "Profile",

@@ -1,14 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from '@/services/api';
 
 const Friends = () => {
-  const friends = [
+  const [friends, setFriends] = useState([
     { id: 1, name: "Alice Johnson", avatar: "/placeholder.svg", matchPercentage: 85 },
     { id: 2, name: "Bob Smith", avatar: "/placeholder.svg", matchPercentage: 72 },
     { id: 3, name: "Carol Williams", avatar: "/placeholder.svg", matchPercentage: 68 },
-  ];
+  ]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !selectedFriend) return;
+
+    try {
+      await api.sendMessage(selectedFriend.id, message);
+      toast({
+        title: "Message Sent",
+        description: `Your message has been sent to ${selectedFriend.name}.`,
+      });
+      setMessage('');
+      setSelectedFriend(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -27,7 +62,27 @@ const Friends = () => {
             </CardHeader>
             <CardContent>
               <p className="text-lg font-semibold">{friend.matchPercentage}% Match</p>
-              <Button className="w-full mt-4">View Profile</Button>
+              <div className="flex space-x-2 mt-4">
+                <Button className="flex-1" onClick={() => navigate(`/profile/${friend.id}`)}>View Profile</Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="flex-1" onClick={() => setSelectedFriend(friend)}>Send Message</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Send Message to {selectedFriend?.name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col space-y-4">
+                      <Input
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Type your message..."
+                      />
+                      <Button onClick={handleSendMessage}>Send</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         ))}

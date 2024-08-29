@@ -96,4 +96,36 @@ export const api = {
     localStorage.setItem('ratings', JSON.stringify(ratings));
     return { success: true };
   },
+
+  getConversations: async () => {
+    await delay(300);
+    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+    return conversations;
+  },
+
+  sendMessage: async (conversationId, message) => {
+    await delay(200);
+    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+    const conversationIndex = conversations.findIndex(c => c.id === conversationId);
+    if (conversationIndex === -1) {
+      throw new Error('Conversation not found');
+    }
+    const newMessage = { id: Date.now(), content: message, sender: 'user', timestamp: new Date().toISOString() };
+    conversations[conversationIndex].messages.push(newMessage);
+    localStorage.setItem('conversations', JSON.stringify(conversations));
+    return newMessage;
+  },
+
+  createConversation: async (userId, friendId) => {
+    await delay(300);
+    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+    const newConversation = {
+      id: Date.now(),
+      participants: [userId, friendId],
+      messages: [],
+    };
+    conversations.push(newConversation);
+    localStorage.setItem('conversations', JSON.stringify(conversations));
+    return newConversation;
+  },
 };
