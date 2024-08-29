@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Settings, BookOpen, ShoppingCart as CartIcon, Moon, Sun } from 'lucide-react';
+import { Menu, BookOpen, ShoppingCart as CartIcon, Moon, Sun } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -88,12 +88,6 @@ const Layout = ({ children }) => {
                   </Link>
                 </DropdownMenuItem>
               ))}
-              <DropdownMenuItem asChild>
-                <Link to="/settings" className="flex items-center">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
