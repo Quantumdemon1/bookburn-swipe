@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
@@ -28,9 +29,10 @@ const Index = () => {
     if (!isSearching) {
       setBooks([]);
       setPage(1);
-      loadMoreBooks();
+      const initialBooks = getRecommendations(1, 10, selectedGenre);
+      setBooks(initialBooks);
     }
-  }, [isSearching, loadMoreBooks, selectedGenre]);
+  }, [isSearching, selectedGenre]);
 
   useEffect(() => {
     if (inView && !isSearching) {
@@ -50,6 +52,10 @@ const Index = () => {
 
   const handleAction = (bookId, action) => {
     updateUserPreferences(bookId, action);
+    // Refresh the book list after updating preferences
+    const updatedBooks = getRecommendations(1, books.length, selectedGenre);
+    setBooks(updatedBooks);
+    
     toast({
       title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
       description: `Action taken on book ${bookId}`,
@@ -85,25 +91,18 @@ const Index = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Genres</SelectItem>
-            <SelectItem value="fiction">Fiction</SelectItem>
+            <SelectItem value="adventure">Adventure</SelectItem>
+            <SelectItem value="classic">Classic</SelectItem>
+            <SelectItem value="horror">Horror</SelectItem>
             <SelectItem value="non-fiction">Non-Fiction</SelectItem>
-            <SelectItem value="mystery">Mystery</SelectItem>
-            <SelectItem value="sci-fi">Science Fiction</SelectItem>
-            <SelectItem value="fantasy">Fantasy</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <p className="text-sm text-gray-400 my-4">
-        {isSearching ? "Search results:" : `Showing ${selectedGenre === 'all' ? 'all genres' : selectedGenre}. Scroll for more!`}
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {books.map((book, index) => (
           <BookCard
             key={`${book.id}-${index}`}
-            book={{
-              ...book,
-              preview: book.preview.slice(0, 200) + (book.preview.length > 200 ? '...' : '')
-            }}
+            book={book}
             onBurn={() => handleAction(book.id, 'burn')}
             onLike={() => handleAction(book.id, 'like')}
             onFavorite={() => handleAction(book.id, 'favorite')}
