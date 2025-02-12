@@ -1,13 +1,39 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import BookCover from '@/components/BookCover';
 
 const books = [
-  { id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", coverUrl: "https://example.com/cover1.jpg" },
-  { id: 2, title: "1984", author: "George Orwell", coverUrl: "https://example.com/cover2.jpg" },
-  { id: 3, title: "Pride and Prejudice", author: "Jane Austen", coverUrl: "https://example.com/cover3.jpg" },
-  { id: 4, title: "The Hobbit", author: "J.R.R. Tolkien", coverUrl: "https://example.com/cover4.jpg" },
-  { id: 5, title: "To Kill a Mockingbird", author: "Harper Lee", coverUrl: "https://example.com/cover5.jpg" },
+  { 
+    id: 1, 
+    title: "A Tale of Two Cities", 
+    author: "Charles Dickens", 
+    coverUrl: "/placeholder.svg"  // Using local placeholder image
+  },
+  { 
+    id: 2, 
+    title: "1984", 
+    author: "George Orwell", 
+    coverUrl: "/placeholder.svg"
+  },
+  { 
+    id: 3, 
+    title: "Pride and Prejudice", 
+    author: "Jane Austen", 
+    coverUrl: "/placeholder.svg"
+  },
+  { 
+    id: 4, 
+    title: "The Hobbit", 
+    author: "J.R.R. Tolkien", 
+    coverUrl: "/placeholder.svg"
+  },
+  { 
+    id: 5, 
+    title: "To Kill a Mockingbird", 
+    author: "Harper Lee", 
+    coverUrl: "/placeholder.svg"
+  },
 ];
 
 const Covers = () => {
