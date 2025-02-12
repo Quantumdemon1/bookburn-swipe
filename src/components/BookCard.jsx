@@ -33,6 +33,11 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
     <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
         <div className="rounded-3xl bg-white text-black p-6 mb-6">
+          <img 
+            src={book.coverUrl || '/placeholder.svg'} 
+            alt={`Cover of ${book.title}`}
+            className="w-full h-64 object-cover rounded-lg mb-4 bg-gray-100"
+          />
           <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
           <p className="text-lg mb-4">by {book.author}</p>
           <p className="text-xl">{book.preview}</p>
