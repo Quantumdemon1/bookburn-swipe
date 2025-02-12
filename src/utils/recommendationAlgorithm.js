@@ -1,4 +1,3 @@
-
 // Simulated book database with public domain content
 export const books = [
   {
@@ -43,6 +42,9 @@ export const books = [
   }
 ];
 
+// Keep track of shown books
+let shownBooks = new Set();
+
 // User preferences object to store tag weights
 let userPreferences = {};
 
@@ -58,7 +60,7 @@ export const initializeUserPreferences = () => {
 };
 
 // Update user preferences based on action
-export const updateUserPreferences = (bookId, action, value = null) => {
+export const updateUserPreferences = (bookId, action) => {
   const book = books.find(b => b.id === bookId);
   if (!book) return;
 
@@ -73,12 +75,6 @@ export const updateUserPreferences = (bookId, action, value = null) => {
     case 'favorite':
       weight = 0.2;
       break;
-    case 'rate':
-      weight = (value - 3) * 0.05; // Adjust weight based on rating (1-5)
-      break;
-    case 'review':
-      weight = 0.15; // Reviewing a book indicates strong engagement
-      break;
     default:
       weight = 0;
   }
@@ -87,40 +83,53 @@ export const updateUserPreferences = (bookId, action, value = null) => {
     userPreferences[tag] = Math.max(0, Math.min(2, (userPreferences[tag] || 1) + weight));
   });
 
+  // Add to shown books
+  shownBooks.add(bookId);
+
+  // Reset shown books if all books have been shown
+  if (shownBooks.size === books.length) {
+    shownBooks.clear();
+  }
+
   // Save updated preferences to localStorage
   localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
 };
 
 // Get book recommendations based on user preferences and genre filter
 export const getRecommendations = (page = 1, limit = 10, selectedGenre = 'all') => {
-  // Load preferences from localStorage
-  const storedPreferences = JSON.parse(localStorage.getItem('userPreferences'));
-  if (storedPreferences) {
-    userPreferences = storedPreferences;
+  // Filter books by genre and not shown
+  let availableBooks = books.filter(book => 
+    !shownBooks.has(book.id) && 
+    (selectedGenre === 'all' || book.tags.includes(selectedGenre))
+  );
+
+  // If no books available, reset shown books and try again
+  if (availableBooks.length === 0) {
+    shownBooks.clear();
+    availableBooks = books.filter(book => 
+      selectedGenre === 'all' || book.tags.includes(selectedGenre)
+    );
   }
 
-  // Filter books by genre if a specific genre is selected
-  let filteredBooks = books;
-  if (selectedGenre !== 'all') {
-    filteredBooks = books.filter(book => book.tags.includes(selectedGenre));
-  }
-
-  const sortedBooks = filteredBooks.map(book => ({
-    ...book,
-    score: book.tags.reduce((sum, tag) => sum + (userPreferences[tag] || 1), 0)
-  })).sort((a, b) => b.score - a.score);
-
-  const start = (page - 1) * limit;
-  const end = start + limit;
-
-  return sortedBooks.slice(start, end);
+  return availableBooks.slice(0, limit);
 };
 
 // Get next recommended book
 export const getNextRecommendation = (currentBookId) => {
-  const recommendations = getRecommendations();
-  const currentIndex = recommendations.findIndex(book => book.id === currentBookId);
-  return recommendations[(currentIndex + 1) % recommendations.length];
+  // Add current book to shown books
+  shownBooks.add(currentBookId);
+  
+  // Get available books
+  const availableBooks = books.filter(book => !shownBooks.has(book.id));
+  
+  // If no more books available, reset shown books and return first book
+  if (availableBooks.length === 0) {
+    shownBooks.clear();
+    return books[0];
+  }
+  
+  // Return first available book
+  return availableBooks[0];
 };
 
 // Search books
