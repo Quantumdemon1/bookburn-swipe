@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ const ShoppingCart = ({ onClose }) => {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
 
   const handleCheckout = () => {
     onClose();
@@ -30,7 +31,9 @@ const ShoppingCart = ({ onClose }) => {
               <div key={item.id} className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-semibold">{item.title}</h3>
-                  <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
+                  <p className="text-sm text-gray-500">
+                    ${(item.price || 0).toFixed(2)}
+                  </p>
                 </div>
                 <div className="flex items-center">
                   <Button
@@ -64,7 +67,9 @@ const ShoppingCart = ({ onClose }) => {
                 <span className="font-semibold">Total:</span>
                 <span className="font-semibold">${total.toFixed(2)}</span>
               </div>
-              <Button className="w-full mt-4" onClick={handleCheckout}>Proceed to Checkout</Button>
+              <Button className="w-full mt-4" onClick={handleCheckout}>
+                Proceed to Checkout
+              </Button>
             </div>
           </>
         )}
