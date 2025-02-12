@@ -1,44 +1,32 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
 import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
-import { getRecommendations, updateUserPreferences, searchBooks } from '@/utils/recommendationAlgorithm';
+import { getRecommendations, updateUserPreferences, searchBooks, getNextRecommendation } from '@/utils/recommendationAlgorithm';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Index = () => {
-  const [books, setBooks] = useState([]);
-  const [page, setPage] = useState(1);
+  const [currentBook, setCurrentBook] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [isNewUser, setIsNewUser] = useState(true);
   const { toast } = useToast();
-  const { ref, inView } = useInView({
+  const { ref } = useInView({
     threshold: 0,
   });
 
-  const loadMoreBooks = useCallback(() => {
-    const newBooks = getRecommendations(page, 10, selectedGenre);
-    setBooks(prevBooks => [...prevBooks, ...newBooks]);
-    setPage(prevPage => prevPage + 1);
-  }, [page, selectedGenre]);
-
+  // Load initial book
   useEffect(() => {
     if (!isSearching) {
-      setBooks([]);
-      setPage(1);
-      const initialBooks = getRecommendations(1, 10, selectedGenre);
-      setBooks(initialBooks);
+      const initialBooks = getRecommendations(1, 1, selectedGenre);
+      if (initialBooks.length > 0) {
+        setCurrentBook(initialBooks[0]);
+      }
     }
   }, [isSearching, selectedGenre]);
-
-  useEffect(() => {
-    if (inView && !isSearching) {
-      loadMoreBooks();
-    }
-  }, [inView, isSearching, loadMoreBooks]);
 
   useEffect(() => {
     const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
@@ -52,9 +40,10 @@ const Index = () => {
 
   const handleAction = (bookId, action) => {
     updateUserPreferences(bookId, action);
-    // Refresh the book list after updating preferences
-    const updatedBooks = getRecommendations(1, books.length, selectedGenre);
-    setBooks(updatedBooks);
+    
+    // Get next book recommendation
+    const nextBook = getNextRecommendation(bookId);
+    setCurrentBook(nextBook);
     
     toast({
       title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
@@ -65,14 +54,18 @@ const Index = () => {
   const handleSearch = (query) => {
     setIsSearching(true);
     const searchResults = searchBooks(query);
-    setBooks(searchResults);
+    if (searchResults.length > 0) {
+      setCurrentBook(searchResults[0]);
+    }
   };
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
     setIsSearching(false);
-    setBooks([]);
-    setPage(1);
+    const newBooks = getRecommendations(1, 1, genre);
+    if (newBooks.length > 0) {
+      setCurrentBook(newBooks[0]);
+    }
   };
 
   return (
@@ -99,26 +92,33 @@ const Index = () => {
         </Select>
       </div>
       <div className="grid grid-cols-1 gap-6">
-        {books.map((book, index) => (
+        {currentBook ? (
           <BookCard
-            key={`${book.id}-${index}`}
-            book={book}
-            onBurn={() => handleAction(book.id, 'burn')}
-            onLike={() => handleAction(book.id, 'like')}
-            onFavorite={() => handleAction(book.id, 'favorite')}
+            key={currentBook.id}
+            book={currentBook}
+            onBurn={() => handleAction(currentBook.id, 'burn')}
+            onLike={() => handleAction(currentBook.id, 'like')}
+            onFavorite={() => handleAction(currentBook.id, 'favorite')}
           />
-        ))}
+        ) : (
+          <div className="text-center mt-8">
+            <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
+          </div>
+        )}
       </div>
-      {!isSearching && books.length > 0 && (
-        <div ref={ref} className="text-center mt-8">
-          <Button onClick={loadMoreBooks} variant="outline">Load More Books</Button>
-        </div>
-      )}
-      {books.length === 0 && (
-        <div className="text-center mt-8">
-          <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
-        </div>
-      )}
+      <div ref={ref} className="text-center mt-8">
+        <Button 
+          onClick={() => {
+            if (currentBook) {
+              const nextBook = getNextRecommendation(currentBook.id);
+              setCurrentBook(nextBook);
+            }
+          }} 
+          variant="outline"
+        >
+          Next Book
+        </Button>
+      </div>
     </div>
   );
 };
