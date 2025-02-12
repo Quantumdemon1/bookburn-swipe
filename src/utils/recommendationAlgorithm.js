@@ -50,19 +50,41 @@ export const books = [
 
 // Keep track of shown books
 let shownBooks = new Set();
+let userInteractions = new Map(); // Map to store user interactions with timestamps
 
-// User preferences object to store tag weights
-let userPreferences = {};
+// Interaction weights for different actions
+const interactionWeights = {
+  like: 1.0,
+  burn: -1.0,
+  favorite: 2.0
+};
 
-// Initialize user preferences
+// Initialize user preferences with timestamps
 export const initializeUserPreferences = () => {
+  const storedPrefs = localStorage.getItem('userPreferences');
+  if (storedPrefs) {
+    return JSON.parse(storedPrefs);
+  }
+  
+  const preferences = {};
   books.forEach(book => {
     book.tags.forEach(tag => {
-      if (!userPreferences[tag]) {
-        userPreferences[tag] = 1; // Neutral weight
-      }
+      preferences[tag] = {
+        weight: 1,
+        lastUpdated: Date.now()
+      };
     });
   });
+  
+  localStorage.setItem('userPreferences', JSON.stringify(preferences));
+  return preferences;
+};
+
+// Calculate time decay
+const calculateTimeDecay = (timestamp) => {
+  const now = Date.now();
+  const daysDiff = (now - timestamp) / (1000 * 60 * 60 * 24);
+  return Math.pow(0.95, daysDiff); // 5% decay per day
 };
 
 // Update user preferences based on action
@@ -70,71 +92,111 @@ export const updateUserPreferences = (bookId, action) => {
   const book = books.find(b => b.id === bookId);
   if (!book) return;
 
-  let weight;
-  switch (action) {
-    case 'like':
-      weight = 0.1;
-      break;
-    case 'burn':
-      weight = -0.1;
-      break;
-    case 'favorite':
-      weight = 0.2;
-      break;
-    default:
-      weight = 0;
-  }
+  const preferences = initializeUserPreferences();
+  const weight = interactionWeights[action] || 0;
+  const now = Date.now();
 
+  // Update tag weights with time decay
   book.tags.forEach(tag => {
-    userPreferences[tag] = Math.max(0, Math.min(2, (userPreferences[tag] || 1) + weight));
+    const currentPref = preferences[tag] || { weight: 1, lastUpdated: now };
+    const timeDecay = calculateTimeDecay(currentPref.lastUpdated);
+    
+    preferences[tag] = {
+      weight: Math.max(0, Math.min(2, currentPref.weight * timeDecay + weight)),
+      lastUpdated: now
+    };
   });
+
+  // Store interaction
+  const interactions = JSON.parse(localStorage.getItem('userInteractions') || '[]');
+  interactions.push({
+    bookId,
+    action,
+    timestamp: now
+  });
+  localStorage.setItem('userInteractions', JSON.stringify(interactions));
 
   // Add to shown books
   shownBooks.add(bookId);
-
-  // Reset shown books if all books have been shown
   if (shownBooks.size === books.length) {
     shownBooks.clear();
   }
 
-  // Save updated preferences to localStorage
-  localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
+  localStorage.setItem('userPreferences', JSON.stringify(preferences));
+};
+
+// Calculate book score based on user preferences and novelty
+const calculateBookScore = (book, preferences) => {
+  if (!book || !preferences) return 0;
+
+  let score = 0;
+  let totalWeight = 0;
+
+  // Calculate preference score
+  book.tags.forEach(tag => {
+    if (preferences[tag]) {
+      const timeDecay = calculateTimeDecay(preferences[tag].lastUpdated);
+      score += preferences[tag].weight * timeDecay;
+      totalWeight += 1;
+    }
+  });
+
+  // Normalize score
+  score = totalWeight > 0 ? score / totalWeight : 0;
+
+  // Add novelty bonus if not shown recently
+  if (!shownBooks.has(book.id)) {
+    score += 0.2;
+  }
+
+  return score;
 };
 
 // Get book recommendations based on user preferences and genre filter
 export const getRecommendations = (page = 1, limit = 10, selectedGenre = 'all') => {
-  // Filter books by genre and not shown
-  let availableBooks = books.filter(book => 
-    !shownBooks.has(book.id) && 
-    (selectedGenre === 'all' || book.tags.includes(selectedGenre))
-  );
+  const preferences = initializeUserPreferences();
+  
+  // Filter and score books
+  let availableBooks = books
+    .filter(book => selectedGenre === 'all' || book.tags.includes(selectedGenre))
+    .map(book => ({
+      ...book,
+      score: calculateBookScore(book, preferences)
+    }))
+    .sort((a, b) => b.score - a.score);
 
-  // If no books available, reset shown books and try again
-  if (availableBooks.length === 0) {
+  // If all books have been shown, reset
+  if (availableBooks.length === shownBooks.size) {
     shownBooks.clear();
-    availableBooks = books.filter(book => 
-      selectedGenre === 'all' || book.tags.includes(selectedGenre)
-    );
   }
 
-  return availableBooks.slice(0, limit);
+  return availableBooks.slice((page - 1) * limit, page * limit);
 };
 
 // Get next recommended book
 export const getNextRecommendation = (currentBookId) => {
-  // Add current book to shown books
-  shownBooks.add(currentBookId);
+  // Mark current book as shown
+  if (currentBookId) {
+    shownBooks.add(currentBookId);
+  }
+
+  const preferences = initializeUserPreferences();
   
-  // Get available books
-  const availableBooks = books.filter(book => !shownBooks.has(book.id));
-  
-  // If no more books available, reset shown books and return first book
+  // Get all unshown books and score them
+  const availableBooks = books
+    .filter(book => !shownBooks.has(book.id))
+    .map(book => ({
+      ...book,
+      score: calculateBookScore(book, preferences)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  // If no more unshown books, reset and try again
   if (availableBooks.length === 0) {
     shownBooks.clear();
-    return books[0];
+    return getNextRecommendation();
   }
-  
-  // Return first available book
+
   return availableBooks[0];
 };
 
