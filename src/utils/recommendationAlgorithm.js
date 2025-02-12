@@ -1,11 +1,46 @@
 
-// Simulated book database
+// Simulated book database with public domain content
 export const books = [
-  {id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", tags: ["classic", "historical", "fiction"], preview: "It was the best of times, it was the worst of times..."},
-  {id: 2, title: "1984", author: "George Orwell", tags: ["dystopian", "political", "fiction"], preview: "It was a bright cold day in April, and the clocks were striking thirteen..."},
-  {id: 3, title: "Pride and Prejudice", author: "Jane Austen", tags: ["romance", "classic", "fiction"], preview: "It is a truth universally acknowledged..."},
-  {id: 4, title: "The Hobbit", author: "J.R.R. Tolkien", tags: ["fantasy", "adventure", "fiction"], preview: "In a hole in the ground there lived a hobbit..."},
-  {id: 5, title: "To Kill a Mockingbird", author: "Harper Lee", tags: ["classic", "coming-of-age", "fiction"], preview: "When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow..."},
+  {
+    id: 1, 
+    title: "Robinson Crusoe", 
+    author: "Daniel Defoe", 
+    tags: ["adventure", "classic", "survival"],
+    preview: "I was born in the year 1632, in the city of York, of a good family. My father was a foreign merchant originally from Bremen, who settled first at Hull.",
+    coverUrl: "/placeholder.svg"
+  },
+  {
+    id: 2, 
+    title: "The Art of War", 
+    author: "Sun Tzu", 
+    tags: ["strategy", "classic", "non-fiction"],
+    preview: "The art of war is of vital importance to the State. It is a matter of life and death, a road either to safety or to ruin.",
+    coverUrl: "/placeholder.svg"
+  },
+  {
+    id: 3, 
+    title: "The Wealth of Nations", 
+    author: "Adam Smith", 
+    tags: ["economics", "classic", "non-fiction"],
+    preview: "The annual labour of every nation is the fund which originally supplies it with all the necessaries and conveniences of life which it annually consumes.",
+    coverUrl: "/placeholder.svg"
+  },
+  {
+    id: 4, 
+    title: "Frankenstein", 
+    author: "Mary Shelley", 
+    tags: ["horror", "classic", "science-fiction"],
+    preview: "You will rejoice to hear that no disaster has accompanied the commencement of an enterprise which you have regarded with such evil forebodings.",
+    coverUrl: "/placeholder.svg"
+  },
+  {
+    id: 5, 
+    title: "The Count of Monte Cristo", 
+    author: "Alexandre Dumas", 
+    tags: ["adventure", "classic", "revenge"],
+    preview: "On the 24th of February, 1815, the look-out at Notre-Dame de la Garde signalled the three-master, the Pharaon from Smyrna, Trieste, and Naples.",
+    coverUrl: "/placeholder.svg"
+  }
 ];
 
 // User preferences object to store tag weights
