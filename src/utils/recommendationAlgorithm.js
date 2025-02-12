@@ -1,3 +1,4 @@
+
 // Simulated book database
 export const books = [
   {id: 1, title: "A Tale of Two Cities", author: "Charles Dickens", tags: ["classic", "historical", "fiction"], preview: "It was the best of times, it was the worst of times..."},
