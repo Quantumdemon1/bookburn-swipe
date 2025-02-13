@@ -62,7 +62,7 @@ const Messages = () => {
       const response = await api.sendMessage(selectedConversation.id, newMessage);
       setSelectedConversation(prev => ({
         ...prev,
-        messages: [...prev.messages, response]
+        messages: [...(prev?.messages || []), response]
       }));
       setNewMessage('');
       
@@ -70,7 +70,7 @@ const Messages = () => {
       setConversations(prev => {
         const updated = prev.map(conv => 
           conv.id === selectedConversation.id 
-            ? { ...conv, messages: [...conv.messages, response] }
+            ? { ...conv, messages: [...(conv.messages || []), response] }
             : conv
         );
         return updated.sort((a, b) => {
@@ -89,6 +89,7 @@ const Messages = () => {
   };
 
   const getMessageStatus = (message) => {
+    if (!message) return null;
     if (message.read) return <CheckCheck className="h-4 w-4 text-blue-500" />;
     if (message.delivered) return <Check className="h-4 w-4 text-blue-500" />;
     return <Check className="h-4 w-4 text-gray-400" />;
@@ -105,8 +106,9 @@ const Messages = () => {
           <CardContent className="p-0">
             <div className="flex flex-col">
               {conversations.map(conv => {
-                const lastMessage = conv.messages[conv.messages.length - 1];
-                const hasUnread = conv.messages.some(m => !m.read && m.sender !== 'user');
+                const lastMessage = conv.messages?.[conv.messages.length - 1];
+                const hasUnread = conv.messages?.some(m => !m.read && m.sender !== 'user') || false;
+                const friendName = conv.friendName || 'User';
                 
                 return (
                   <Button
@@ -118,12 +120,12 @@ const Messages = () => {
                     <div className="flex items-start space-x-3 w-full">
                       <Avatar>
                         <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
-                        <AvatarFallback>{conv.friendName[0]}</AvatarFallback>
+                        <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
                           <span className={`font-medium ${hasUnread ? 'text-primary' : ''}`}>
-                            {conv.friendName}
+                            {friendName}
                           </span>
                           {lastMessage && (
                             <span className="text-xs text-gray-500">
@@ -150,9 +152,9 @@ const Messages = () => {
               <div className="flex items-center space-x-3">
                 <Avatar>
                   <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
-                  <AvatarFallback>{selectedConversation.friendName[0]}</AvatarFallback>
+                  <AvatarFallback>{((selectedConversation.friendName || 'U')[0]).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <CardTitle>{selectedConversation.friendName}</CardTitle>
+                <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
               </div>
             )}
           </CardHeader>
@@ -160,7 +162,7 @@ const Messages = () => {
             {selectedConversation ? (
               <>
                 <div className="h-[calc(70vh-200px)] overflow-y-auto mb-4 p-4 space-y-4">
-                  {selectedConversation.messages.map((message, index) => (
+                  {(selectedConversation.messages || []).map((message, index) => (
                     <div 
                       key={index} 
                       className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}

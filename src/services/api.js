@@ -100,7 +100,13 @@ export const api = {
   getConversations: async () => {
     await delay(300);
     const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    return conversations;
+    return conversations.map(conv => ({
+      id: conv.id,
+      participants: conv.participants || [],
+      messages: conv.messages || [],
+      friendName: conv.friendName || 'User',
+      friendAvatar: conv.friendAvatar || '/placeholder.svg'
+    }));
   },
 
   sendMessage: async (conversationId, message) => {
@@ -110,7 +116,14 @@ export const api = {
     if (conversationIndex === -1) {
       throw new Error('Conversation not found');
     }
-    const newMessage = { id: Date.now(), content: message, sender: 'user', timestamp: new Date().toISOString() };
+    const newMessage = {
+      id: Date.now(),
+      content: message,
+      sender: 'user',
+      timestamp: new Date().toISOString(),
+      delivered: true,
+      read: false
+    };
     conversations[conversationIndex].messages.push(newMessage);
     localStorage.setItem('conversations', JSON.stringify(conversations));
     return newMessage;
@@ -118,12 +131,16 @@ export const api = {
 
   createConversation: async (userId, friendId) => {
     await delay(300);
-    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const friend = users.find(u => u.id === friendId) || { name: 'User', avatar: '/placeholder.svg' };
     const newConversation = {
       id: Date.now(),
       participants: [userId, friendId],
       messages: [],
+      friendName: friend.name || 'User',
+      friendAvatar: friend.avatar || '/placeholder.svg'
     };
+    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
     conversations.push(newConversation);
     localStorage.setItem('conversations', JSON.stringify(conversations));
     return newConversation;
