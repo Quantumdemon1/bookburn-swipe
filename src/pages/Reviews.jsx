@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, MessageSquare, ThumbsUp, Share2 } from 'lucide-react';
+import { Star, MessageSquare, ThumbsUp, Share2, Heart, Laugh, AlertCircle, ArrowDown, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,16 +14,19 @@ const Reviews = () => {
   const [selectedBook, setSelectedBook] = useState(1); // Dummy book ID for now
   const [expandedComments, setExpandedComments] = useState({});
   const [newComments, setNewComments] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [sortOrder, setSortOrder] = useState('newest');
   const dummyUserId = 1; // This would come from authentication in a real app
 
   useEffect(() => {
     loadReviews();
-  }, [selectedBook]);
+  }, [selectedBook, sortOrder]);
 
   const loadReviews = async () => {
     try {
       const fetchedReviews = await api.getReviews(selectedBook);
-      setReviews(fetchedReviews);
+      const sortedReviews = sortReviews(fetchedReviews, sortOrder);
+      setReviews(sortedReviews);
     } catch (error) {
       toast({
         title: "Error",
@@ -31,6 +34,21 @@ const Reviews = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const sortReviews = (reviewsToSort, order) => {
+    return [...reviewsToSort].sort((a, b) => {
+      switch (order) {
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'oldest':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'mostLiked':
+          return (b.likes || 0) - (a.likes || 0);
+        default:
+          return 0;
+      }
+    });
   };
 
   const handleLike = async (reviewId) => {
@@ -52,6 +70,46 @@ const Reviews = () => {
     }
   };
 
+  const handleReaction = async (reviewId, commentId, reactionType) => {
+    try {
+      const updatedReactions = await api.addReaction(reviewId, commentId, dummyUserId, reactionType);
+      setReviews(prevReviews =>
+        prevReviews.map(review => {
+          if (review.id !== reviewId) return review;
+          
+          if (!commentId) {
+            return { ...review, reactions: updatedReactions };
+          }
+
+          const updateCommentReactions = (comments) =>
+            comments.map(comment => {
+              if (comment.id === commentId) {
+                return { ...comment, reactions: updatedReactions };
+              }
+              if (comment.replies?.length) {
+                return {
+                  ...comment,
+                  replies: updateCommentReactions(comment.replies)
+                };
+              }
+              return comment;
+            });
+
+          return {
+            ...review,
+            comments: updateCommentReactions(review.comments || [])
+          };
+        })
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update reaction",
+        variant: "destructive"
+      });
+    }
+  };
+
   const toggleComments = (reviewId) => {
     setExpandedComments(prev => ({
       ...prev,
@@ -66,18 +124,20 @@ const Reviews = () => {
     }));
   };
 
-  const handleCommentSubmit = async (reviewId) => {
+  const handleCommentSubmit = async (reviewId, parentId = null) => {
     const content = newComments[reviewId]?.trim();
     if (!content) return;
 
     try {
-      const comment = await api.addComment(reviewId, dummyUserId, content);
+      const comment = await api.addComment(reviewId, dummyUserId, content, parentId);
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review.id === reviewId
             ? {
                 ...review,
-                comments: [...(review.comments || []), comment]
+                comments: parentId
+                  ? updateCommentsWithReply(review.comments || [], parentId, comment)
+                  : [...(review.comments || []), comment]
               }
             : review
         )
@@ -86,6 +146,7 @@ const Reviews = () => {
         ...prev,
         [reviewId]: ''
       }));
+      setReplyingTo(null);
     } catch (error) {
       toast({
         title: "Error",
@@ -94,6 +155,97 @@ const Reviews = () => {
       });
     }
   };
+
+  const updateCommentsWithReply = (comments, parentId, newReply) => {
+    return comments.map(comment => {
+      if (comment.id === parentId) {
+        return {
+          ...comment,
+          replies: [...(comment.replies || []), newReply]
+        };
+      }
+      if (comment.replies?.length) {
+        return {
+          ...comment,
+          replies: updateCommentsWithReply(comment.replies, parentId, newReply)
+        };
+      }
+      return comment;
+    });
+  };
+
+  const renderComment = (comment, reviewId, depth = 0) => (
+    <div 
+      key={comment.id} 
+      className={`pl-${depth * 4} border-l-2 border-gray-200 ml-4 mt-2`}
+    >
+      <div className="flex items-center space-x-2 mb-1">
+        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">
+          {comment.userId}
+        </div>
+        <div className="flex-grow">
+          <p className="text-sm text-gray-600">
+            {new Date(comment.createdAt).toLocaleDateString()}
+          </p>
+          <p className="text-gray-800">{comment.content}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2 mt-1 mb-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleReaction(reviewId, comment.id, 'heart')}
+          className="p-1 h-auto"
+        >
+          <Heart className={`w-4 h-4 ${comment.reactions?.heart > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+          <span className="ml-1 text-xs">{comment.reactions?.heart || 0}</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleReaction(reviewId, comment.id, 'laugh')}
+          className="p-1 h-auto"
+        >
+          <Laugh className={`w-4 h-4 ${comment.reactions?.laugh > 0 ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+          <span className="ml-1 text-xs">{comment.reactions?.laugh || 0}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setReplyingTo(comment.id)}
+          className="p-1 h-auto"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span className="ml-1 text-xs">Reply</span>
+        </Button>
+      </div>
+
+      {replyingTo === comment.id && (
+        <div className="flex gap-2 mt-2 mb-4">
+          <Textarea
+            placeholder="Write a reply..."
+            value={newComments[reviewId] || ''}
+            onChange={(e) => handleCommentChange(reviewId, e.target.value)}
+            className="flex-1 text-sm"
+          />
+          <Button
+            size="sm"
+            onClick={() => handleCommentSubmit(reviewId, comment.id)}
+            disabled={!newComments[reviewId]?.trim()}
+          >
+            Reply
+          </Button>
+        </div>
+      )}
+
+      {comment.replies?.length > 0 && (
+        <div className="ml-4">
+          {comment.replies.map(reply => renderComment(reply, reviewId, depth + 1))}
+        </div>
+      )}
+    </div>
+  );
 
   const handleShare = async (review) => {
     try {
@@ -118,6 +270,19 @@ const Reviews = () => {
         bookId={selectedBook} 
         onReviewSubmitted={loadReviews}
       />
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">All Reviews</h2>
+        <select
+          className="border rounded-md p-2"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+        >
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="mostLiked">Most Liked</option>
+        </select>
+      </div>
 
       <div className="space-y-6">
         {reviews.map((review) => (
@@ -151,7 +316,7 @@ const Reviews = () => {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 mb-4">{review.content}</p>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 mb-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -160,6 +325,24 @@ const Reviews = () => {
                 >
                   <ThumbsUp className={`w-4 h-4 ${review.hasLiked ? 'fill-current text-blue-500' : ''}`} />
                   <span>{review.likes || 0}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleReaction(review.id, null, 'heart')}
+                  className="flex items-center gap-2"
+                >
+                  <Heart className={`w-4 h-4 ${review.reactions?.heart > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                  <span>{review.reactions?.heart || 0}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleReaction(review.id, null, 'laugh')}
+                  className="flex items-center gap-2"
+                >
+                  <Laugh className={`w-4 h-4 ${review.reactions?.laugh > 0 ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                  <span>{review.reactions?.laugh || 0}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -183,21 +366,7 @@ const Reviews = () => {
 
               {expandedComments[review.id] && (
                 <div className="mt-4 space-y-4">
-                  {review.comments?.map((comment) => (
-                    <div key={comment.id} className="pl-4 border-l-2 border-gray-200">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">
-                          {comment.userId}
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            {new Date(comment.createdAt).toLocaleDateString()}
-                          </p>
-                          <p className="text-gray-800">{comment.content}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {review.comments?.map((comment) => renderComment(comment, review.id))}
                   <div className="flex gap-2 mt-2">
                     <Textarea
                       placeholder="Write a comment..."
