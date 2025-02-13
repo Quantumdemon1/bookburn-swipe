@@ -7,12 +7,29 @@ import { api } from '@/services/api';
 import { useSearchParams } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
-import { Check, CheckCheck, MoreHorizontal, Smile, Reply, Trash2, Forward, Heart, ThumbsUp, Laugh } from 'lucide-react';
+import { 
+  Check, 
+  CheckCheck, 
+  MoreHorizontal, 
+  Smile, 
+  Reply, 
+  Trash2, 
+  Forward, 
+  Heart, 
+  ThumbsUp, 
+  Laugh,
+  Search,
+  Pin,
+  Paperclip,
+  Image as ImageIcon,
+  Mic
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
@@ -30,6 +47,9 @@ const Messages = () => {
   const friendId = searchParams.get('friend');
   const [typingStatus, setTypingStatus] = useState({});
   const [selectedMessage, setSelectedMessage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pinnedConversations, setPinnedConversations] = useState([]);
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -66,6 +86,58 @@ const Messages = () => {
 
     fetchConversations();
   }, [friendId, toast]);
+
+  const filteredConversations = conversations.filter(conv => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      conv.friendName?.toLowerCase().includes(searchLower) ||
+      conv.messages?.some(msg => msg.content.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const togglePinConversation = (convId) => {
+    if (pinnedConversations.includes(convId)) {
+      setPinnedConversations(prev => prev.filter(id => id !== convId));
+    } else {
+      setPinnedConversations(prev => [...prev, convId]);
+    }
+  };
+
+  const sortedConversations = [...filteredConversations].sort((a, b) => {
+    const aPinned = pinnedConversations.includes(a.id);
+    const bPinned = pinnedConversations.includes(b.id);
+    if (aPinned !== bPinned) return bPinned ? 1 : -1;
+    
+    const aLastMessage = a.messages?.[a.messages.length - 1];
+    const bLastMessage = b.messages?.[b.messages.length - 1];
+    return new Date(bLastMessage?.timestamp || 0) - new Date(aLastMessage?.timestamp || 0);
+  });
+
+  const handleAttachment = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        toast({
+          title: "Coming Soon",
+          description: "File attachment feature will be available soon!",
+        });
+      }
+    };
+    input.click();
+  };
+
+  const handleVoiceRecord = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      toast({
+        title: "Coming Soon",
+        description: "Voice recording feature will be available soon!",
+      });
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
@@ -267,57 +339,78 @@ const Messages = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Conversations</CardTitle>
+            <div className="space-y-4">
+              <CardTitle>Conversations</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Search messages..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex flex-col">
-              {conversations.map(conv => {
+              {sortedConversations.map(conv => {
                 const lastMessage = conv.messages?.[conv.messages.length - 1];
                 const hasUnread = conv.messages?.some(m => !m.read && m.sender !== 'user') || false;
                 const friendName = conv.friendName || 'User';
                 const isTyping = typingStatus[conv.id];
+                const isPinned = pinnedConversations.includes(conv.id);
                 
                 return (
-                  <Button
-                    key={conv.id}
-                    className="w-full p-3 justify-start h-auto border-b hover:bg-gray-100 transition-colors"
-                    variant="ghost"
-                    onClick={() => setSelectedConversation(conv)}
-                  >
-                    <div className="flex items-start space-x-3 w-full">
-                      <div className="relative">
-                        <Avatar>
-                          <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
-                          <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        {conv.isOnline && (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center">
-                          <span className={`font-medium ${hasUnread ? 'text-primary' : ''}`}>
-                            {friendName}
-                          </span>
-                          {lastMessage && (
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(lastMessage.timestamp), 'HH:mm')}
-                            </span>
+                  <div key={conv.id} className="relative group">
+                    <Button
+                      className="w-full p-3 justify-start h-auto border-b hover:bg-gray-100 transition-colors"
+                      variant="ghost"
+                      onClick={() => setSelectedConversation(conv)}
+                    >
+                      <div className="flex items-start space-x-3 w-full">
+                        <div className="relative">
+                          <Avatar>
+                            <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
+                            <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          {conv.isOnline && (
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 truncate">
-                          {isTyping ? (
-                            <span className="text-primary animate-pulse">Typing...</span>
-                          ) : (
-                            lastMessage?.content
-                          )}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <span className={`font-medium ${hasUnread ? 'text-primary' : ''}`}>
+                              {friendName}
+                            </span>
+                            {lastMessage && (
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(lastMessage.timestamp), 'HH:mm')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 truncate">
+                            {isTyping ? (
+                              <span className="text-primary animate-pulse">Typing...</span>
+                            ) : (
+                              lastMessage?.content
+                            )}
+                          </p>
+                        </div>
+                        {hasUnread && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+                        )}
                       </div>
-                      {hasUnread && (
-                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
-                      )}
-                    </div>
-                  </Button>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity ${isPinned ? 'text-primary' : ''}`}
+                      onClick={() => togglePinConversation(conv.id)}
+                    >
+                      <Pin className="h-4 w-4" />
+                    </Button>
+                  </div>
                 );
               })}
             </div>
@@ -326,24 +419,44 @@ const Messages = () => {
         <Card className="md:col-span-2">
           <CardHeader className="border-b">
             {selectedConversation && (
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <Avatar>
-                    <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
-                    <AvatarFallback>
-                      {((selectedConversation.friendName || 'U')[0]).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {selectedConversation.isOnline && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                  )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <Avatar>
+                      <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
+                      <AvatarFallback>
+                        {((selectedConversation.friendName || 'U')[0]).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {selectedConversation.isOnline && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
+                    {selectedConversation.isOnline && (
+                      <p className="text-sm text-muted-foreground">Online</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
-                  {selectedConversation.isOnline && (
-                    <p className="text-sm text-muted-foreground">Online</p>
-                  )}
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => togglePinConversation(selectedConversation.id)}>
+                      <Pin className="h-4 w-4 mr-2" />
+                      {pinnedConversations.includes(selectedConversation.id) ? 'Unpin' : 'Pin'} Conversation
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Conversation
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </CardHeader>
@@ -353,22 +466,56 @@ const Messages = () => {
                 <div className="h-[calc(70vh-200px)] overflow-y-auto mb-4 p-4 space-y-4">
                   {renderMessages()}
                 </div>
-                <div className="flex items-center space-x-2 pt-2 border-t">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-grow"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <Button variant="ghost" size="icon">
-                    <Smile className="h-5 w-5" />
-                  </Button>
-                  <Button onClick={handleSendMessage}>Send</Button>
+                <div className="flex items-end space-x-2 pt-2 border-t">
+                  <div className="flex-grow">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="min-h-[2.5rem]"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => toast({ description: "Emoji picker coming soon!" })}>
+                            <Smile className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add emoji</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleAttachment}>
+                            <Paperclip className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Attach file</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleVoiceRecord}>
+                            <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isRecording ? 'Stop recording' : 'Record voice message'}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <Button onClick={handleSendMessage}>Send</Button>
+                  </div>
                 </div>
               </>
             ) : (
