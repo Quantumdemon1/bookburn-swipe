@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
 
 const Friends = () => {
-  const [friends, setFriends] = useState([
+  const [friends] = useState([
     { id: 1, name: "Alice Johnson", avatar: "/placeholder.svg", matchPercentage: 85 },
     { id: 2, name: "Bob Smith", avatar: "/placeholder.svg", matchPercentage: 72 },
     { id: 3, name: "Carol Williams", avatar: "/placeholder.svg", matchPercentage: 68 },
@@ -31,7 +31,12 @@ const Friends = () => {
 
     try {
       // Create a new conversation if it doesn't exist
-      const conversation = await api.createConversation(1, selectedFriend.id); // Using 1 as dummy current user ID
+      const conversation = await api.createConversation(
+        1, // Using 1 as dummy current user ID
+        selectedFriend.id,
+        selectedFriend.name,
+        selectedFriend.avatar
+      );
       
       // Send the message
       await api.sendMessage(conversation.id, message);
@@ -55,9 +60,9 @@ const Friends = () => {
     }
   };
 
-  const handleViewProfile = (friendId) => {
-    // Navigate to messages with this friend directly
-    navigate(`/messages?friend=${friendId}`);
+  const handleViewProfile = (friend) => {
+    // Navigate to messages with this friend's full profile
+    navigate(`/messages?friend=${friend.id}&name=${encodeURIComponent(friend.name)}&avatar=${encodeURIComponent(friend.avatar)}`);
   };
 
   return (
@@ -80,7 +85,7 @@ const Friends = () => {
               <div className="flex space-x-2 mt-4">
                 <Button 
                   className="flex-1" 
-                  onClick={() => handleViewProfile(friend.id)}
+                  onClick={() => handleViewProfile(friend)}
                 >
                   View Profile
                 </Button>

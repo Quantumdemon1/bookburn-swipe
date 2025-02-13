@@ -70,7 +70,14 @@ const Messages = () => {
           if (existingConv) {
             setSelectedConversation(existingConv);
           } else {
-            const newConv = await api.createConversation(1, Number(friendId));
+            const friendName = searchParams.get('name');
+            const friendAvatar = searchParams.get('avatar');
+            const newConv = await api.createConversation(
+              1, // dummy current user ID
+              Number(friendId),
+              friendName,
+              friendAvatar
+            );
             setConversations(prev => [...prev, newConv]);
             setSelectedConversation(newConv);
           }
@@ -85,7 +92,7 @@ const Messages = () => {
     };
 
     fetchConversations();
-  }, [friendId, toast]);
+  }, [friendId, toast, searchParams]);
 
   const filteredConversations = conversations.filter(conv => {
     const searchLower = searchQuery.toLowerCase();

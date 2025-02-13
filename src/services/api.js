@@ -286,16 +286,14 @@ export const api = {
     return newMessage;
   },
 
-  createConversation: async (userId, friendId) => {
+  createConversation: async (userId, friendId, friendName, friendAvatar) => {
     await delay(300);
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const friend = users.find(u => u.id === friendId) || { name: 'User', avatar: '/placeholder.svg' };
     const newConversation = {
       id: Date.now(),
       participants: [userId, friendId],
       messages: [],
-      friendName: friend.name || 'User',
-      friendAvatar: friend.avatar || '/placeholder.svg'
+      friendName: friendName || 'User',
+      friendAvatar: friendAvatar || '/placeholder.svg'
     };
     const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
     conversations.push(newConversation);
