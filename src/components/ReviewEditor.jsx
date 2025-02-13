@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +100,36 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
     }
   };
 
+  const handleShare = async (platform) => {
+    const shareData = {
+      title: 'Check out this review',
+      text: content.substring(0, 100) + '...',
+      url: window.location.href
+    };
+
+    switch (platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank');
+        break;
+      case 'linkedin':
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareData.url)}`, '_blank');
+        break;
+      default:
+        try {
+          await navigator.share(shareData);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Sharing not supported on this device",
+            variant: "destructive"
+          });
+        }
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -188,6 +217,30 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
             disabled={isSubmitting}
           >
             {isSubmitting ? "Posting..." : "Post Review"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleShare('twitter')}
+          >
+            Share on Twitter
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleShare('facebook')}
+          >
+            Share on Facebook
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleShare('linkedin')}
+          >
+            Share on LinkedIn
           </Button>
         </form>
       </CardContent>
