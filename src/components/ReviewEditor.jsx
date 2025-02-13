@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star } from 'lucide-react';
+import { Star, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
 
@@ -11,7 +11,57 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
   const { toast } = useToast();
+
+  const handleTextSelect = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      setSelectedText(selection.toString());
+    }
+  };
+
+  const applyFormat = (format) => {
+    const textarea = document.querySelector('textarea');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentContent = content;
+
+    let formattedText = '';
+    switch (format) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        break;
+      case 'italic':
+        formattedText = `_${selectedText}_`;
+        break;
+      case 'underline':
+        formattedText = `__${selectedText}__`;
+        break;
+      case 'list':
+        formattedText = `\n- ${selectedText}`;
+        break;
+      case 'ordered-list':
+        formattedText = `\n1. ${selectedText}`;
+        break;
+      case 'link':
+        const url = prompt('Enter URL:');
+        if (url) {
+          formattedText = `[${selectedText}](${url})`;
+        }
+        break;
+      default:
+        return;
+    }
+
+    if (formattedText) {
+      const newContent = 
+        currentContent.substring(0, start) +
+        formattedText +
+        currentContent.substring(end);
+      setContent(newContent);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +82,7 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
         createdAt: new Date().toISOString(),
       };
 
-      await api.addReview(1, bookId, reviewData); // Using dummy userId=1 for now
+      await api.addReview(1, bookId, reviewData);
       toast({
         title: "Success",
         description: "Your review has been posted!",
@@ -75,11 +125,62 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
               </Button>
             ))}
           </div>
+          <div className="flex items-center space-x-2 mb-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('bold')}
+            >
+              <Bold className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('italic')}
+            >
+              <Italic className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('underline')}
+            >
+              <Underline className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('ordered-list')}
+            >
+              <ListOrdered className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyFormat('link')}
+            >
+              <LinkIcon className="w-4 h-4" />
+            </Button>
+          </div>
           <Textarea
             placeholder="Share your thoughts about this book..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[150px]"
+            onSelect={handleTextSelect}
+            className="min-h-[150px] font-mono"
           />
           <Button 
             type="submit" 
