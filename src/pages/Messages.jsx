@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,20 @@ import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
 import { useSearchParams } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from 'date-fns';
-import { Check, CheckCheck } from 'lucide-react';
+import { format, isToday, isYesterday, isSameDay } from 'date-fns';
+import { Check, CheckCheck, MoreHorizontal, Smile, Reply, Trash2, Forward, Heart, ThumbsUp, Laugh } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Messages = () => {
   const [conversations, setConversations] = useState([]);
@@ -17,12 +28,13 @@ const Messages = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const friendId = searchParams.get('friend');
+  const [typingStatus, setTypingStatus] = useState({});
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   useEffect(() => {
     const fetchConversations = async () => {
       try {
         const response = await api.getConversations();
-        // Sort conversations by latest message
         const sortedConversations = response.sort((a, b) => {
           const aLastMessage = a.messages[a.messages.length - 1];
           const bLastMessage = b.messages[b.messages.length - 1];
@@ -66,7 +78,6 @@ const Messages = () => {
       }));
       setNewMessage('');
       
-      // Update conversation list to show latest message
       setConversations(prev => {
         const updated = prev.map(conv => 
           conv.id === selectedConversation.id 
@@ -87,6 +98,161 @@ const Messages = () => {
       });
     }
   };
+
+  const handleReaction = async (messageId, reaction) => {
+    try {
+      await api.addMessageReaction(messageId, reaction);
+      setSelectedConversation(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, reactions: [...(msg.reactions || []), reaction] }
+            : msg
+        )
+      }));
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add reaction",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderDateSeparator = (date) => {
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, 'MMMM d, yyyy');
+  };
+
+  const renderMessages = () => {
+    if (!selectedConversation?.messages?.length) return null;
+
+    let currentDate = null;
+    return selectedConversation.messages.map((message, index) => {
+      const messageDate = new Date(message.timestamp);
+      const showDateSeparator = !currentDate || !isSameDay(currentDate, messageDate);
+      
+      if (showDateSeparator) {
+        currentDate = messageDate;
+        return (
+          <React.Fragment key={message.id}>
+            <div className="flex justify-center my-4">
+              <span className="bg-muted px-3 py-1 rounded-full text-sm text-muted-foreground">
+                {renderDateSeparator(messageDate)}
+              </span>
+            </div>
+            {renderMessage(message)}
+          </React.Fragment>
+        );
+      }
+      
+      return renderMessage(message);
+    });
+  };
+
+  const renderMessage = (message) => (
+    <div 
+      key={message.id} 
+      className={`group flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
+      onMouseEnter={() => setSelectedMessage(message.id)}
+      onMouseLeave={() => setSelectedMessage(null)}
+    >
+      <div className={`max-w-[70%] break-words relative ${
+        message.sender === 'user' 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-muted'
+      } rounded-lg px-4 py-2`}>
+        {message.content}
+        
+        <div className={`absolute ${message.sender === 'user' ? 'right-0' : 'left-0'} -top-8 
+          opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1`}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0"
+                  onClick={() => handleReaction(message.id, 'heart')}
+                >
+                  <Heart className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>React with heart</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0"
+                  onClick={() => handleReaction(message.id, 'thumbsUp')}
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>React with thumbs up</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0"
+                  onClick={() => handleReaction(message.id, 'laugh')}
+                >
+                  <Laugh className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>React with laugh</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Reply className="h-4 w-4 mr-2" /> Reply
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Forward className="h-4 w-4 mr-2" /> Forward
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {message.reactions?.length > 0 && (
+          <div className="flex gap-1 mt-1">
+            {message.reactions.map((reaction, index) => (
+              <span key={index} className="bg-background/80 rounded-full px-2 py-0.5 text-xs">
+                {reaction === 'heart' && <Heart className="h-3 w-3 inline" />}
+                {reaction === 'thumbsUp' && <ThumbsUp className="h-3 w-3 inline" />}
+                {reaction === 'laugh' && <Laugh className="h-3 w-3 inline" />}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
+        <span>{format(new Date(message.timestamp), 'HH:mm')}</span>
+        {message.sender === 'user' && getMessageStatus(message)}
+      </div>
+    </div>
+  );
 
   const getMessageStatus = (message) => {
     if (!message) return null;
@@ -109,6 +275,7 @@ const Messages = () => {
                 const lastMessage = conv.messages?.[conv.messages.length - 1];
                 const hasUnread = conv.messages?.some(m => !m.read && m.sender !== 'user') || false;
                 const friendName = conv.friendName || 'User';
+                const isTyping = typingStatus[conv.id];
                 
                 return (
                   <Button
@@ -118,10 +285,15 @@ const Messages = () => {
                     onClick={() => setSelectedConversation(conv)}
                   >
                     <div className="flex items-start space-x-3 w-full">
-                      <Avatar>
-                        <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
-                        <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar>
+                          <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
+                          <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        {conv.isOnline && (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
                           <span className={`font-medium ${hasUnread ? 'text-primary' : ''}`}>
@@ -133,12 +305,17 @@ const Messages = () => {
                             </span>
                           )}
                         </div>
-                        {lastMessage && (
-                          <p className="text-sm text-gray-500 truncate">
-                            {lastMessage.content}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-500 truncate">
+                          {isTyping ? (
+                            <span className="text-primary animate-pulse">Typing...</span>
+                          ) : (
+                            lastMessage?.content
+                          )}
+                        </p>
                       </div>
+                      {hasUnread && (
+                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+                      )}
                     </div>
                   </Button>
                 );
@@ -150,11 +327,23 @@ const Messages = () => {
           <CardHeader className="border-b">
             {selectedConversation && (
               <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
-                  <AvatarFallback>{((selectedConversation.friendName || 'U')[0]).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
+                <div className="relative">
+                  <Avatar>
+                    <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
+                    <AvatarFallback>
+                      {((selectedConversation.friendName || 'U')[0]).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {selectedConversation.isOnline && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                  )}
+                </div>
+                <div>
+                  <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
+                  {selectedConversation.isOnline && (
+                    <p className="text-sm text-muted-foreground">Online</p>
+                  )}
+                </div>
               </div>
             )}
           </CardHeader>
@@ -162,24 +351,7 @@ const Messages = () => {
             {selectedConversation ? (
               <>
                 <div className="h-[calc(70vh-200px)] overflow-y-auto mb-4 p-4 space-y-4">
-                  {(selectedConversation.messages || []).map((message, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className={`max-w-[70%] break-words ${
-                        message.sender === 'user' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
-                      } rounded-lg px-4 py-2`}>
-                        {message.content}
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
-                        <span>{format(new Date(message.timestamp), 'HH:mm')}</span>
-                        {message.sender === 'user' && getMessageStatus(message)}
-                      </div>
-                    </div>
-                  ))}
+                  {renderMessages()}
                 </div>
                 <div className="flex items-center space-x-2 pt-2 border-t">
                   <Input
@@ -193,6 +365,9 @@ const Messages = () => {
                       }
                     }}
                   />
+                  <Button variant="ghost" size="icon">
+                    <Smile className="h-5 w-5" />
+                  </Button>
                   <Button onClick={handleSendMessage}>Send</Button>
                 </div>
               </>
