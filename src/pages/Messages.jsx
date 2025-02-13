@@ -1,21 +1,41 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
+import { useSearchParams } from 'react-router-dom';
 
 const Messages = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const friendId = searchParams.get('friend');
 
   useEffect(() => {
     const fetchConversations = async () => {
       try {
         const response = await api.getConversations();
         setConversations(response);
+        
+        // If friendId is provided, find or create conversation with that friend
+        if (friendId) {
+          const existingConv = response.find(conv => 
+            conv.participants.includes(Number(friendId))
+          );
+          
+          if (existingConv) {
+            setSelectedConversation(existingConv);
+          } else {
+            // Create new conversation with this friend
+            const newConv = await api.createConversation(1, Number(friendId)); // Using 1 as dummy current user ID
+            setConversations(prev => [...prev, newConv]);
+            setSelectedConversation(newConv);
+          }
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -26,7 +46,7 @@ const Messages = () => {
     };
 
     fetchConversations();
-  }, [toast]);
+  }, [friendId, toast]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
@@ -70,7 +90,9 @@ const Messages = () => {
         </Card>
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>{selectedConversation ? `Chat with ${selectedConversation.friendName}` : 'Select a conversation'}</CardTitle>
+            <CardTitle>
+              {selectedConversation ? `Chat with ${selectedConversation.friendName}` : 'Select a conversation'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedConversation && (
@@ -90,6 +112,11 @@ const Messages = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
                     className="flex-grow mr-2"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSendMessage();
+                      }
+                    }}
                   />
                   <Button onClick={handleSendMessage}>Send</Button>
                 </div>

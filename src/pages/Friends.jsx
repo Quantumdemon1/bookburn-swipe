@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,13 +30,22 @@ const Friends = () => {
     if (!message.trim() || !selectedFriend) return;
 
     try {
-      await api.sendMessage(selectedFriend.id, message);
+      // Create a new conversation if it doesn't exist
+      const conversation = await api.createConversation(1, selectedFriend.id); // Using 1 as dummy current user ID
+      
+      // Send the message
+      await api.sendMessage(conversation.id, message);
+      
       toast({
         title: "Message Sent",
         description: `Your message has been sent to ${selectedFriend.name}.`,
       });
+      
       setMessage('');
       setSelectedFriend(null);
+      
+      // Navigate to messages page
+      navigate('/messages');
     } catch (error) {
       toast({
         title: "Error",
@@ -43,6 +53,11 @@ const Friends = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleViewProfile = (friendId) => {
+    // Navigate to messages with this friend directly
+    navigate(`/messages?friend=${friendId}`);
   };
 
   return (
@@ -63,10 +78,17 @@ const Friends = () => {
             <CardContent>
               <p className="text-lg font-semibold">{friend.matchPercentage}% Match</p>
               <div className="flex space-x-2 mt-4">
-                <Button className="flex-1" onClick={() => navigate(`/profile/${friend.id}`)}>View Profile</Button>
+                <Button 
+                  className="flex-1" 
+                  onClick={() => handleViewProfile(friend.id)}
+                >
+                  View Profile
+                </Button>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="flex-1" onClick={() => setSelectedFriend(friend)}>Send Message</Button>
+                    <Button className="flex-1" onClick={() => setSelectedFriend(friend)}>
+                      Send Message
+                    </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
