@@ -72,7 +72,22 @@ export const api = {
   addReview: async (userId, bookId, reviewData) => {
     await delay(300);
     const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const newReview = { id: Date.now(), userId, bookId, ...reviewData, likes: 0, comments: [] };
+    const newReview = {
+      id: Date.now(),
+      userId,
+      bookId,
+      ...reviewData,
+      likes: 0,
+      comments: [],
+      reactions: {
+        like: 0,
+        heart: 0,
+        laugh: 0,
+        surprised: 0,
+      },
+      likedBy: [],
+      reactedBy: {},
+    };
     reviews.push(newReview);
     localStorage.setItem('reviews', JSON.stringify(reviews));
     return { success: true, review: newReview };
@@ -84,7 +99,7 @@ export const api = {
     return reviews.filter(review => review.bookId === bookId);
   },
 
-  addComment: async (reviewId, userId, content) => {
+  addComment: async (reviewId, userId, content, parentId = null) => {
     await delay(200);
     const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
     const reviewIndex = reviews.findIndex(r => r.id === reviewId);
@@ -97,16 +112,106 @@ export const api = {
       id: Date.now(),
       userId,
       content,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      parentId,
+      reactions: {
+        like: 0,
+        heart: 0,
+        laugh: 0,
+        surprised: 0,
+      },
+      replies: [],
     };
 
-    if (!reviews[reviewIndex].comments) {
-      reviews[reviewIndex].comments = [];
+    if (parentId) {
+      // Add reply to parent comment
+      const addReplyToComment = (comments) => {
+        for (let comment of comments) {
+          if (comment.id === parentId) {
+            comment.replies.push(newComment);
+            return true;
+          }
+          if (comment.replies?.length) {
+            const found = addReplyToComment(comment.replies);
+            if (found) return true;
+          }
+        }
+        return false;
+      };
+
+      addReplyToComment(reviews[reviewIndex].comments);
+    } else {
+      // Add top-level comment
+      if (!reviews[reviewIndex].comments) {
+        reviews[reviewIndex].comments = [];
+      }
+      reviews[reviewIndex].comments.push(newComment);
     }
-    
-    reviews[reviewIndex].comments.push(newComment);
+
     localStorage.setItem('reviews', JSON.stringify(reviews));
     return newComment;
+  },
+
+  addReaction: async (reviewId, commentId, userId, reactionType) => {
+    await delay(200);
+    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
+    const review = reviews.find(r => r.id === reviewId);
+    
+    if (!review) {
+      throw new Error('Review not found');
+    }
+
+    const updateReactions = (item) => {
+      if (!item.reactedBy) {
+        item.reactedBy = {};
+      }
+      if (!item.reactions) {
+        item.reactions = { like: 0, heart: 0, laugh: 0, surprised: 0 };
+      }
+
+      const previousReaction = item.reactedBy[userId];
+      if (previousReaction === reactionType) {
+        // Remove reaction
+        delete item.reactedBy[userId];
+        item.reactions[reactionType]--;
+      } else {
+        // Update reaction
+        if (previousReaction) {
+          item.reactions[previousReaction]--;
+        }
+        item.reactedBy[userId] = reactionType;
+        item.reactions[reactionType]++;
+      }
+
+      return item.reactions;
+    };
+
+    if (commentId) {
+      const findAndUpdateComment = (comments) => {
+        for (let comment of comments) {
+          if (comment.id === commentId) {
+            return updateReactions(comment);
+          }
+          if (comment.replies?.length) {
+            const result = findAndUpdateComment(comment.replies);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+
+      const updatedReactions = findAndUpdateComment(review.comments);
+      if (!updatedReactions) {
+        throw new Error('Comment not found');
+      }
+
+      localStorage.setItem('reviews', JSON.stringify(reviews));
+      return updatedReactions;
+    } else {
+      const updatedReactions = updateReactions(review);
+      localStorage.setItem('reviews', JSON.stringify(reviews));
+      return updatedReactions;
+    }
   },
 
   toggleLike: async (reviewId, userId) => {
