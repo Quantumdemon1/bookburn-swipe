@@ -1,39 +1,97 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star } from 'lucide-react';
+import { Star, MessageSquare, ThumbsUp } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import ReviewEditor from '@/components/ReviewEditor';
+import { api } from '@/services/api';
 
 const Reviews = () => {
-  // This would typically come from a database or API
-  const reviews = [
-    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", rating: 4, review: "A classic that never gets old. Fitzgerald's prose is simply beautiful." },
-    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", rating: 5, review: "An important book that everyone should read. Scout's narrative is both heartwarming and thought-provoking." },
-    { id: 3, title: "1984", author: "George Orwell", rating: 4, review: "A chilling dystopian novel that feels more relevant with each passing year." },
-    { id: 4, title: "Pride and Prejudice", author: "Jane Austen", rating: 4, review: "Austen's wit and social commentary shine in this beloved romance." },
-    { id: 5, title: "The Catcher in the Rye", author: "J.D. Salinger", rating: 3, review: "A controversial classic. Holden's voice is unique, but not for everyone." },
-  ];
+  const [reviews, setReviews] = useState([]);
+  const { toast } = useToast();
+  const [selectedBook, setSelectedBook] = useState(1); // Dummy book ID for now
+
+  useEffect(() => {
+    loadReviews();
+  }, [selectedBook]);
+
+  const loadReviews = async () => {
+    try {
+      const fetchedReviews = await api.getReviews(selectedBook);
+      setReviews(fetchedReviews);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load reviews",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLike = async (reviewId) => {
+    // Implementation for liking reviews will come in the next phase
+    toast({
+      title: "Coming Soon",
+      description: "Like functionality will be available soon!",
+    });
+  };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">Book Reviews</h1>
+      
+      <ReviewEditor 
+        bookId={selectedBook} 
+        onReviewSubmitted={loadReviews}
+      />
+
       <div className="space-y-6">
         {reviews.map((review) => (
-          <Card key={review.id}>
+          <Card key={review.id} className="animate-fade-in">
             <CardHeader>
-              <CardTitle className="text-xl">{review.title}</CardTitle>
-              <p className="text-sm text-gray-600">{review.author}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl mb-2">
+                    {review.user?.username || "Anonymous"}
+                  </CardTitle>
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </span>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-5 h-5 ${
-                      star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                    }`}
-                  />
-                ))}
+              <p className="text-gray-700 mb-4">{review.content}</p>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleLike(review.id)}
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                  <span>{review.likes || 0}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{review.comments?.length || 0}</span>
+                </Button>
               </div>
-              <p className="text-gray-700">{review.review}</p>
             </CardContent>
           </Card>
         ))}
