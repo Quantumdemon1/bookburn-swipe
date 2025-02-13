@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
 import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
-import { getRecommendations, updateUserPreferences, searchBooks, getNextRecommendation } from '@/utils/recommendationAlgorithm';
+import { getRecommendations } from '@/utils/recommendationEngine';
+import { updateUserPreferences } from '@/utils/interactionWeights';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { searchBooks, getNextRecommendation } from '@/utils/recommendationEngine';
 
 const Index = () => {
   const [currentBook, setCurrentBook] = useState(null);

@@ -1,8 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import { useToast } from "@/components/ui/use-toast";
-import { initializeUserPreferences, updateUserPreferences, getNextRecommendation } from '@/utils/recommendationAlgorithm';
+import { initializeUserPreferences } from '@/utils/preferencesManager';
+import { updateUserPreferences } from '@/utils/interactionWeights';
+import { getNextRecommendation } from '@/utils/recommendationEngine';
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
