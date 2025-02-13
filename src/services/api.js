@@ -72,7 +72,7 @@ export const api = {
   addReview: async (userId, bookId, reviewData) => {
     await delay(300);
     const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const newReview = { id: Date.now(), userId, bookId, ...reviewData };
+    const newReview = { id: Date.now(), userId, bookId, ...reviewData, likes: 0, comments: [] };
     reviews.push(newReview);
     localStorage.setItem('reviews', JSON.stringify(reviews));
     return { success: true, review: newReview };
@@ -82,6 +82,58 @@ export const api = {
     await delay(300);
     const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
     return reviews.filter(review => review.bookId === bookId);
+  },
+
+  addComment: async (reviewId, userId, content) => {
+    await delay(200);
+    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
+    const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+    
+    if (reviewIndex === -1) {
+      throw new Error('Review not found');
+    }
+
+    const newComment = {
+      id: Date.now(),
+      userId,
+      content,
+      createdAt: new Date().toISOString()
+    };
+
+    if (!reviews[reviewIndex].comments) {
+      reviews[reviewIndex].comments = [];
+    }
+    
+    reviews[reviewIndex].comments.push(newComment);
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+    return newComment;
+  },
+
+  toggleLike: async (reviewId, userId) => {
+    await delay(200);
+    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
+    const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+    
+    if (reviewIndex === -1) {
+      throw new Error('Review not found');
+    }
+
+    const likedBy = reviews[reviewIndex].likedBy || [];
+    const hasLiked = likedBy.includes(userId);
+
+    if (hasLiked) {
+      reviews[reviewIndex].likedBy = likedBy.filter(id => id !== userId);
+      reviews[reviewIndex].likes = (reviews[reviewIndex].likes || 0) - 1;
+    } else {
+      reviews[reviewIndex].likedBy = [...likedBy, userId];
+      reviews[reviewIndex].likes = (reviews[reviewIndex].likes || 0) + 1;
+    }
+
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+    return {
+      likes: reviews[reviewIndex].likes,
+      hasLiked: !hasLiked
+    };
   },
 
   updateRating: async (userId, bookId, rating) => {
