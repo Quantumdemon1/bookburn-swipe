@@ -6,16 +6,17 @@ import { initializeUserPreferences, calculateTimeDecay, addToShownBooks, getShow
 export const interactionWeights = {
   like: 1.0,
   burn: -1.0,
-  favorite: 2.0
+  favorite: 2.0,
+  rate: 0.5 // Added weight for rating actions
 };
 
 // Update user preferences based on action
-export const updateUserPreferences = (bookId, action) => {
+export const updateUserPreferences = (bookId, action, value = 1) => {
   const book = books.find(b => b.id === bookId);
   if (!book) return;
 
   const preferences = initializeUserPreferences();
-  const weight = interactionWeights[action] || 0;
+  const weight = action === 'rate' ? interactionWeights[action] * value : interactionWeights[action] || 0;
   const now = Date.now();
 
   // Update tag weights with time decay
@@ -34,6 +35,7 @@ export const updateUserPreferences = (bookId, action) => {
   interactions.push({
     bookId,
     action,
+    value,
     timestamp: now
   });
   localStorage.setItem('userInteractions', JSON.stringify(interactions));
