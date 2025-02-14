@@ -1,14 +1,16 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List, Timer, Flame, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import confetti from 'canvas-confetti';
 import ReadingStreak from '@/components/reading/ReadingStreak';
 import AchievementCard from '@/components/reading/AchievementCard';
 import TimelineCard from '@/components/reading/TimelineCard';
 import StatsCard from '@/components/reading/StatsCard';
 import BookList from '@/components/reading/BookList';
+import ReadingLevel from '@/components/reading/ReadingLevel';
+import { calculateMilestone } from '@/utils/gamification';
 
 const Recent = () => {
   const [viewMode, setViewMode] = useState('grid');
@@ -116,6 +118,21 @@ const Recent = () => {
     { hour: '9PM-12AM', percentage: 5 }
   ];
 
+  useEffect(() => {
+    const milestone = calculateMilestone(totalTimeSpent);
+    if (milestone === totalTimeSpent) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      toast({
+        title: "Reading Milestone Achieved! 🎉",
+        description: `You've reached ${milestone} minutes of reading time!`
+      });
+    }
+  }, [totalTimeSpent, toast]);
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -140,12 +157,13 @@ const Recent = () => {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <ReadingStreak
           streakDays={streakDays}
           todayProgress={todayProgress}
           dailyReadingGoal={dailyReadingGoal}
         />
+        <ReadingLevel totalMinutes={totalTimeSpent} />
         <AchievementCard achievements={achievements} />
       </div>
 
@@ -172,4 +190,3 @@ const Recent = () => {
 };
 
 export default Recent;
-
