@@ -34,7 +34,7 @@ export const books = [
     price: 8.99,
     tags: ["horror", "classic", "science-fiction"],
     preview: "You will rejoice to hear that no disaster has accompanied the commencement of an enterprise which you have regarded with such evil forebodings.",
-    coverUrl: "https://images.unsplash.com/photo-1601524738525-22614e09fde2?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1474932430478-367dbb6832c1?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 5, 
