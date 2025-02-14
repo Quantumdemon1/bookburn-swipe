@@ -1,10 +1,14 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ThumbsUp, ThumbsDown, BookOpen, Share2, LayoutGrid, List, Timer, Flame, Trophy, Clock } from "lucide-react";
+import { LayoutGrid, List, Timer, Flame, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import ReadingStreak from '@/components/reading/ReadingStreak';
+import AchievementCard from '@/components/reading/AchievementCard';
+import TimelineCard from '@/components/reading/TimelineCard';
+import StatsCard from '@/components/reading/StatsCard';
+import BookList from '@/components/reading/BookList';
 
 const Recent = () => {
   const [viewMode, setViewMode] = useState('grid');
@@ -69,8 +73,8 @@ const Recent = () => {
   const totalTimeSpent = recentBooks.reduce((total, book) => total + book.timeSpent, 0);
   const averageTimePerBook = Math.round(totalTimeSpent / recentBooks.length);
 
-  const streakDays = 3; // Example streak count
-  const dailyReadingGoal = 30; // minutes
+  const streakDays = 3;
+  const dailyReadingGoal = 30;
   const todayProgress = recentBooks
     .filter(book => {
       const today = new Date();
@@ -137,145 +141,31 @@ const Recent = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              Reading Streak
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center space-y-4">
-              <div className="text-4xl font-bold text-orange-500">{streakDays} Days</div>
-              <Progress value={(todayProgress / dailyReadingGoal) * 100} className="h-2" />
-              <p className="text-sm text-muted-foreground">
-                {todayProgress} of {dailyReadingGoal} minutes read today
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Achievements
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {achievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className={`text-center p-3 rounded-lg transition-all duration-200 ${
-                    achievement.earned
-                      ? 'bg-primary/10 animate-scale-in'
-                      : 'opacity-50'
-                  }`}
-                >
-                  {achievement.icon}
-                  <div className="text-sm font-medium mt-2">{achievement.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {achievement.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ReadingStreak
+          streakDays={streakDays}
+          todayProgress={todayProgress}
+          dailyReadingGoal={dailyReadingGoal}
+        />
+        <AchievementCard achievements={achievements} />
       </div>
 
-      <Card className="p-6">
-        <CardHeader>
-          <CardTitle>Reading Activity Timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {readingHours.map((timeSlot, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{timeSlot.hour}</span>
-                  <span className="font-medium">{timeSlot.percentage}%</span>
-                </div>
-                <Progress value={timeSlot.percentage} className="h-2" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <TimelineCard readingHours={readingHours} />
 
-      <Card className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium text-muted-foreground">Books Viewed</h3>
-            <p className="text-3xl font-bold">{recentBooks.length}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium text-muted-foreground">Total Time</h3>
-            <p className="text-3xl font-bold">{totalTimeSpent}m</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium text-muted-foreground">Avg. Time per Book</h3>
-            <p className="text-3xl font-bold">{averageTimePerBook}m</p>
-          </div>
-        </div>
-      </Card>
+      <StatsCard
+        booksCount={recentBooks.length}
+        totalTime={totalTimeSpent}
+        averageTime={averageTimePerBook}
+      />
 
       {Object.entries(groupedBooks).map(([group, books]) => (
-        <div key={group} className="space-y-4">
-          <h2 className="text-2xl font-semibold text-muted-foreground">{group}</h2>
-          <div className={`grid gap-4 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-              : 'grid-cols-1'
-          }`}>
-            {books.map((book) => (
-              <Card 
-                key={book.id}
-                className={`group hover:shadow-lg transition-all duration-200 ${
-                  viewMode === 'list' ? 'flex items-center' : ''
-                }`}
-              >
-                <CardHeader className={viewMode === 'list' ? 'flex-1' : ''}>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{book.title}</span>
-                    {book.liked ? (
-                      <ThumbsUp className="text-green-500" />
-                    ) : (
-                      <ThumbsDown className="text-red-500" />
-                    )}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">{book.author}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(book.viewedAt).toLocaleTimeString()} - {book.timeSpent} minutes spent
-                  </p>
-                </CardHeader>
-                <CardContent className={viewMode === 'list' ? 'flex justify-end gap-2' : ''}>
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 group-hover:bg-primary/10 transition-colors"
-                      onClick={() => handleReread(book)}
-                    >
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Re-read
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 group-hover:bg-primary/10 transition-colors"
-                      onClick={() => handleShare(book)}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <BookList
+          key={group}
+          group={group}
+          books={books}
+          viewMode={viewMode}
+          onReread={handleReread}
+          onShare={handleShare}
+        />
       ))}
     </div>
   );
