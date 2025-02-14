@@ -1,3 +1,4 @@
+
 // Simulated book database with public domain content
 export const books = [
   {
@@ -25,7 +26,7 @@ export const books = [
     price: 12.99,
     tags: ["economics", "classic", "non-fiction"],
     preview: "The annual labour of every nation is the fund which originally supplies it with all the necessaries and conveniences of life which it annually consumes.",
-    coverUrl: "https://images.unsplash.com/photo-1554495439-b6807d1ecf1a?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=500&auto=format&fit=crop&q=60" // Updated this URL
   },
   {
     id: 4, 
@@ -79,7 +80,7 @@ export const books = [
     price: 14.99,
     tags: ["fantasy", "adventure", "classic"],
     preview: "A fantasy novel and children's book by J.R.R. Tolkien, it follows the quest of home-loving hobbit Bilbo Baggins to win a share of the treasure guarded by Smaug the dragon.",
-    coverUrl: "https://images.unsplash.com/photo-1474932430478-367dbb6832c1?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=500&auto=format&fit=crop&q=60" // Updated this URL
   },
   {
     id: 10,
@@ -106,7 +107,7 @@ export const books = [
     price: 11.99,
     tags: ["classic", "American literature", "fiction"],
     preview: "A 1925 novel written by American author F. Scott Fitzgerald that follows a cast of characters living in the fictional towns of West Egg and East Egg on prosperous Long Island in the summer of 1922.",
-    coverUrl: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1543002588-bfa07a98d237e?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 13,
