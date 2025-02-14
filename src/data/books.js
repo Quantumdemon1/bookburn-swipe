@@ -1,4 +1,3 @@
-
 // Simulated book database with public domain content
 export const books = [
   {
@@ -107,7 +106,7 @@ export const books = [
     price: 11.99,
     tags: ["classic", "American literature", "fiction"],
     preview: "A 1925 novel written by American author F. Scott Fitzgerald that follows a cast of characters living in the fictional towns of West Egg and East Egg on prosperous Long Island in the summer of 1922.",
-    coverUrl: "https://images.unsplash.com/photo-1543002588-bfa07a98d237e?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 13,
