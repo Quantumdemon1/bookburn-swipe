@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
@@ -6,25 +7,37 @@ import { useInView } from 'react-intersection-observer';
 import { getRecommendations, searchBooks, getNextRecommendation } from '@/utils/recommendationEngine';
 import { updateUserPreferences } from '@/utils/interactionWeights';
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import confetti from 'canvas-confetti';
 
 const Index = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [isNewUser, setIsNewUser] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [dragDirection, setDragDirection] = useState(0);
   const { toast } = useToast();
   const { ref } = useInView({
     threshold: 0,
   });
 
-  // Load initial book
   useEffect(() => {
     if (!isSearching) {
+      setIsLoading(true);
       const initialBooks = getRecommendations(1, 1, selectedGenre);
       if (initialBooks.length > 0) {
         setCurrentBook(initialBooks[0]);
       }
+      setIsLoading(false);
     }
   }, [isSearching, selectedGenre]);
 
@@ -36,14 +49,43 @@ const Index = () => {
     } else {
       setIsNewUser(false);
     }
-  }, []);
+
+    // Add keyboard event listeners
+    const handleKeyPress = (e) => {
+      if (!currentBook) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          handleAction(currentBook.id, 'burn');
+          break;
+        case 'ArrowRight':
+          handleAction(currentBook.id, 'like');
+          break;
+        case 'ArrowUp':
+          handleAction(currentBook.id, 'favorite');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentBook]);
 
   const handleAction = (bookId, action) => {
+    setIsLoading(true);
     updateUserPreferences(bookId, action);
     
-    // Get next book recommendation
+    if (action === 'favorite') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+    
     const nextBook = getNextRecommendation(bookId);
     setCurrentBook(nextBook);
+    setIsLoading(false);
     
     toast({
       title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
@@ -53,28 +95,50 @@ const Index = () => {
 
   const handleSearch = (query) => {
     setIsSearching(true);
+    setIsLoading(true);
     const searchResults = searchBooks(query);
     if (searchResults.length > 0) {
       setCurrentBook(searchResults[0]);
     }
+    setIsLoading(false);
   };
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
     setIsSearching(false);
+    setIsLoading(true);
     const newBooks = getRecommendations(1, 1, genre);
     if (newBooks.length > 0) {
       setCurrentBook(newBooks[0]);
     }
+    setIsLoading(false);
+  };
+
+  const handleDragEnd = (_, info) => {
+    const offset = info.offset.x;
+    if (Math.abs(offset) > 100) {
+      if (offset > 0) {
+        handleAction(currentBook.id, 'like');
+      } else {
+        handleAction(currentBook.id, 'burn');
+      }
+    }
+    setDragDirection(0);
   };
 
   return (
     <div className="max-w-5xl mx-auto p-4">
       {isNewUser && (
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4"
+          role="alert"
+        >
           <p className="font-bold">Welcome to Book Burn!</p>
           <p>Start exploring books by swiping through recommendations or use the search bar to find specific titles.</p>
-        </div>
+          <p className="text-sm mt-2">Pro tip: Use arrow keys to navigate (←→ to burn/like, ↑ to favorite)</p>
+        </motion.div>
       )}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <SearchBar onSearch={handleSearch} />
@@ -91,21 +155,51 @@ const Index = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="grid grid-cols-1 gap-6">
-        {currentBook ? (
-          <BookCard
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex justify-center items-center h-64"
+          >
+            <Loader className="w-8 h-8 animate-spin" />
+          </motion.div>
+        ) : currentBook ? (
+          <motion.div
             key={currentBook.id}
-            book={currentBook}
-            onBurn={() => handleAction(currentBook.id, 'burn')}
-            onLike={() => handleAction(currentBook.id, 'like')}
-            onFavorite={() => handleAction(currentBook.id, 'favorite')}
-          />
+            initial={{ opacity: 0, x: 200 }}
+            animate={{ 
+              opacity: 1, 
+              x: 0,
+              rotate: dragDirection * 5 
+            }}
+            exit={{ opacity: 0, x: -200 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={handleDragEnd}
+            onDrag={(_, info) => {
+              setDragDirection(info.offset.x > 0 ? 1 : -1);
+            }}
+          >
+            <BookCard
+              book={currentBook}
+              onBurn={() => handleAction(currentBook.id, 'burn')}
+              onLike={() => handleAction(currentBook.id, 'like')}
+              onFavorite={() => handleAction(currentBook.id, 'favorite')}
+            />
+          </motion.div>
         ) : (
-          <div className="text-center mt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center mt-8"
+          >
             <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
       <div ref={ref} className="text-center mt-8">
         <Button 
           onClick={() => {
@@ -115,6 +209,7 @@ const Index = () => {
             }
           }} 
           variant="outline"
+          className="hover:scale-105 transition-transform"
         >
           Next Book
         </Button>
