@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Flame, Heart, ThumbsUp } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { motion } from "framer-motion";
+import confetti from 'canvas-confetti';
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   const { addToCart } = useCart();
@@ -28,6 +29,15 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
     setLikeClicked(true);
     setTimeout(() => setLikeClicked(false), 1000);
     onLike(book.id);
+  };
+
+  const handleAddToCart = () => {
+    addToCart(book);
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
   };
 
   return (
@@ -90,7 +100,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
           <Button
             variant="ghost"
             onClick={handleLike}
-            className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like' : ''}`}
+            className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like sparkle' : ''}`}
           >
             <div className="text-blue-500">
               <ThumbsUp size={32} />
@@ -104,8 +114,8 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
           className="mt-4"
         >
           <Button 
-            onClick={() => addToCart(book)} 
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
+            onClick={handleAddToCart} 
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black animate-add-cart"
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             Add to Cart
