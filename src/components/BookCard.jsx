@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Flame, Heart, ThumbsUp } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { motion } from "framer-motion";
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   const { addToCart } = useCart();
@@ -32,50 +33,93 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   return (
     <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
-        <div className="rounded-3xl bg-white text-black p-6 mb-6">
-          <img 
+        <motion.div 
+          className="rounded-3xl bg-white text-black p-6 mb-6"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <motion.img 
             src={book.coverUrl || '/placeholder.svg'} 
             alt={`Cover of ${book.title}`}
             className="w-full h-64 object-cover rounded-lg mb-4 bg-gray-100"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           />
-          <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
-          <p className="text-lg mb-4">by {book.author}</p>
-          <p className="text-xl">{book.preview}</p>
-          <p className="text-sm text-gray-500 mt-2">Tags: {book.tags.join(', ')}</p>
-        </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
+            <p className="text-lg mb-4">by {book.author}</p>
+            <p className="text-xl">{book.preview}</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {book.tags.map((tag, index) => (
+                <span 
+                  key={index} 
+                  className="text-sm px-3 py-1 bg-gray-100 rounded-full text-gray-600"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
         <div className="flex justify-between items-center">
-          <Button
-            variant="ghost"
-            onClick={handleBurn}
-            className={`rounded-full p-4 flex flex-col items-center transition-transform ${burnClicked ? 'animate-burn' : ''}`}
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <span className="text-4xl mb-1">🔥</span>
-            <span className="text-xs text-red-500">BURN</span>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleSave}
-            className={`rounded-full p-4 flex flex-col items-center transition-transform ${saveClicked ? 'animate-save' : ''}`}
+            <Button
+              variant="ghost"
+              onClick={handleBurn}
+              className={`rounded-full p-4 flex flex-col items-center transition-all ${burnClicked ? 'animate-burn' : ''}`}
+            >
+              <Flame className="h-8 w-8 mb-1 text-red-500" />
+              <span className="text-xs text-red-500">BURN</span>
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <span className="text-4xl mb-1">❤️</span>
-            <span className="text-xs text-white">SAVE</span>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleLike}
-            className={`rounded-full p-4 flex flex-col items-center transition-transform ${likeClicked ? 'animate-like' : ''}`}
+            <Button
+              variant="ghost"
+              onClick={handleSave}
+              className={`rounded-full p-4 flex flex-col items-center transition-all ${saveClicked ? 'animate-save' : ''}`}
+            >
+              <Heart className="h-8 w-8 mb-1 text-pink-500" />
+              <span className="text-xs text-white">SAVE</span>
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <span className="text-4xl mb-1">👍</span>
-            <span className="text-xs text-indigo-500">LIKE</span>
-          </Button>
+            <Button
+              variant="ghost"
+              onClick={handleLike}
+              className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like' : ''}`}
+            >
+              <ThumbsUp className="h-8 w-8 mb-1 text-blue-500" />
+              <span className="text-xs text-blue-500">LIKE</span>
+            </Button>
+          </motion.div>
         </div>
-        <Button 
-          onClick={() => addToCart(book)} 
-          className="w-full mt-4 bg-yellow-400 hover:bg-yellow-500 text-black"
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="mt-4"
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to Cart
-        </Button>
+          <Button 
+            onClick={() => addToCart(book)} 
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
+          </Button>
+        </motion.div>
       </CardContent>
     </Card>
   );
