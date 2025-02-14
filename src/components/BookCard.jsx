@@ -83,7 +83,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
             className={`rounded-full p-4 flex flex-col items-center transition-all ${burnClicked ? 'animate-burn' : ''}`}
           >
             <div className="text-red-500">
-              <Flame size={32} />
+              <Flame className={burnClicked ? 'animate-burn' : ''} size={32} />
               <span className="text-xs block mt-1">BURN</span>
             </div>
           </Button>
@@ -93,17 +93,17 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
             className={`rounded-full p-4 flex flex-col items-center transition-all ${saveClicked ? 'animate-save' : ''}`}
           >
             <div className="text-pink-500">
-              <Heart size={32} />
+              <Heart className={saveClicked ? 'animate-save' : ''} size={32} />
               <span className="text-xs block mt-1">SAVE</span>
             </div>
           </Button>
           <Button
             variant="ghost"
             onClick={handleLike}
-            className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like sparkle' : ''}`}
+            className={`rounded-full p-4 flex flex-col items-center transition-all`}
           >
             <div className="text-blue-500">
-              <ThumbsUp size={32} />
+              <ThumbsUp className={`${likeClicked ? 'sparkle' : ''}`} size={32} />
               <span className="text-xs block mt-1">LIKE</span>
             </div>
           </Button>
