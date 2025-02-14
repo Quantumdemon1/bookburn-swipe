@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
@@ -74,14 +73,6 @@ const Index = () => {
   const handleAction = (bookId, action) => {
     setIsLoading(true);
     updateUserPreferences(bookId, action);
-    
-    if (action === 'favorite') {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
     
     const nextBook = getNextRecommendation(bookId);
     setCurrentBook(nextBook);

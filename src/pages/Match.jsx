@@ -7,7 +7,6 @@ import { updateUserPreferences } from '@/utils/interactionWeights';
 import { getNextRecommendation } from '@/utils/recommendationEngine';
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "lucide-react";
-import confetti from 'canvas-confetti';
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
@@ -43,14 +42,6 @@ const Match = () => {
 
   const handleAction = (action) => {
     if (!currentBook) return;
-
-    if (action === 'favorite') {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
 
     updateUserPreferences(currentBook.id, action);
     toast({
