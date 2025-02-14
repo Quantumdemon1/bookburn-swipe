@@ -1,45 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
 import { useSearchParams } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MessageCircle } from 'lucide-react';
+import ConversationList from '@/components/messages/ConversationList';
+import MessageItem from '@/components/messages/MessageItem';
+import MessageInput from '@/components/messages/MessageInput';
+import ConversationHeader from '@/components/messages/ConversationHeader';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
-import { 
-  Check, 
-  CheckCheck, 
-  MoreHorizontal, 
-  Smile, 
-  Reply, 
-  Trash2, 
-  Forward, 
-  Heart, 
-  ThumbsUp, 
-  Laugh,
-  Search,
-  Pin,
-  Paperclip,
-  Image as ImageIcon,
-  Mic,
-  Search as SearchIcon,
-  X,
-  MessageCircle
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const Messages = () => {
   const [conversations, setConversations] = useState([]);
@@ -49,7 +18,6 @@ const Messages = () => {
   const [searchParams] = useSearchParams();
   const friendId = searchParams.get('friend');
   const [typingStatus, setTypingStatus] = useState({});
-  const [selectedMessage, setSelectedMessage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [pinnedConversations, setPinnedConversations] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -107,14 +75,6 @@ const Messages = () => {
       conv.messages?.some(msg => msg.content.toLowerCase().includes(searchLower))
     );
   });
-
-  const togglePinConversation = (convId) => {
-    if (pinnedConversations.includes(convId)) {
-      setPinnedConversations(prev => prev.filter(id => id !== convId));
-    } else {
-      setPinnedConversations(prev => [...prev, convId]);
-    }
-  };
 
   const sortedConversations = [...filteredConversations].sort((a, b) => {
     const aPinned = pinnedConversations.includes(a.id);
@@ -213,6 +173,14 @@ const Messages = () => {
     }
   };
 
+  const togglePinConversation = (convId) => {
+    if (pinnedConversations.includes(convId)) {
+      setPinnedConversations(prev => prev.filter(id => id !== convId));
+    } else {
+      setPinnedConversations(prev => [...prev, convId]);
+    }
+  };
+
   const renderDateSeparator = (date) => {
     if (isToday(date)) return "Today";
     if (isYesterday(date)) return "Yesterday";
@@ -236,123 +204,13 @@ const Messages = () => {
                 {renderDateSeparator(messageDate)}
               </span>
             </div>
-            {renderMessage(message)}
+            <MessageItem message={message} onReaction={handleReaction} />
           </React.Fragment>
         );
       }
       
-      return renderMessage(message);
+      return <MessageItem key={message.id} message={message} onReaction={handleReaction} />;
     });
-  };
-
-  const renderMessage = (message) => (
-    <div 
-      key={message.id} 
-      className={`group flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
-      onMouseEnter={() => setSelectedMessage(message.id)}
-      onMouseLeave={() => setSelectedMessage(null)}
-    >
-      <div className={`max-w-[70%] break-words relative ${
-        message.sender === 'user' 
-          ? 'bg-primary text-primary-foreground' 
-          : 'bg-muted'
-      } rounded-lg px-4 py-2`}>
-        {message.content}
-        
-        <div className={`absolute ${message.sender === 'user' ? 'right-0' : 'left-0'} -top-8 
-          opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1`}>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 w-7 p-0"
-                  onClick={() => handleReaction(message.id, 'heart')}
-                >
-                  <Heart className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>React with heart</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 w-7 p-0"
-                  onClick={() => handleReaction(message.id, 'thumbsUp')}
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>React with thumbs up</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 w-7 p-0"
-                  onClick={() => handleReaction(message.id, 'laugh')}
-                >
-                  <Laugh className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>React with laugh</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>
-                <Reply className="h-4 w-4 mr-2" /> Reply
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Forward className="h-4 w-4 mr-2" /> Forward
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {message.reactions?.length > 0 && (
-          <div className="flex gap-1 mt-1">
-            {message.reactions.map((reaction, index) => (
-              <span key={index} className="bg-background/80 rounded-full px-2 py-0.5 text-xs">
-                {reaction === 'heart' && <Heart className="h-3 w-3 inline" />}
-                {reaction === 'thumbsUp' && <ThumbsUp className="h-3 w-3 inline" />}
-                {reaction === 'laugh' && <Laugh className="h-3 w-3 inline" />}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
-        <span>{format(new Date(message.timestamp), 'HH:mm')}</span>
-        {message.sender === 'user' && getMessageStatus(message)}
-      </div>
-    </div>
-  );
-
-  const getMessageStatus = (message) => {
-    if (!message) return null;
-    if (message.read) return <CheckCheck className="h-4 w-4 text-blue-500" />;
-    if (message.delivered) return <Check className="h-4 w-4 text-blue-500" />;
-    return <Check className="h-4 w-4 text-gray-400" />;
   };
 
   const filteredMessages = selectedConversation?.messages?.filter(
@@ -363,165 +221,35 @@ const Messages = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Messages</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <div className="space-y-4">
-              <CardTitle>Conversations</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-              {sortedConversations.map(conv => {
-                const lastMessage = conv.messages?.[conv.messages.length - 1];
-                const hasUnread = conv.messages?.some(m => !m.read && m.sender !== 'user') || false;
-                const friendName = conv.friendName || 'User';
-                const isTyping = typingStatus[conv.id];
-                const isPinned = pinnedConversations.includes(conv.id);
-                
-                return (
-                  <div key={conv.id} className="relative group">
-                    <Button
-                      className="w-full p-3 justify-start h-auto border-b hover:bg-gray-100 transition-colors"
-                      variant="ghost"
-                      onClick={() => setSelectedConversation(conv)}
-                    >
-                      <div className="flex items-start space-x-3 w-full">
-                        <div className="relative">
-                          <Avatar>
-                            <AvatarImage src={conv.friendAvatar || "/placeholder.svg"} />
-                            <AvatarFallback>{(friendName[0] || 'U').toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          {conv.isOnline && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center">
-                            <span className={`font-medium ${hasUnread ? 'text-primary' : ''}`}>
-                              {friendName}
-                            </span>
-                            {lastMessage && (
-                              <span className="text-xs text-gray-500">
-                                {format(new Date(lastMessage.timestamp), 'HH:mm')}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500 truncate">
-                            {isTyping ? (
-                              <span className="text-primary animate-pulse">Typing...</span>
-                            ) : (
-                              lastMessage?.content
-                            )}
-                          </p>
-                        </div>
-                        {hasUnread && (
-                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
-                        )}
-                      </div>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity ${isPinned ? 'text-primary' : ''}`}
-                      onClick={() => togglePinConversation(conv.id)}
-                    >
-                      <Pin className="h-4 w-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <ConversationList
+          conversations={sortedConversations}
+          searchQuery={searchQuery}
+          onSearchChange={(e) => setSearchQuery(e.target.value)}
+          selectedConversation={selectedConversation}
+          pinnedConversations={pinnedConversations}
+          onSelectConversation={setSelectedConversation}
+          onPinConversation={togglePinConversation}
+        />
+        
         <Card className="md:col-span-2">
-          <CardHeader className="border-b">
-            {selectedConversation && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Avatar>
-                      <AvatarImage src={selectedConversation.friendAvatar || "/placeholder.svg"} />
-                      <AvatarFallback>
-                        {((selectedConversation.friendName || 'U')[0]).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {selectedConversation.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                    )}
-                  </div>
-                  <div>
-                    <CardTitle>{selectedConversation.friendName || 'User'}</CardTitle>
-                    {selectedConversation.isOnline && (
-                      <p className="text-sm text-muted-foreground">Online</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => setShowSearch(!showSearch)}
-                          className={showSearch ? 'bg-muted' : ''}
-                        >
-                          <SearchIcon className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Search in conversation</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => togglePinConversation(selectedConversation.id)}>
-                        <Pin className="h-4 w-4 mr-2" />
-                        {pinnedConversations.includes(selectedConversation.id) ? 'Unpin' : 'Pin'} Conversation
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Conversation
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            )}
-            {showSearch && (
-              <div className="mt-4 relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search in conversation..."
-                  value={messageSearch}
-                  onChange={(e) => setMessageSearch(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            )}
-          </CardHeader>
+          <ConversationHeader
+            conversation={selectedConversation}
+            showSearch={showSearch}
+            messageSearch={messageSearch}
+            onSearchChange={(e) => setMessageSearch(e.target.value)}
+            onToggleSearch={() => setShowSearch(!showSearch)}
+            onPinConversation={togglePinConversation}
+            isPinned={pinnedConversations.includes(selectedConversation?.id)}
+          />
           <CardContent>
             {selectedConversation ? (
               <>
                 <div className="h-[calc(70vh-200px)] overflow-y-auto mb-4 p-4 space-y-4">
                   {messageSearch ? (
                     filteredMessages.length > 0 ? (
-                      filteredMessages.map(message => renderMessage(message))
+                      filteredMessages.map(message => (
+                        <MessageItem key={message.id} message={message} onReaction={handleReaction} />
+                      ))
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2">
                         <MessageCircle className="h-12 w-12" />
@@ -532,81 +260,22 @@ const Messages = () => {
                     renderMessages()
                   )}
                 </div>
-                <div className="space-y-4 pt-2 border-t">
-                  {attachmentPreview && (
-                    <div className="relative inline-block">
-                      <div className="relative group border rounded-lg p-2 inline-block">
-                        {attachmentPreview.type === 'image' && (
-                          <img 
-                            src={attachmentPreview.url} 
-                            alt="Preview" 
-                            className="max-h-32 rounded"
-                          />
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background shadow-sm"
-                          onClick={removeAttachment}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-end space-x-2">
-                    <div className="flex-grow">
-                      <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="min-h-[2.5rem]"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="flex space-x-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => toast({ description: "Emoji picker coming soon!" })}>
-                              <Smile className="h-5 w-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Add emoji</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={handleAttachment}>
-                              <Paperclip className="h-5 w-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Attach file</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={handleVoiceRecord}>
-                              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500' : ''}`} />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{isRecording ? 'Stop recording' : 'Record voice message'}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <Button onClick={handleSendMessage}>Send</Button>
-                    </div>
-                  </div>
-                </div>
+                <MessageInput
+                  newMessage={newMessage}
+                  onMessageChange={(e) => setNewMessage(e.target.value)}
+                  onSend={handleSendMessage}
+                  onAttachment={handleAttachment}
+                  onVoiceRecord={handleVoiceRecord}
+                  isRecording={isRecording}
+                  attachmentPreview={attachmentPreview}
+                  onRemoveAttachment={() => {
+                    if (attachmentPreview?.url) {
+                      URL.revokeObjectURL(attachmentPreview.url);
+                    }
+                    setAttachmentPreview(null);
+                  }}
+                  onEmojiClick={() => toast({ description: "Emoji picker coming soon!" })}
+                />
               </>
             ) : (
               <div className="h-[calc(70vh-200px)] flex flex-col items-center justify-center text-gray-500 space-y-4">
