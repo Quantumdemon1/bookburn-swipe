@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, BookOpen, Share2, LayoutGrid, List } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ThumbsUp, ThumbsDown, BookOpen, Share2, LayoutGrid, List, Timer, Flame, Trophy, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const Recent = () => {
@@ -68,6 +68,49 @@ const Recent = () => {
   const totalTimeSpent = recentBooks.reduce((total, book) => total + book.timeSpent, 0);
   const averageTimePerBook = Math.round(totalTimeSpent / recentBooks.length);
 
+  const streakDays = 3; // Example streak count
+  const dailyReadingGoal = 30; // minutes
+  const todayProgress = recentBooks
+    .filter(book => {
+      const today = new Date();
+      const bookDate = new Date(book.viewedAt);
+      return bookDate.toDateString() === today.toDateString();
+    })
+    .reduce((total, book) => total + book.timeSpent, 0);
+
+  const achievements = [
+    {
+      id: 1,
+      title: "Night Owl",
+      description: "Read after 10 PM",
+      icon: <Clock className="h-5 w-5 text-purple-500" />,
+      earned: true
+    },
+    {
+      id: 2,
+      title: "Bookworm",
+      description: "Read 3 days in a row",
+      icon: <Flame className="h-5 w-5 text-orange-500" />,
+      earned: true
+    },
+    {
+      id: 3,
+      title: "Speed Reader",
+      description: "Finish a book in under an hour",
+      icon: <Timer className="h-5 w-5 text-blue-500" />,
+      earned: false
+    }
+  ];
+
+  const readingHours = [
+    { hour: '6AM-9AM', percentage: 15 },
+    { hour: '9AM-12PM', percentage: 25 },
+    { hour: '12PM-3PM', percentage: 10 },
+    { hour: '3PM-6PM', percentage: 30 },
+    { hour: '6PM-9PM', percentage: 15 },
+    { hour: '9PM-12AM', percentage: 5 }
+  ];
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -91,6 +134,74 @@ const Recent = () => {
           </Button>
         </Card>
       </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="p-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Reading Streak
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center space-y-4">
+              <div className="text-4xl font-bold text-orange-500">{streakDays} Days</div>
+              <Progress value={(todayProgress / dailyReadingGoal) * 100} className="h-2" />
+              <p className="text-sm text-muted-foreground">
+                {todayProgress} of {dailyReadingGoal} minutes read today
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Achievements
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`text-center p-3 rounded-lg transition-all duration-200 ${
+                    achievement.earned
+                      ? 'bg-primary/10 animate-scale-in'
+                      : 'opacity-50'
+                  }`}
+                >
+                  {achievement.icon}
+                  <div className="text-sm font-medium mt-2">{achievement.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {achievement.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <CardHeader>
+          <CardTitle>Reading Activity Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {readingHours.map((timeSlot, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{timeSlot.hour}</span>
+                  <span className="font-medium">{timeSlot.percentage}%</span>
+                </div>
+                <Progress value={timeSlot.percentage} className="h-2" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
