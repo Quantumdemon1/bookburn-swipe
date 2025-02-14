@@ -67,45 +67,36 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
           </motion.div>
         </motion.div>
         <div className="flex justify-between items-center">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <Button
+            variant="ghost"
+            onClick={handleBurn}
+            className={`rounded-full p-4 flex flex-col items-center transition-all ${burnClicked ? 'animate-burn' : ''}`}
           >
-            <Button
-              variant="ghost"
-              onClick={handleBurn}
-              className={`rounded-full p-4 flex flex-col items-center transition-all ${burnClicked ? 'animate-burn' : ''}`}
-            >
-              <Flame className="h-8 w-8 mb-1 text-red-500" />
-              <span className="text-xs text-red-500">BURN</span>
-            </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            <div className="text-red-500">
+              <Flame size={32} />
+              <span className="text-xs block mt-1">BURN</span>
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleSave}
+            className={`rounded-full p-4 flex flex-col items-center transition-all ${saveClicked ? 'animate-save' : ''}`}
           >
-            <Button
-              variant="ghost"
-              onClick={handleSave}
-              className={`rounded-full p-4 flex flex-col items-center transition-all ${saveClicked ? 'animate-save' : ''}`}
-            >
-              <Heart className="h-8 w-8 mb-1 text-pink-500" />
-              <span className="text-xs text-white">SAVE</span>
-            </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            <div className="text-pink-500">
+              <Heart size={32} />
+              <span className="text-xs block mt-1">SAVE</span>
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleLike}
+            className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like' : ''}`}
           >
-            <Button
-              variant="ghost"
-              onClick={handleLike}
-              className={`rounded-full p-4 flex flex-col items-center transition-all ${likeClicked ? 'animate-like' : ''}`}
-            >
-              <ThumbsUp className="h-8 w-8 mb-1 text-blue-500" />
-              <span className="text-xs text-blue-500">LIKE</span>
-            </Button>
-          </motion.div>
+            <div className="text-blue-500">
+              <ThumbsUp size={32} />
+              <span className="text-xs block mt-1">LIKE</span>
+            </div>
+          </Button>
         </div>
         <motion.div
           whileHover={{ scale: 1.02 }}
