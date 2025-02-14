@@ -1,27 +1,12 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
-import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Filter, Book, Music, Film, GamepadIcon, LayoutGrid, List, SortAsc } from 'lucide-react';
+import FilterBar from '@/components/friends/FilterBar';
+import ViewControls from '@/components/friends/ViewControls';
+import FriendCard from '@/components/friends/FriendCard';
 
 const Friends = () => {
   const [friends] = useState([
@@ -59,13 +44,6 @@ const Friends = () => {
   const [sortBy, setSortBy] = useState('match');
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const interestIcons = {
-    Books: Book,
-    Music: Music,
-    Films: Film,
-    Games: GamepadIcon,
-  };
 
   const filteredAndSortedFriends = friends
     .filter(friend => 
@@ -118,62 +96,18 @@ const Friends = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Friends with Similar Tastes</h1>
         <div className="flex flex-wrap gap-4">
-          <Card className="p-4 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <span className="text-sm font-medium">Match %</span>
-            </div>
-            <Slider
-              value={matchFilter}
-              onValueChange={setMatchFilter}
-              max={100}
-              step={5}
-              className="w-32"
-            />
-            <span className="text-sm font-medium min-w-[3rem]">{matchFilter}%+</span>
-            <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Interests" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Interests</SelectItem>
-                <SelectItem value="Books">Books</SelectItem>
-                <SelectItem value="Music">Music</SelectItem>
-                <SelectItem value="Films">Films</SelectItem>
-                <SelectItem value="Games">Games</SelectItem>
-              </SelectContent>
-            </Select>
-          </Card>
-
-          <Card className="p-4 flex items-center gap-4">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="match">Match %</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 border-l pl-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className={`${viewMode === 'grid' ? 'bg-primary/10' : ''}`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className={`${viewMode === 'list' ? 'bg-primary/10' : ''}`}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </Card>
+          <FilterBar
+            matchFilter={matchFilter}
+            setMatchFilter={setMatchFilter}
+            selectedInterest={selectedInterest}
+            setSelectedInterest={setSelectedInterest}
+          />
+          <ViewControls
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+          />
         </div>
       </div>
       
@@ -182,93 +116,18 @@ const Friends = () => {
         ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}
       `}>
         {filteredAndSortedFriends.map((friend) => (
-          <Card 
-            key={friend.id} 
-            className={`
-              group hover:shadow-lg transition-all duration-200
-              ${viewMode === 'list' ? 'flex items-center' : ''}
-            `}
-          >
-            <CardHeader className={viewMode === 'list' ? 'flex-1' : ''}>
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/10 transition-transform group-hover:scale-105">
-                    <AvatarImage src={friend.avatar} alt={friend.name} />
-                    <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span 
-                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white
-                      ${friend.isOnline ? 'bg-green-500' : 'bg-gray-300'}
-                    `}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <CardTitle>{friend.name}</CardTitle>
-                  <div className="flex flex-wrap gap-1">
-                    {friend.interests.map((interest) => {
-                      const Icon = interestIcons[interest];
-                      return (
-                        <span 
-                          key={interest}
-                          className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full 
-                            ${selectedInterest === interest ? 'bg-primary text-primary-foreground' : 'bg-muted'}
-                            transition-colors duration-200`}
-                        >
-                          {Icon && <Icon className="h-3 w-3" />}
-                          {interest}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className={viewMode === 'list' ? 'flex-1 flex items-center gap-4' : ''}>
-              <div className={`mb-4 ${viewMode === 'list' ? 'flex-1 mb-0' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Match</span>
-                  <span className="text-lg font-bold text-primary">{friend.matchPercentage}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{ width: `${friend.matchPercentage}%` }}
-                  />
-                </div>
-              </div>
-              <div className={`flex ${viewMode === 'list' ? 'w-48' : 'space-x-2'}`}>
-                <Button 
-                  className="flex-1 group-hover:bg-primary/90 transition-colors"
-                  onClick={() => handleViewProfile(friend)}
-                >
-                  View Profile
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      className="flex-1 group-hover:bg-primary/90 transition-colors"
-                      onClick={() => setSelectedFriend(friend)}
-                    >
-                      Send Message
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Send Message to {selectedFriend?.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col space-y-4">
-                      <Input
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message..."
-                      />
-                      <Button onClick={handleSendMessage}>Send</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
+          <FriendCard
+            key={friend.id}
+            friend={friend}
+            viewMode={viewMode}
+            selectedInterest={selectedInterest}
+            selectedFriend={selectedFriend}
+            setSelectedFriend={setSelectedFriend}
+            message={message}
+            setMessage={setMessage}
+            handleSendMessage={handleSendMessage}
+            handleViewProfile={handleViewProfile}
+          />
         ))}
       </div>
       
