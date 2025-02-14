@@ -29,11 +29,6 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
     setLikeClicked(true);
     setTimeout(() => setLikeClicked(false), 1000);
     onLike(book.id);
-    confetti({
-      particleCount: 50,
-      spread: 30,
-      origin: { y: 0.8 }
-    });
   };
 
   const handleAddToCart = () => {
@@ -132,10 +127,16 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
               <motion.div 
                 className="text-blue-500"
                 animate={likeClicked ? {
-                  scale: [1, 1.2, 1],
-                  y: [0, -5, 0]
+                  scale: [1, 1.5, 1],
+                  y: [0, -10, 0],
+                  color: ['#3B82F6', '#10B981', '#3B82F6'],
+                  rotate: [0, 0, 360]
                 } : {}}
-                transition={{ duration: 0.4 }}
+                transition={{ 
+                  duration: 0.6,
+                  times: [0, 0.5, 1],
+                  ease: "easeInOut"
+                }}
               >
                 <ThumbsUp size={32} />
                 <span className="text-xs block mt-1">LIKE</span>
