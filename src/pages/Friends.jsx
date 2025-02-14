@@ -52,7 +52,7 @@ const Friends = () => {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [message, setMessage] = useState('');
   const [matchFilter, setMatchFilter] = useState([0]);
-  const [selectedInterest, setSelectedInterest] = useState("");
+  const [selectedInterest, setSelectedInterest] = useState("all");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -65,7 +65,7 @@ const Friends = () => {
 
   const filteredFriends = friends.filter(friend => 
     friend.matchPercentage >= matchFilter[0] &&
-    (!selectedInterest || friend.interests.includes(selectedInterest))
+    (selectedInterest === "all" || friend.interests.includes(selectedInterest))
   );
 
   const handleSendMessage = async () => {
@@ -124,7 +124,7 @@ const Friends = () => {
               <SelectValue placeholder="All Interests" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Interests</SelectItem>
+              <SelectItem value="all">All Interests</SelectItem>
               <SelectItem value="Books">Books</SelectItem>
               <SelectItem value="Music">Music</SelectItem>
               <SelectItem value="Films">Films</SelectItem>
