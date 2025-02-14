@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Flame, Heart, ThumbsUp } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from 'canvas-confetti';
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
@@ -29,6 +29,11 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
     setLikeClicked(true);
     setTimeout(() => setLikeClicked(false), 1000);
     onLike(book.id);
+    confetti({
+      particleCount: 50,
+      spread: 30,
+      origin: { y: 0.8 }
+    });
   };
 
   const handleAddToCart = () => {
@@ -77,36 +82,66 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
           </motion.div>
         </motion.div>
         <div className="flex justify-between items-center">
-          <Button
-            variant="ghost"
-            onClick={handleBurn}
-            className={`rounded-full p-4 flex flex-col items-center transition-all ${burnClicked ? 'animate-burn' : ''}`}
-          >
-            <div className="text-red-500">
-              <Flame className={burnClicked ? 'animate-burn' : ''} size={32} />
-              <span className="text-xs block mt-1">BURN</span>
-            </div>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleSave}
-            className={`rounded-full p-4 flex flex-col items-center transition-all ${saveClicked ? 'animate-save' : ''}`}
-          >
-            <div className="text-pink-500">
-              <Heart className={saveClicked ? 'animate-save' : ''} size={32} />
-              <span className="text-xs block mt-1">SAVE</span>
-            </div>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleLike}
-            className={`rounded-full p-4 flex flex-col items-center transition-all`}
-          >
-            <div className="text-blue-500">
-              <ThumbsUp className={`${likeClicked ? 'sparkle' : ''}`} size={32} />
-              <span className="text-xs block mt-1">LIKE</span>
-            </div>
-          </Button>
+          <motion.div>
+            <Button
+              variant="ghost"
+              onClick={handleBurn}
+              className="rounded-full p-4 flex flex-col items-center"
+            >
+              <motion.div 
+                className="text-red-500"
+                animate={burnClicked ? {
+                  scale: [1, 1.2, 0],
+                  rotate: [0, -5, 10],
+                  opacity: [1, 1, 0]
+                } : {}}
+                transition={{ duration: 0.8 }}
+              >
+                <Flame size={32} />
+                <span className="text-xs block mt-1">BURN</span>
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          <motion.div>
+            <Button
+              variant="ghost"
+              onClick={handleSave}
+              className="rounded-full p-4 flex flex-col items-center"
+            >
+              <motion.div 
+                className="text-pink-500"
+                animate={saveClicked ? {
+                  scale: [1, 1.4, 0.8, 1.2, 1],
+                  rotate: [0, -15, 15, -15, 0]
+                } : {}}
+                transition={{ duration: 0.6 }}
+              >
+                <Heart size={32} />
+                <span className="text-xs block mt-1">SAVE</span>
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          <motion.div>
+            <Button
+              variant="ghost"
+              onClick={handleLike}
+              className="rounded-full p-4 flex flex-col items-center"
+            >
+              <motion.div 
+                className="text-blue-500"
+                animate={likeClicked ? {
+                  scale: [1, 1.2, 1],
+                  y: [0, -5, 0]
+                } : {}}
+                transition={{ duration: 0.4 }}
+              >
+                <ThumbsUp size={32} />
+                <span className="text-xs block mt-1">LIKE</span>
+              </motion.div>
+            </Button>
+          </motion.div>
         </div>
         <motion.div
           whileHover={{ scale: 1.02 }}
@@ -115,7 +150,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
         >
           <Button 
             onClick={handleAddToCart} 
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black animate-add-cart"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             Add to Cart
