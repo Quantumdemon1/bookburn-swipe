@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, Book, Music, Film, GamepadIcon } from 'lucide-react';
+import { Filter, Book, Music, Film, GamepadIcon, LayoutGrid, List, SortAsc } from 'lucide-react';
 
 const Friends = () => {
   const [friends] = useState([
@@ -31,21 +30,24 @@ const Friends = () => {
       name: "Alice Johnson", 
       avatar: "/placeholder.svg", 
       matchPercentage: 85,
-      interests: ["Books", "Music", "Films"]
+      interests: ["Books", "Music", "Films"],
+      isOnline: true
     },
     { 
       id: 2, 
       name: "Bob Smith", 
       avatar: "/placeholder.svg", 
       matchPercentage: 72,
-      interests: ["Games", "Music"]
+      interests: ["Games", "Music"],
+      isOnline: false
     },
     { 
       id: 3, 
       name: "Carol Williams", 
       avatar: "/placeholder.svg", 
       matchPercentage: 68,
-      interests: ["Books", "Films"]
+      interests: ["Books", "Films"],
+      isOnline: true
     },
   ]);
   
@@ -53,6 +55,8 @@ const Friends = () => {
   const [message, setMessage] = useState('');
   const [matchFilter, setMatchFilter] = useState([0]);
   const [selectedInterest, setSelectedInterest] = useState("all");
+  const [viewMode, setViewMode] = useState('grid');
+  const [sortBy, setSortBy] = useState('match');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,10 +67,17 @@ const Friends = () => {
     Games: GamepadIcon,
   };
 
-  const filteredFriends = friends.filter(friend => 
-    friend.matchPercentage >= matchFilter[0] &&
-    (selectedInterest === "all" || friend.interests.includes(selectedInterest))
-  );
+  const filteredAndSortedFriends = friends
+    .filter(friend => 
+      friend.matchPercentage >= matchFilter[0] &&
+      (selectedInterest === "all" || friend.interests.includes(selectedInterest))
+    )
+    .sort((a, b) => {
+      if (sortBy === 'match') {
+        return b.matchPercentage - a.matchPercentage;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedFriend) return;
@@ -104,48 +115,96 @@ const Friends = () => {
 
   return (
     <div className="container mx-auto p-4 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Friends with Similar Tastes</h1>
-        <Card className="p-4 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span className="text-sm font-medium">Match %</span>
-          </div>
-          <Slider
-            value={matchFilter}
-            onValueChange={setMatchFilter}
-            max={100}
-            step={5}
-            className="w-32"
-          />
-          <span className="text-sm font-medium min-w-[3rem]">{matchFilter}%+</span>
-          <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Interests" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Interests</SelectItem>
-              <SelectItem value="Books">Books</SelectItem>
-              <SelectItem value="Music">Music</SelectItem>
-              <SelectItem value="Films">Films</SelectItem>
-              <SelectItem value="Games">Games</SelectItem>
-            </SelectContent>
-          </Select>
-        </Card>
+        <div className="flex flex-wrap gap-4">
+          <Card className="p-4 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Match %</span>
+            </div>
+            <Slider
+              value={matchFilter}
+              onValueChange={setMatchFilter}
+              max={100}
+              step={5}
+              className="w-32"
+            />
+            <span className="text-sm font-medium min-w-[3rem]">{matchFilter}%+</span>
+            <Select value={selectedInterest} onValueChange={setSelectedInterest}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="All Interests" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Interests</SelectItem>
+                <SelectItem value="Books">Books</SelectItem>
+                <SelectItem value="Music">Music</SelectItem>
+                <SelectItem value="Films">Films</SelectItem>
+                <SelectItem value="Games">Games</SelectItem>
+              </SelectContent>
+            </Select>
+          </Card>
+
+          <Card className="p-4 flex items-center gap-4">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="match">Match %</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 border-l pl-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode('grid')}
+                className={`${viewMode === 'grid' ? 'bg-primary/10' : ''}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode('list')}
+                className={`${viewMode === 'list' ? 'bg-primary/10' : ''}`}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredFriends.map((friend) => (
-          <Card key={friend.id} className="group hover:shadow-lg transition-all duration-200">
-            <CardHeader>
+      <div className={`
+        grid gap-4 animate-fade-in
+        ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}
+      `}>
+        {filteredAndSortedFriends.map((friend) => (
+          <Card 
+            key={friend.id} 
+            className={`
+              group hover:shadow-lg transition-all duration-200
+              ${viewMode === 'list' ? 'flex items-center' : ''}
+            `}
+          >
+            <CardHeader className={viewMode === 'list' ? 'flex-1' : ''}>
               <div className="flex items-center space-x-4">
-                <Avatar className="h-12 w-12 ring-2 ring-primary/10 transition-transform group-hover:scale-105">
-                  <AvatarImage src={friend.avatar} alt={friend.name} />
-                  <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-12 w-12 ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+                    <AvatarImage src={friend.avatar} alt={friend.name} />
+                    <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span 
+                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white
+                      ${friend.isOnline ? 'bg-green-500' : 'bg-gray-300'}
+                    `}
+                  />
+                </div>
                 <div className="space-y-1">
                   <CardTitle>{friend.name}</CardTitle>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {friend.interests.map((interest) => {
                       const Icon = interestIcons[interest];
                       return (
@@ -164,8 +223,8 @@ const Friends = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="mb-4">
+            <CardContent className={viewMode === 'list' ? 'flex-1 flex items-center gap-4' : ''}>
+              <div className={`mb-4 ${viewMode === 'list' ? 'flex-1 mb-0' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Match</span>
                   <span className="text-lg font-bold text-primary">{friend.matchPercentage}%</span>
@@ -177,7 +236,7 @@ const Friends = () => {
                   />
                 </div>
               </div>
-              <div className="flex space-x-2">
+              <div className={`flex ${viewMode === 'list' ? 'w-48' : 'space-x-2'}`}>
                 <Button 
                   className="flex-1 group-hover:bg-primary/90 transition-colors"
                   onClick={() => handleViewProfile(friend)}
@@ -213,14 +272,14 @@ const Friends = () => {
         ))}
       </div>
       
-      {filteredFriends.length === 0 && (
+      {filteredAndSortedFriends.length === 0 && (
         <div className="text-center py-12">
           <p className="text-lg text-muted-foreground">No friends match your current filters</p>
           <Button 
             variant="ghost" 
             onClick={() => {
               setMatchFilter([0]);
-              setSelectedInterest("");
+              setSelectedInterest("all");
             }}
             className="mt-4"
           >
