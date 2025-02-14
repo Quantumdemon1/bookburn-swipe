@@ -60,9 +60,7 @@ const ConversationHeader = ({
                   variant="ghost" 
                   size="icon"
                   onClick={onToggleSearch}
-                  className={showSearch ? 'bg
-
--muted' : ''}
+                  className={showSearch ? 'bg-muted' : ''}
                 >
                   <Search className="h-5 w-5" />
                 </Button>
@@ -77,7 +75,7 @@ const ConversationHeader = ({
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="z-50">
               <DropdownMenuItem onClick={() => onPinConversation(conversation.id)}>
                 <Pin className="h-4 w-4 mr-2" />
                 {isPinned ? 'Unpin' : 'Pin'} Conversation
@@ -92,7 +90,7 @@ const ConversationHeader = ({
         </div>
       </div>
       {showSearch && (
-        <div className="mt-4 relative">
+        <div className="mt-4 relative animate-fade-in">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search in conversation..."
