@@ -64,4 +64,3 @@ const BookList = ({ group, books, viewMode, onReread, onShare }) => {
 };
 
 export default BookList;
-
