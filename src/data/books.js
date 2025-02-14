@@ -1,3 +1,4 @@
+
 // Simulated book database with public domain content
 export const books = [
   {
@@ -25,7 +26,7 @@ export const books = [
     price: 12.99,
     tags: ["economics", "classic", "non-fiction"],
     preview: "The annual labour of every nation is the fund which originally supplies it with all the necessaries and conveniences of life which it annually consumes.",
-    coverUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=500&auto=format&fit=crop&q=60" // Updated this URL
+    coverUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 4, 
@@ -79,7 +80,7 @@ export const books = [
     price: 14.99,
     tags: ["fantasy", "adventure", "classic"],
     preview: "A fantasy novel and children's book by J.R.R. Tolkien, it follows the quest of home-loving hobbit Bilbo Baggins to win a share of the treasure guarded by Smaug the dragon.",
-    coverUrl: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=500&auto=format&fit=crop&q=60" // Updated this URL
+    coverUrl: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 10,
