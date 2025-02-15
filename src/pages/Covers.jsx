@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
+import BookCardSkeleton from '@/components/BookCardSkeleton';
 import SearchBar from '@/components/SearchBar';
 import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
@@ -15,14 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import confetti from 'canvas-confetti';
 
 const Index = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [isNewUser, setIsNewUser] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [dragDirection, setDragDirection] = useState(0);
   const { toast } = useToast();
   const { ref } = useInView({
@@ -32,11 +34,15 @@ const Index = () => {
   useEffect(() => {
     if (!isSearching) {
       setIsLoading(true);
-      const initialBooks = getRecommendations(1, 1, selectedGenre);
-      if (initialBooks.length > 0) {
-        setCurrentBook(initialBooks[0]);
-      }
-      setIsLoading(false);
+      const fetchBooks = async () => {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        const initialBooks = getRecommendations(1, 1, selectedGenre);
+        if (initialBooks.length > 0) {
+          setCurrentBook(initialBooks[0]);
+        }
+        setIsLoading(false);
+      };
+      fetchBooks();
     }
   }, [isSearching, selectedGenre]);
 
@@ -49,9 +55,8 @@ const Index = () => {
       setIsNewUser(false);
     }
 
-    // Add keyboard event listeners
     const handleKeyPress = (e) => {
-      if (!currentBook) return;
+      if (!currentBook || isActionLoading) return;
       
       switch(e.key) {
         case 'ArrowLeft':
@@ -68,15 +73,20 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentBook]);
+  }, [currentBook, isActionLoading]);
 
-  const handleAction = (bookId, action) => {
-    setIsLoading(true);
+  const handleAction = async (bookId, action) => {
+    if (isActionLoading) return;
+    
+    setIsActionLoading(true);
     updateUserPreferences(bookId, action);
+    
+    // Simulate network delay for the action
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     const nextBook = getNextRecommendation(bookId);
     setCurrentBook(nextBook);
-    setIsLoading(false);
+    setIsActionLoading(false);
     
     toast({
       title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
@@ -84,9 +94,13 @@ const Index = () => {
     });
   };
 
-  const handleSearch = (query) => {
+  const handleSearch = async (query) => {
     setIsSearching(true);
     setIsLoading(true);
+    
+    // Simulate network delay for search
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     const searchResults = searchBooks(query);
     if (searchResults.length > 0) {
       setCurrentBook(searchResults[0]);
@@ -94,10 +108,14 @@ const Index = () => {
     setIsLoading(false);
   };
 
-  const handleGenreChange = (genre) => {
+  const handleGenreChange = async (genre) => {
     setSelectedGenre(genre);
     setIsSearching(false);
     setIsLoading(true);
+    
+    // Simulate network delay for genre change
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     const newBooks = getRecommendations(1, 1, genre);
     if (newBooks.length > 0) {
       setCurrentBook(newBooks[0]);
@@ -106,6 +124,8 @@ const Index = () => {
   };
 
   const handleDragEnd = (_, info) => {
+    if (isActionLoading) return;
+    
     const offset = info.offset.x;
     if (Math.abs(offset) > 100) {
       if (offset > 0) {
@@ -149,13 +169,12 @@ const Index = () => {
       <AnimatePresence mode="wait">
         {isLoading ? (
           <motion.div
-            key="loader"
+            key="skeleton"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex justify-center items-center h-64"
           >
-            <Loader className="w-8 h-8 animate-spin" />
+            <BookCardSkeleton />
           </motion.div>
         ) : currentBook ? (
           <motion.div
@@ -167,7 +186,7 @@ const Index = () => {
               rotate: dragDirection * 5 
             }}
             exit={{ opacity: 0, x: -200 }}
-            drag="x"
+            drag={!isActionLoading ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
             onDrag={(_, info) => {
@@ -194,15 +213,18 @@ const Index = () => {
       <div ref={ref} className="text-center mt-8">
         <Button 
           onClick={() => {
-            if (currentBook) {
+            if (currentBook && !isActionLoading) {
               const nextBook = getNextRecommendation(currentBook.id);
               setCurrentBook(nextBook);
             }
           }} 
           variant="outline"
           className="hover:scale-105 transition-transform"
+          disabled={isActionLoading}
         >
-          Next Book
+          {isActionLoading ? (
+            <Loader className="w-4 h-4 animate-spin mr-2" />
+          ) : "Next Book"}
         </Button>
       </div>
     </div>
