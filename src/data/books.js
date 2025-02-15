@@ -224,5 +224,268 @@ export const books = [
     tags: ["philosophy", "classic", "non-fiction"],
     preview: "I went down yesterday to the Piraeus with Glaucon the son of Ariston, that I might offer up my prayers to the goddess; and also because I wanted to see in what manner they would celebrate the festival, which was a new thing.",
     coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
-  }
-];
+  },
+  {
+    id: 26,
+    title: "The Iliad",
+    author: "Homer",
+    price: 6.99,
+    tags: ["classic", "epic", "mythology"],
+    preview: "A brief preview of 'The Iliad' by Homer. An epic poem recounting the events of the Trojan War.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 27,
+    title: "The Odyssey",
+    author: "Homer",
+    price: 8.49,
+    tags: ["classic", "epic", "mythology"],
+    preview: "A brief preview of 'The Odyssey' by Homer. The long journey home of Odysseus after the Trojan War.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 28,
+    title: "Frankenstein",
+    author: "Mary Shelley",
+    price: 9.99,
+    tags: ["classic", "gothic", "science fiction"],
+    preview: "A brief preview of 'Frankenstein' by Mary Shelley. A tale of a scientist who creates a living being that turns monstrous.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 29,
+    title: "Dracula",
+    author: "Bram Stoker",
+    price: 11.49,
+    tags: ["classic", "horror", "gothic"],
+    preview: "A brief preview of 'Dracula' by Bram Stoker. The story of Count Dracula's attempt to move from Transylvania to England.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 30,
+    title: "The Strange Case of Dr Jekyll and Mr Hyde",
+    author: "Robert Louis Stevenson",
+    price: 12.99,
+    tags: ["classic", "horror", "fiction"],
+    preview: "A brief preview of 'The Strange Case of Dr Jekyll and Mr Hyde' by Robert Louis Stevenson. A study in duality, where a doctor transforms into a monstrous alter ego.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 31,
+    title: "A Tale of Two Cities",
+    author: "Charles Dickens",
+    price: 13.49,
+    tags: ["classic", "historical", "fiction"],
+    preview: "A brief preview of 'A Tale of Two Cities' by Charles Dickens. A story set against the backdrop of the French Revolution.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 32,
+    title: "The Count of Monte Cristo",
+    author: "Alexandre Dumas",
+    price: 14.99,
+    tags: ["classic", "adventure", "fiction"],
+    preview: "A brief preview of 'The Count of Monte Cristo' by Alexandre Dumas. A tale of betrayal, imprisonment, and revenge.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 33,
+    title: "The Scarlet Letter",
+    author: "Nathaniel Hawthorne",
+    price: 16.49,
+    tags: ["classic", "historical", "fiction"],
+    preview: "A brief preview of 'The Scarlet Letter' by Nathaniel Hawthorne. A story of sin, guilt, and redemption in Puritan America.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 34,
+    title: "The Adventures of Tom Sawyer",
+    author: "Mark Twain",
+    price: 17.99,
+    tags: ["classic", "adventure", "fiction"],
+    preview: "A brief preview of 'The Adventures of Tom Sawyer' by Mark Twain. The mischievous adventures of a young boy in a small town.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 35,
+    title: "The Adventures of Huckleberry Finn",
+    author: "Mark Twain",
+    price: 19.49,
+    tags: ["classic", "adventure", "fiction"],
+    preview: "A brief preview of 'The Adventures of Huckleberry Finn' by Mark Twain. A journey down the Mississippi River with a runaway boy and a fugitive slave.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+
+    },
+    {
+
+        id: 36,
+        title: "A Connecticut Yankee in King Arthur's Court",
+        author: "Mark Twain",
+        price: 20.99,
+        tags: ["classic", "satire", "science fiction"],
+        preview: "A brief preview of 'A Connecticut Yankee in King Arthur's Court' by Mark Twain. A modern man is transported to medieval times in a satirical tale.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 37,
+        title: "The Picture of Dorian Gray",
+        author: "Oscar Wilde",
+        price: 22.49,
+        tags: ["classic", "gothic", "fiction"],
+        preview: "A brief preview of 'The Picture of Dorian Gray' by Oscar Wilde. A man remains eternally youthful while his portrait ages.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 38,
+        title: "The Importance of Being Earnest",
+        author: "Oscar Wilde",
+        price: 23.99,
+        tags: ["classic", "comedy", "satire"],
+        preview: "A brief preview of 'The Importance of Being Earnest' by Oscar Wilde. A witty satire on Victorian society and mistaken identities.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 39,
+        title: "The Wonderful Wizard of Oz",
+        author: "L. Frank Baum",
+        "price": 25.49,
+        "tags": ["classic", "fantasy", "children"],
+        "preview": "A brief preview of 'The Wonderful Wizard of Oz' by L. Frank Baum. A young girl's journey in a magical land to find her way home.",
+        "coverUrl": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 40,
+        title: "The Time Machine",
+        author: "H.G. Wells",
+        price: 26.99,
+        "tags": ["classic", "science fiction", "adventure"],
+        "preview": "A brief preview of 'The Time Machine' by H.G. Wells. An inventor travels far into the future in his time machine.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 41,
+        title: "The War of the Worlds",
+        author: "H.G. Wells",
+        price: 28.49,
+        "tags": ["classic", "science fiction", "adventure"],
+        preview: "A brief preview of 'The War of the Worlds' by H.G. Wells. A Martian invasion of Earth and humanity's struggle to survive.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 42,
+        title: "The Invisible Man",
+        author: "H.G. Wells",
+        price: 29.99,
+        "tags": ["classic", "science fiction", "horror"],
+        "preview": "A brief preview of 'The Invisible Man' by H.G. Wells. A scientist discovers the secret of invisibility—with tragic consequences.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 43,
+        title: "The Island of Doctor Moreau",
+        author: "H.G. Wells",
+        price: 31.49,
+        "tags": ["classic", "science fiction", "horror"],
+        "preview": "A brief preview of 'The Island of Doctor Moreau' by H.G. Wells. A man encounters a scientist who creates human-animal hybrids on a remote island.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 44,
+        title: "Treasure Island",
+        author: "Robert Louis Stevenson",
+        price: 32.99,
+        "tags": ["classic", "adventure", "fiction"],
+        "preview": "A brief preview of 'Treasure Island' by Robert Louis Stevenson. A thrilling pirate adventure in search of hidden treasure.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 45,
+        title: "Kidnapped",
+        author: "Robert Louis Stevenson",
+        price: 34.49,
+        tags: ["classic", "adventure", "fiction"],
+        preview: "A brief preview of 'Kidnapped' by Robert Louis Stevenson. A tale of betrayal and adventure set in 18th-century Scotland.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+
+    },
+    {
+
+        id: 46,
+        title: "Three Sisters",
+        author: "Anton Chekhov",
+        price: 26.99,
+        tags: ["classic", "drama", "tragedy"],
+        preview: "A story of three sisters yearning for a better life amidst change.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 47,
+        title: "Uncle Vanya",
+        author: "Anton Chekhov",
+        price: 27.49,
+        tags: ["classic", "drama", "tragedy"],
+        preview: "A play depicting the frustrations and unfulfilled dreams of rural life.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 48,
+        title: "The Seagull",
+        author: "Anton Chekhov",
+        price: 28.99,
+        tags: ["classic", "drama", "tragedy"],
+        preview: "A play exploring the conflicts between art and life.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 49,
+        title: "Anna Karenina",
+        author: "Leo Tolstoy",
+        price: 30.49,
+        tags: ["classic", "romance", "fiction"],
+        preview: "A tragic love story set against the backdrop of Russian high society.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 50,
+        title: "Resurrection",
+        author: "Leo Tolstoy",
+        price: 31.99,
+        tags: ["classic", "philosophical", "fiction"],
+        preview: "A novel about redemption and the search for meaning in life.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 51,
+        title: "The Death of Ivan Ilyich",
+        author: "Leo Tolstoy",
+        price: 33.49,
+        tags: ["classic", "philosophical", "fiction"],
+        preview: "A haunting novella about the existential reflections of a dying man.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 52,
+        title: "Fathers and Sons",
+        author: "Ivan Turgenev",
+        price: 34.99,
+        tags: ["classic", "social", "fiction"],
+        preview: "A novel exploring the generational clash in 19th-century Russia.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 53,
+        title: "A Sportsman's Sketches",
+        author: "Ivan Turgenev",
+        price: 36.49,
+        tags: ["classic", "nature", "fiction"],
+        preview: "Short stories depicting rural Russian life and nature.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 54,
+        title: "The Metamorphosis",
+        author: "Franz Kafka",
+        price: 37.99,
+        tags: ["classic", "absurdist", "fiction"],
+        preview: "A man wakes up one morning transformed into a giant insect.",
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=6
