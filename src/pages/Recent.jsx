@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List, Timer, Flame, Clock, SortAsc, SortDesc } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import confetti from 'canvas-confetti';
+import { useNavigate } from 'react-router-dom';
 import ReadingStreak from '@/components/reading/ReadingStreak';
 import AchievementCard from '@/components/reading/AchievementCard';
 import TimelineCard from '@/components/reading/TimelineCard';
@@ -28,6 +28,7 @@ const Recent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [minReadingTime, setMinReadingTime] = useState(0);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const recentBooks = [
     { 
@@ -109,10 +110,27 @@ const Recent = () => {
   }, {});
 
   const handleShare = (book) => {
-    toast({
-      title: "Share Link Copied!",
-      description: `Share link for "${book.title}" has been copied to clipboard.`
-    });
+    if (navigator.share) {
+      navigator.share({
+        title: book.title,
+        text: `Check out "${book.title}" by ${book.author}!`,
+        url: window.location.href
+      }).catch(() => {
+        navigator.clipboard.writeText(`${window.location.origin}/book/${book.id}`).then(() => {
+          toast({
+            title: "Share Link Copied!",
+            description: `Share link for "${book.title}" has been copied to clipboard.`
+          });
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(`${window.location.origin}/book/${book.id}`).then(() => {
+        toast({
+          title: "Share Link Copied!",
+          description: `Share link for "${book.title}" has been copied to clipboard.`
+        });
+      });
+    }
   };
 
   const handleReread = (book) => {
@@ -120,6 +138,7 @@ const Recent = () => {
       title: "Opening Book",
       description: `Opening "${book.title}" for re-reading.`
     });
+    navigate(`/book/${book.id}`);
   };
 
   const totalTimeSpent = recentBooks.reduce((total, book) => total + book.timeSpent, 0);
