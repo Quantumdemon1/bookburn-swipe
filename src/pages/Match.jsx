@@ -10,34 +10,15 @@ import { Loader } from "lucide-react";
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(false);
   const [dragDirection, setDragDirection] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadInitialBook = async () => {
-      try {
-        initializeUserPreferences();
-        const nextBook = getNextRecommendation();
-        console.log('Initial book:', nextBook); // Debug log
-        if (nextBook) {
-          setCurrentBook(nextBook);
-        } else {
-          console.log('No book found'); // Debug log
-        }
-      } catch (error) {
-        console.error('Error in Match component initialization:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load book recommendations. Please try again.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialBook();
+    initializeUserPreferences();
+    setIsLoading(true);
+    setCurrentBook(getNextRecommendation());
+    setIsLoading(false);
 
     const handleKeyPress = (e) => {
       if (!currentBook) return;
@@ -62,45 +43,28 @@ const Match = () => {
   const handleAction = (action) => {
     if (!currentBook) return;
 
-    try {
-      updateUserPreferences(currentBook.id, action);
-      toast({
-        title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-        description: `${currentBook.title} by ${currentBook.author}`,
-      });
-      
-      setIsLoading(true);
-      const nextBook = getNextRecommendation(currentBook.id);
-      console.log('Next book:', nextBook); // Debug log
-      if (nextBook) {
-        setCurrentBook(nextBook);
-      }
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error handling action:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to process action. Please try again.",
-      });
-    }
+    updateUserPreferences(currentBook.id, action);
+    toast({
+      title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
+      description: `${currentBook.title} by ${currentBook.author}`,
+    });
+    
+    setIsLoading(true);
+    const nextBook = getNextRecommendation(currentBook.id);
+    setCurrentBook(nextBook);
+    setIsLoading(false);
   };
 
   const handleDragEnd = (_, info) => {
-    try {
-      const offset = info.offset.x;
-      if (Math.abs(offset) > 100) {
-        if (offset > 0) {
-          handleAction('like');
-        } else {
-          handleAction('burn');
-        }
+    const offset = info.offset.x;
+    if (Math.abs(offset) > 100) {
+      if (offset > 0) {
+        handleAction('like');
+      } else {
+        handleAction('burn');
       }
-      setDragDirection(0);
-    } catch (error) {
-      console.error('Error in drag handling:', error);
-      setDragDirection(0);
     }
+    setDragDirection(0);
   };
 
   return (
@@ -132,7 +96,7 @@ const Match = () => {
           >
             <Loader className="w-8 h-8 animate-spin" />
           </motion.div>
-        ) : currentBook ? (
+        ) : currentBook && (
           <motion.div
             key={currentBook.id}
             initial={{ opacity: 0, x: 200 }}
@@ -159,14 +123,6 @@ const Match = () => {
               onLike={() => handleAction('like')}
               onFavorite={() => handleAction('favorite')}
             />
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-gray-500 py-8"
-          >
-            No more books to show. Check back later!
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,4 +1,4 @@
-import { books } from '../data';
+import { books } from '../data/books';
 
 // Keep track of shown books
 let shownBooks = new Set();
