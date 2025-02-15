@@ -1,3 +1,4 @@
+<lov-code>
 // Simulated book database with public domain content
 export const books = [
   {
@@ -488,4 +489,4 @@ export const books = [
         price: 37.99,
         tags: ["classic", "absurdist", "fiction"],
         preview: "A man wakes up one morning transformed into a giant insect.",
-        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=6
+        coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&
