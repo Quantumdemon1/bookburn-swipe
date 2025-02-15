@@ -9,12 +9,12 @@ const BookContent = ({ book }) => {
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300 }}
     >
-      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full">
         <AnimatePresence mode="wait">
           <motion.div 
-            className="relative w-full md:w-2/5"
+            className="relative w-full md:w-1/3"
           >
-            <div className="aspect-[3/4] md:aspect-[4/3] relative">
+            <div className="aspect-[3/4] md:aspect-[16/9] relative">
               <motion.img 
                 key={book.id}
                 src={book.coverUrl || '/placeholder.svg'} 
@@ -24,8 +24,8 @@ const BookContent = ({ book }) => {
                         ${book.coverUrl || '/placeholder.svg'} 600w,
                         ${book.coverUrl || '/placeholder.svg'} 900w`}
                 sizes="(max-width: 640px) 100vw,
-                       (max-width: 1024px) 50vw,
-                       40vw"
+                       (max-width: 1024px) 33vw,
+                       33vw"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -40,19 +40,22 @@ const BookContent = ({ book }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="flex-1 space-y-3 md:space-y-6 md:py-4"
+          className="flex-1 flex flex-col h-full"
         >
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{book.title}</h2>
-          <p className="text-base sm:text-lg md:text-xl">by {book.author}</p>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg line-clamp-3 md:line-clamp-none">{book.description}</p>
-          <div className="flex flex-wrap gap-2 mt-2 md:mt-4">
+          <div className="flex-grow space-y-3 md:space-y-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{book.title}</h2>
+            <p className="text-base sm:text-lg">by {book.author}</p>
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg">{book.description}</p>
+          </div>
+          
+          <div className="flex flex-wrap gap-1.5 mt-auto pt-3 border-t border-gray-100">
             {book.tags.map((tag, index) => (
               <motion.span 
                 key={tag}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-xs sm:text-sm md:text-base px-2 sm:px-3 py-1 bg-gray-100 rounded-full"
+                className="text-[10px] px-2 py-0.5 bg-gray-50 text-gray-600 rounded-full"
               >
                 {tag}
               </motion.span>

@@ -112,7 +112,7 @@ const Match = () => {
             onDrag={(_, info) => {
               setDragDirection(info.offset.x > 0 ? 1 : -1);
             }}
-            className="w-full max-w-sm md:max-w-4xl mx-auto"
+            className="w-full max-w-screen-xl mx-auto"
           >
             <BookCard
               book={{
