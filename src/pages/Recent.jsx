@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Timer, Flame, Clock, SortAsc, SortDesc } from "lucide-react";
+import { LayoutGrid, List, Timer, Flame, Clock, SortAsc, SortDesc, Shield, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 
 const Recent = () => {
   const [viewMode, setViewMode] = useState(() => 
@@ -36,6 +41,10 @@ const Recent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const userRole = currentUser?.role || 'visitor';
+
   const recentBooks = [
     { 
       id: 1, 
@@ -43,7 +52,8 @@ const Recent = () => {
       author: "Jane Austen", 
       liked: true,
       viewedAt: new Date('2024-03-14T10:00:00'),
-      timeSpent: 45
+      timeSpent: 45,
+      requiresAuth: false
     },
     { 
       id: 2, 
@@ -51,7 +61,8 @@ const Recent = () => {
       author: "J.D. Salinger", 
       liked: false,
       viewedAt: new Date('2024-03-13T15:30:00'),
-      timeSpent: 30
+      timeSpent: 30,
+      requiresAuth: true
     },
     { 
       id: 3, 
@@ -59,14 +70,20 @@ const Recent = () => {
       author: "J.R.R. Tolkien", 
       liked: true,
       viewedAt: new Date('2024-03-10T09:15:00'),
-      timeSpent: 60
+      timeSpent: 60,
+      requiresAuth: true
     },
   ];
+
+  const visibleBooks = recentBooks.filter(book => {
+    if (userRole === 'admin') return true;
+    if (userRole === 'user') return !book.requiresAuth || book.requiresAuth;
+    return !book.requiresAuth; // visitor
+  });
 
   const filterAndSortBooks = (books) => {
     let filteredBooks = [...books];
     
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filteredBooks = filteredBooks.filter(book => 
@@ -75,10 +92,8 @@ const Recent = () => {
       );
     }
 
-    // Apply reading time filter
     filteredBooks = filteredBooks.filter(book => book.timeSpent >= minReadingTime);
 
-    // Apply sorting
     filteredBooks.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
@@ -100,7 +115,7 @@ const Recent = () => {
     return filteredBooks;
   };
 
-  const groupedBooks = filterAndSortBooks(recentBooks).reduce((groups, book) => {
+  const groupedBooks = filterAndSortBooks(visibleBooks).reduce((groups, book) => {
     const now = new Date();
     const viewDate = new Date(book.viewedAt);
     const dayDiff = Math.floor((now - viewDate) / (1000 * 60 * 60 * 24));
@@ -136,7 +151,6 @@ const Recent = () => {
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        // User cancelled share
         return;
       }
       toast({
@@ -203,12 +217,12 @@ const Recent = () => {
     setMinReadingTime(value);
   };
 
-  const totalTimeSpent = recentBooks.reduce((total, book) => total + book.timeSpent, 0);
-  const averageTimePerBook = Math.round(totalTimeSpent / recentBooks.length);
+  const totalTimeSpent = visibleBooks.reduce((total, book) => total + book.timeSpent, 0);
+  const averageTimePerBook = Math.round(totalTimeSpent / visibleBooks.length);
 
   const streakDays = 3;
   const dailyReadingGoal = 30;
-  const todayProgress = recentBooks
+  const todayProgress = visibleBooks
     .filter(book => {
       const today = new Date();
       const bookDate = new Date(book.viewedAt);
@@ -270,88 +284,149 @@ const Recent = () => {
     localStorage.setItem('sortOrder', sortOrder);
   }, [viewMode, sortBy, sortOrder]);
 
+  const renderRoleSpecificContent = () => {
+    switch (userRole) {
+      case 'admin':
+        return (
+          <Alert className="mb-4 bg-yellow-50 border-yellow-200">
+            <Shield className="h-4 w-4 text-yellow-600" />
+            <AlertTitle>Administrator View</AlertTitle>
+            <AlertDescription>
+              You have full access to all features and content management.
+            </AlertDescription>
+          </Alert>
+        );
+      case 'user':
+        return (
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <AlertTitle>Welcome back, {currentUser?.name}!</AlertTitle>
+            <AlertDescription>
+              Track your reading progress and unlock achievements.
+            </AlertDescription>
+          </Alert>
+        );
+      default:
+        return (
+          <Alert className="mb-4">
+            <LogIn className="h-4 w-4" />
+            <AlertTitle>Welcome to Book Burn!</AlertTitle>
+            <AlertDescription>
+              <Button 
+                variant="link" 
+                className="p-0 text-primary" 
+                onClick={() => navigate('/login')}
+              >
+                Log in
+              </Button>
+              {' '}or{' '}
+              <Button 
+                variant="link" 
+                className="p-0 text-primary" 
+                onClick={() => navigate('/register')}
+              >
+                register
+              </Button>
+              {' '}to unlock full features.
+            </AlertDescription>
+          </Alert>
+        );
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
+      {renderRoleSpecificContent()}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-3xl font-bold">Recently Viewed Books</h1>
-        <div className="flex items-center gap-4">
-          <Card className="p-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleViewModeChange('grid')}
-              className={`${viewMode === 'grid' ? 'bg-primary/10' : ''}`}
-              aria-label="Grid view"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleViewModeChange('list')}
-              className={`${viewMode === 'list' ? 'bg-primary/10' : ''}`}
-              aria-label="List view"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </Card>
+        {(isAuthenticated || userRole === 'admin') && (
+          <div className="flex items-center gap-4">
+            <Card className="p-4 flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleViewModeChange('grid')}
+                className={`${viewMode === 'grid' ? 'bg-primary/10' : ''}`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleViewModeChange('list')}
+                className={`${viewMode === 'list' ? 'bg-primary/10' : ''}`}
+                aria-label="List view"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {(isAuthenticated || userRole === 'admin') && (
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <Input
+            placeholder="Search books..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-xs"
+            aria-label="Search books"
+          />
+          <Select value={sortBy} onValueChange={handleSortByChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">Date</SelectItem>
+              <SelectItem value="time">Reading Time</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSortOrderChange}
+            aria-label={`Sort ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
+          >
+            {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+          </Button>
+          <Input
+            type="number"
+            placeholder="Min reading time (minutes)"
+            value={minReadingTime}
+            onChange={handleMinReadingTimeChange}
+            className="max-w-xs"
+            min="0"
+            aria-label="Minimum reading time in minutes"
+          />
         </div>
-      </div>
+      )}
 
-      <div className="flex flex-col md:flex-row gap-4 items-center">
-        <Input
-          placeholder="Search books..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-xs"
-          aria-label="Search books"
+      {(isAuthenticated || userRole === 'admin') && (
+        <div className="grid gap-6 md:grid-cols-3">
+          <ReadingStreak
+            streakDays={streakDays}
+            todayProgress={todayProgress}
+            dailyReadingGoal={dailyReadingGoal}
+          />
+          <ReadingLevel totalMinutes={totalTimeSpent} />
+          <AchievementCard achievements={achievements} />
+        </div>
+      )}
+
+      {(isAuthenticated || userRole === 'admin') && (
+        <TimelineCard readingHours={readingHours} />
+      )}
+
+      {(isAuthenticated || userRole === 'admin') && (
+        <StatsCard
+          booksCount={visibleBooks.length}
+          totalTime={totalTimeSpent}
+          averageTime={averageTimePerBook}
         />
-        <Select value={sortBy} onValueChange={handleSortByChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date">Date</SelectItem>
-            <SelectItem value="time">Reading Time</SelectItem>
-            <SelectItem value="title">Title</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleSortOrderChange}
-          aria-label={`Sort ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
-        >
-          {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-        </Button>
-        <Input
-          type="number"
-          placeholder="Min reading time (minutes)"
-          value={minReadingTime}
-          onChange={handleMinReadingTimeChange}
-          className="max-w-xs"
-          min="0"
-          aria-label="Minimum reading time in minutes"
-        />
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <ReadingStreak
-          streakDays={streakDays}
-          todayProgress={todayProgress}
-          dailyReadingGoal={dailyReadingGoal}
-        />
-        <ReadingLevel totalMinutes={totalTimeSpent} />
-        <AchievementCard achievements={achievements} />
-      </div>
-
-      <TimelineCard readingHours={readingHours} />
-
-      <StatsCard
-        booksCount={recentBooks.length}
-        totalTime={totalTimeSpent}
-        averageTime={averageTimePerBook}
-      />
+      )}
 
       {Object.entries(groupedBooks).map(([group, books]) => (
         <BookList
@@ -361,6 +436,8 @@ const Recent = () => {
           viewMode={viewMode}
           onReread={handleReread}
           onShare={handleShare}
+          userRole={userRole}
+          isAuthenticated={isAuthenticated}
         />
       ))}
     </div>
