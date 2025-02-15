@@ -1,37 +1,42 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 const ActionButton = ({ 
-  icon: Icon,
-  label,
-  onClick,
+  icon: Icon, 
+  label, 
+  onClick, 
+  isClicked, 
+  color, 
+  animation,
   isLoading,
-  isRetrying,
-  isClicked,
-  color,
-  animation
+  isRetrying 
 }) => {
   return (
-    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+    <motion.div
+      animate={isClicked ? animation : {}}
+      className="flex-1"
+    >
       <Button
         variant="ghost"
+        size="lg"
         onClick={onClick}
-        className={`rounded-full p-4 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         disabled={isLoading}
+        className={`w-full h-14 sm:h-16 rounded-xl touch-manipulation 
+          ${isClicked ? `text-${color}-500` : ''} 
+          active:scale-95 transition-transform
+          flex flex-col items-center justify-center
+          space-y-1`}
       >
         {isRetrying ? (
-          <Loader className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
-          <motion.div 
-            className={`text-${color}-500`}
-            animate={isClicked ? animation : {}}
-          >
-            <Icon className={`h-8 w-8 text-${color}-500`} />
-            <span className="text-xs block mt-1">{label}</span>
-          </motion.div>
+          <>
+            <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${isClicked ? `text-${color}-500` : ''}`} />
+            <span className="text-xs sm:text-sm font-medium">{label}</span>
+          </>
         )}
       </Button>
     </motion.div>

@@ -63,13 +63,14 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3 }}
-      className="w-full"
+      className="w-full sm:w-auto"
+      whileTap={{ scale: 0.98 }}
     >
-      <Card className="w-full max-w-4xl mx-auto bg-black text-white overflow-hidden">
-        <CardContent className="p-6">
+      <Card className="w-full max-w-sm mx-auto bg-black text-white overflow-hidden touch-manipulation">
+        <CardContent className="p-4 sm:p-6">
           <BookContent book={book} />
           
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2">
             {actions.map((action, index) => (
               <ActionButton
                 key={index}

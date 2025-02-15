@@ -1,29 +1,26 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Loader } from "lucide-react";
-import { motion } from "framer-motion";
+import { ShoppingCart, Loader2 } from "lucide-react";
 
 const CartButton = ({ onClick, isLoading }) => {
   return (
-    <motion.div
-      className="mt-4"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+    <Button
+      onClick={onClick}
+      disabled={isLoading}
+      className="w-full mt-4 h-12 sm:h-14 rounded-xl touch-manipulation
+        bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600
+        active:scale-95 transition-transform"
     >
-      <Button 
-        onClick={onClick}
-        className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader className="h-4 w-4 animate-spin mr-2" />
-        ) : (
-          <ShoppingCart className="mr-2 h-4 w-4" />
-        )}
-        Add to Cart
-      </Button>
-    </motion.div>
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin" />
+      ) : (
+        <>
+          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+          <span className="text-sm sm:text-base font-medium">Add to Cart</span>
+        </>
+      )}
+    </Button>
   );
 };
 
