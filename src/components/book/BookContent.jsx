@@ -12,9 +12,9 @@ const BookContent = ({ book }) => {
       <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full">
         <AnimatePresence mode="wait">
           <motion.div 
-            className="relative w-full md:w-2/5"
+            className="relative w-full md:w-3/5"
           >
-            <div className="aspect-[21/9] relative">
+            <div className="aspect-[32/9] relative">
               <motion.img 
                 key={book.id}
                 src={book.coverUrl || '/placeholder.svg'} 
@@ -24,8 +24,8 @@ const BookContent = ({ book }) => {
                         ${book.coverUrl || '/placeholder.svg'} 600w,
                         ${book.coverUrl || '/placeholder.svg'} 900w`}
                 sizes="(max-width: 640px) 100vw,
-                       (max-width: 1024px) 40vw,
-                       40vw"
+                       (max-width: 1024px) 60vw,
+                       60vw"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -45,7 +45,7 @@ const BookContent = ({ book }) => {
           <div className="flex-grow space-y-2 md:space-y-3">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{book.title}</h2>
             <p className="text-base sm:text-lg">by {book.author}</p>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">{book.description}</p>
+            <p className="text-gray-600 text-sm sm:text-base italic mb-2">{book.preview}</p>
           </div>
           
           <div className="flex flex-wrap gap-0.5 mt-auto pt-1 border-t border-gray-50">
