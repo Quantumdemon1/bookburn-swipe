@@ -1,14 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle } from 'lucide-react';
 import ConversationList from '@/components/messages/ConversationList';
+import MessageItem from '@/components/messages/MessageItem';
 import MessageInput from '@/components/messages/MessageInput';
 import ConversationHeader from '@/components/messages/ConversationHeader';
 import MessageList from '@/components/messages/MessageList';
 import { useMessages } from '@/hooks/useMessages';
-import { useConversationSorting } from '@/hooks/useConversationSorting';
-import { useAttachmentHandler } from '@/hooks/useAttachmentHandler';
 
 const Messages = () => {
   const {
@@ -28,19 +27,54 @@ const Messages = () => {
     togglePinConversation
   } = useMessages();
 
-  const {
-    attachmentPreview,
-    isRecording,
-    handleAttachment,
-    handleVoiceRecord,
-    removeAttachment
-  } = useAttachmentHandler();
+  const [isRecording, setIsRecording] = useState(false);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
 
-  const sortedConversations = useConversationSorting(
-    conversations,
-    searchQuery,
-    pinnedConversations
-  );
+  const filteredConversations = conversations.filter(conv => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      conv.friendName?.toLowerCase().includes(searchLower) ||
+      conv.messages?.some(msg => msg.content.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const sortedConversations = [...filteredConversations].sort((a, b) => {
+    const aPinned = pinnedConversations.includes(a.id);
+    const bPinned = pinnedConversations.includes(b.id);
+    if (aPinned !== bPinned) return bPinned ? 1 : -1;
+    
+    const aLastMessage = a.messages?.[a.messages.length - 1];
+    const bLastMessage = b.messages?.[b.messages.length - 1];
+    return new Date(bLastMessage?.timestamp || 0) - new Date(aLastMessage?.timestamp || 0);
+  });
+
+  const handleAttachment = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const previewUrl = URL.createObjectURL(file);
+        setAttachmentPreview({
+          type: 'image',
+          url: previewUrl,
+          name: file.name
+        });
+      }
+    };
+    input.click();
+  };
+
+  const handleVoiceRecord = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      toast({
+        title: "Coming Soon",
+        description: "Voice recording feature will be available soon!",
+      });
+    }
+  };
 
   const handleReaction = async (messageId, reaction) => {
     try {
@@ -107,7 +141,12 @@ const Messages = () => {
                   onVoiceRecord={handleVoiceRecord}
                   isRecording={isRecording}
                   attachmentPreview={attachmentPreview}
-                  onRemoveAttachment={removeAttachment}
+                  onRemoveAttachment={() => {
+                    if (attachmentPreview?.url) {
+                      URL.revokeObjectURL(attachmentPreview.url);
+                    }
+                    setAttachmentPreview(null);
+                  }}
                   onEmojiClick={() => toast({ description: "Emoji picker coming soon!" })}
                 />
               </>

@@ -1,52 +1,100 @@
 
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { updateUserPreferences } from '@/utils/interactionWeights';
-import { getNextRecommendation } from '@/utils/recommendationEngine';
+import { Button } from "@/components/ui/button";
+import confetti from 'canvas-confetti';
 
-export const useBookActions = (currentBook, setCurrentBook) => {
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [dragDirection, setDragDirection] = useState(0);
+export const useBookActions = (book, addToCart) => {
   const { toast } = useToast();
+  const [burnClicked, setBurnClicked] = useState(false);
+  const [saveClicked, setSaveClicked] = useState(false);
+  const [likeClicked, setLikeClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [retryAction, setRetryAction] = useState(null);
 
-  const handleAction = async (action) => {
-    if (isActionLoading || !currentBook) return;
+  const handleAction = async (action, handler) => {
+    if (isLoading) return;
     
-    setIsActionLoading(true);
-    updateUserPreferences(currentBook.id, action);
-    
-    // Simulate network delay for the action
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const nextBook = getNextRecommendation(currentBook.id);
-    setCurrentBook(nextBook);
-    setIsActionLoading(false);
-    
-    toast({
-      title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-      description: `Action taken on book ${currentBook.id}`,
-    });
+    setIsLoading(true);
+    setRetryAction(null);
+
+    try {
+      switch(action) {
+        case 'burn':
+          setBurnClicked(true);
+          await handler();
+          setTimeout(() => setBurnClicked(false), 1000);
+          break;
+        case 'save':
+          setSaveClicked(true);
+          await handler();
+          setTimeout(() => setSaveClicked(false), 1000);
+          break;
+        case 'like':
+          setLikeClicked(true);
+          await handler();
+          setTimeout(() => setLikeClicked(false), 1000);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error during ${action} action:`, error);
+      setRetryAction({ action, handler });
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: `Failed to ${action} the book. Click to try again.`,
+        action: (
+          <Button 
+            variant="outline" 
+            onClick={() => handleAction(action, handler)}
+            className="bg-white text-red-500 hover:bg-red-50"
+          >
+            Retry
+          </Button>
+        ),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDragEnd = (_, info) => {
-    if (isActionLoading) return;
-    
-    const offset = info.offset.x;
-    if (Math.abs(offset) > 100) {
-      if (offset > 0) {
-        handleAction('like');
-      } else {
-        handleAction('burn');
-      }
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(book);
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      toast({
+        title: "Added to Cart",
+        description: `${book.title} has been added to your cart`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to Add to Cart",
+        description: "Please try again",
+        action: (
+          <Button 
+            variant="outline" 
+            onClick={handleAddToCart}
+            className="bg-white text-red-500 hover:bg-red-50"
+          >
+            Retry
+          </Button>
+        ),
+      });
     }
-    setDragDirection(0);
   };
 
   return {
-    isActionLoading,
-    dragDirection,
-    setDragDirection,
+    burnClicked,
+    saveClicked,
+    likeClicked,
+    isLoading,
+    retryAction,
     handleAction,
-    handleDragEnd
+    handleAddToCart
   };
 };
