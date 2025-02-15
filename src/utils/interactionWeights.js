@@ -1,5 +1,5 @@
 
-import { books } from '../data';
+import { books } from '../data/books';
 import { initializeUserPreferences, calculateTimeDecay, addToShownBooks, getShownBooks, clearShownBooks } from './preferencesManager';
 
 // Interaction weights for different actions
