@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import confetti from 'canvas-confetti';
 
 export const useBookActions = (book, addToCart) => {
