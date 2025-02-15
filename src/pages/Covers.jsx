@@ -1,35 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
-import BookCard from '@/components/BookCard';
-import BookCardSkeleton from '@/components/BookCardSkeleton';
-import SearchBar from '@/components/SearchBar';
-import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
-import { getRecommendations, searchBooks, getNextRecommendation } from '@/utils/recommendationEngine';
-import { updateUserPreferences } from '@/utils/interactionWeights';
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import BookCard from '@/components/BookCard';
+import BookCardSkeleton from '@/components/BookCardSkeleton';
+import WelcomeBanner from '@/components/books/WelcomeBanner';
+import BookControls from '@/components/books/BookControls';
+import { useBookActions } from '@/hooks/useBookActions';
+import { getRecommendations, searchBooks } from '@/utils/recommendationEngine';
 
-const Index = () => {
+const Covers = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [isNewUser, setIsNewUser] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [dragDirection, setDragDirection] = useState(0);
-  const { toast } = useToast();
-  const { ref } = useInView({
-    threshold: 0,
-  });
+  const { ref } = useInView({ threshold: 0 });
+
+  const {
+    isActionLoading,
+    dragDirection,
+    setDragDirection,
+    handleAction,
+    handleDragEnd
+  } = useBookActions(currentBook, setCurrentBook);
 
   useEffect(() => {
     if (!isSearching) {
@@ -60,47 +56,25 @@ const Index = () => {
       
       switch(e.key) {
         case 'ArrowLeft':
-          handleAction(currentBook.id, 'burn');
+          handleAction('burn');
           break;
         case 'ArrowRight':
-          handleAction(currentBook.id, 'like');
+          handleAction('like');
           break;
         case 'ArrowUp':
-          handleAction(currentBook.id, 'favorite');
+          handleAction('favorite');
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentBook, isActionLoading]);
-
-  const handleAction = async (bookId, action) => {
-    if (isActionLoading) return;
-    
-    setIsActionLoading(true);
-    updateUserPreferences(bookId, action);
-    
-    // Simulate network delay for the action
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const nextBook = getNextRecommendation(bookId);
-    setCurrentBook(nextBook);
-    setIsActionLoading(false);
-    
-    toast({
-      title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-      description: `Action taken on book ${bookId}`,
-    });
-  };
+  }, [currentBook, isActionLoading, handleAction]);
 
   const handleSearch = async (query) => {
     setIsSearching(true);
     setIsLoading(true);
-    
-    // Simulate network delay for search
     await new Promise(resolve => setTimeout(resolve, 800));
-    
     const searchResults = searchBooks(query);
     if (searchResults.length > 0) {
       setCurrentBook(searchResults[0]);
@@ -111,61 +85,18 @@ const Index = () => {
   const handleGenreChange = async (genre) => {
     setSelectedGenre(genre);
     setIsSearching(false);
-    setIsLoading(true);
-    
-    // Simulate network delay for genre change
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const newBooks = getRecommendations(1, 1, genre);
-    if (newBooks.length > 0) {
-      setCurrentBook(newBooks[0]);
-    }
-    setIsLoading(false);
-  };
-
-  const handleDragEnd = (_, info) => {
-    if (isActionLoading) return;
-    
-    const offset = info.offset.x;
-    if (Math.abs(offset) > 100) {
-      if (offset > 0) {
-        handleAction(currentBook.id, 'like');
-      } else {
-        handleAction(currentBook.id, 'burn');
-      }
-    }
-    setDragDirection(0);
   };
 
   return (
     <div className="max-w-5xl mx-auto p-4">
-      {isNewUser && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4"
-          role="alert"
-        >
-          <p className="font-bold">Welcome to Book Burn!</p>
-          <p>Start exploring books by swiping through recommendations or use the search bar to find specific titles.</p>
-          <p className="text-sm mt-2">Pro tip: Use arrow keys to navigate (←→ to burn/like, ↑ to favorite)</p>
-        </motion.div>
-      )}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <SearchBar onSearch={handleSearch} />
-        <Select onValueChange={handleGenreChange} defaultValue="all">
-          <SelectTrigger className="w-[180px] mt-4 md:mt-0">
-            <SelectValue placeholder="Select Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Genres</SelectItem>
-            <SelectItem value="adventure">Adventure</SelectItem>
-            <SelectItem value="classic">Classic</SelectItem>
-            <SelectItem value="horror">Horror</SelectItem>
-            <SelectItem value="non-fiction">Non-Fiction</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {isNewUser && <WelcomeBanner />}
+      
+      <BookControls
+        onSearch={handleSearch}
+        selectedGenre={selectedGenre}
+        onGenreChange={handleGenreChange}
+      />
+
       <AnimatePresence mode="wait">
         {isLoading ? (
           <motion.div
@@ -195,9 +126,9 @@ const Index = () => {
           >
             <BookCard
               book={currentBook}
-              onBurn={() => handleAction(currentBook.id, 'burn')}
-              onLike={() => handleAction(currentBook.id, 'like')}
-              onFavorite={() => handleAction(currentBook.id, 'favorite')}
+              onBurn={() => handleAction('burn')}
+              onLike={() => handleAction('like')}
+              onFavorite={() => handleAction('favorite')}
             />
           </motion.div>
         ) : (
@@ -210,11 +141,12 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       <div ref={ref} className="text-center mt-8">
         <Button 
           onClick={() => {
             if (currentBook && !isActionLoading) {
-              const nextBook = getNextRecommendation(currentBook.id);
+              const nextBook = getRecommendations(currentBook.id)[0];
               setCurrentBook(nextBook);
             }
           }} 
@@ -231,4 +163,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Covers;
