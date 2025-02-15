@@ -1,4 +1,3 @@
-
 // Simulated book database with public domain content
 export const books = [
   {
@@ -44,7 +43,7 @@ export const books = [
     price: 11.99,
     tags: ["adventure", "classic", "revenge"],
     preview: "On the 24th of February, 1815, the look-out at Notre-Dame de la Garde signalled the three-master, the Pharaon from Smyrna, Trieste, and Naples.",
-    coverUrl: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1512820790803-83d5b814b5a6?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 6, 
@@ -135,5 +134,95 @@ export const books = [
     tags: ["fantasy", "adventure", "epic"],
     preview: "An epic high-fantasy novel written by English author and scholar J.R.R. Tolkien. The story began as a sequel to Tolkien's 1937 fantasy novel The Hobbit, but eventually developed into a much larger work.",
     coverUrl: "https://images.unsplash.com/photo-1479813183133-7e558ec2e308?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 16,
+    title: "Pride and Prejudice",
+    author: "Jane Austen",
+    price: 10.99,
+    tags: ["classic", "romance", "fiction"],
+    preview: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 17,
+    title: "Design Patterns",
+    author: "Gang of Four",
+    price: 49.99,
+    tags: ["programming", "software engineering", "computer science"],
+    preview: "A book that has become an essential reference for object-oriented developers, presenting a catalog of simple and succinct solutions to commonly occurring design problems.",
+    coverUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 18,
+    title: "Moby Dick",
+    author: "Herman Melville",
+    price: 12.99,
+    tags: ["classic", "adventure", "fiction"],
+    preview: "Call me Ishmael. Some years ago—never mind how long precisely—having little or no money in my purse, and nothing particular to interest me on shore, I thought I would sail about a little and see the watery part of the world.",
+    coverUrl: "https://images.unsplash.com/photo-1548048026-5a1a941d93d3?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 19,
+    title: "Blockchain Basics",
+    author: "Daniel Drescher",
+    price: 34.99,
+    tags: ["technology", "cryptocurrency", "programming"],
+    preview: "A non-technical exploration of the fundamental principles behind blockchain technology and its implications for digital currency and beyond.",
+    coverUrl: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 20,
+    title: "War and Peace",
+    author: "Leo Tolstoy",
+    price: 15.99,
+    tags: ["classic", "historical", "fiction"],
+    preview: "Well, Prince, so Genoa and Lucca are now just family estates of the Buonapartes. But I warn you, if you don't tell me that this means war, if you still try to defend the infamies and horrors perpetrated by that Antichrist—I really believe he is Antichrist—I will have nothing more to do with you.",
+    coverUrl: "https://images.unsplash.com/photo-1519682577862-22b62b24e493?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 21,
+    title: "Machine Learning Fundamentals",
+    author: "Dr. Sarah Chen",
+    price: 45.99,
+    tags: ["technology", "computer science", "artificial intelligence"],
+    preview: "A comprehensive introduction to machine learning principles, algorithms, and practical applications in today's data-driven world.",
+    coverUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 22,
+    title: "The Time Machine",
+    author: "H.G. Wells",
+    price: 9.99,
+    tags: ["science fiction", "classic", "adventure"],
+    preview: "The Time Traveller (for so it will be convenient to speak of him) was expounding a recondite matter to us. His grey eyes shone and twinkled, and his usually pale face was flushed and animated.",
+    coverUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 23,
+    title: "The Picture of Dorian Gray",
+    author: "Oscar Wilde",
+    price: 11.99,
+    tags: ["classic", "gothic", "fiction"],
+    preview: "The studio was filled with the rich odour of roses, and when the light summer wind stirred amidst the trees of the garden, there came through the open door the heavy scent of the lilac, or the more delicate perfume of the pink-flowering thorn.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 24,
+    title: "Cybersecurity Essentials",
+    author: "William Stallings",
+    price: 42.99,
+    tags: ["technology", "security", "computer science"],
+    preview: "A comprehensive guide to understanding and implementing cybersecurity principles in modern computing environments.",
+    coverUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format&fit=crop&q=60"
+  },
+  {
+    id: 25,
+    title: "The Republic",
+    author: "Plato",
+    price: 13.99,
+    tags: ["philosophy", "classic", "non-fiction"],
+    preview: "I went down yesterday to the Piraeus with Glaucon the son of Ariston, that I might offer up my prayers to the goddess; and also because I wanted to see in what manner they would celebrate the festival, which was a new thing.",
+    coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60"
   }
 ];
