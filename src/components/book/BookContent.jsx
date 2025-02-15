@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const BookContent = ({ book }) => {
   return (
     <motion.div 
-      className="rounded-3xl bg-white text-black p-4 sm:p-6 mb-4 sm:mb-6"
+      className="rounded-3xl bg-white text-black p-4 sm:p-6 mb-4 sm:mb-6 w-full max-w-[1400px] mx-auto"
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300 }}
     >
