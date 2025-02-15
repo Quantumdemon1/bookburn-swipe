@@ -1,72 +1,34 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { api } from '@/services/api';
-import { useSearchParams } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import ConversationList from '@/components/messages/ConversationList';
 import MessageItem from '@/components/messages/MessageItem';
 import MessageInput from '@/components/messages/MessageInput';
 import ConversationHeader from '@/components/messages/ConversationHeader';
-import { format, isToday, isYesterday, isSameDay } from 'date-fns';
+import MessageList from '@/components/messages/MessageList';
+import { useMessages } from '@/hooks/useMessages';
 
 const Messages = () => {
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
-  const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const friendId = searchParams.get('friend');
-  const [typingStatus, setTypingStatus] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [pinnedConversations, setPinnedConversations] = useState([]);
+  const {
+    conversations,
+    selectedConversation,
+    setSelectedConversation,
+    newMessage,
+    setNewMessage,
+    searchQuery,
+    setSearchQuery,
+    pinnedConversations,
+    messageSearch,
+    setMessageSearch,
+    showSearch,
+    setShowSearch,
+    handleSendMessage,
+    togglePinConversation
+  } = useMessages();
+
   const [isRecording, setIsRecording] = useState(false);
-  const [messageSearch, setMessageSearch] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
   const [attachmentPreview, setAttachmentPreview] = useState(null);
-
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const response = await api.getConversations();
-        const sortedConversations = response.sort((a, b) => {
-          const aLastMessage = a.messages[a.messages.length - 1];
-          const bLastMessage = b.messages[b.messages.length - 1];
-          return new Date(bLastMessage?.timestamp || 0) - new Date(aLastMessage?.timestamp || 0);
-        });
-        setConversations(sortedConversations);
-        
-        if (friendId) {
-          const existingConv = sortedConversations.find(conv => 
-            conv.participants.includes(Number(friendId))
-          );
-          
-          if (existingConv) {
-            setSelectedConversation(existingConv);
-          } else {
-            const friendName = searchParams.get('name');
-            const friendAvatar = searchParams.get('avatar');
-            const newConv = await api.createConversation(
-              1, // dummy current user ID
-              Number(friendId),
-              friendName,
-              friendAvatar
-            );
-            setConversations(prev => [...prev, newConv]);
-            setSelectedConversation(newConv);
-          }
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load conversations",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchConversations();
-  }, [friendId, toast, searchParams]);
 
   const filteredConversations = conversations.filter(conv => {
     const searchLower = searchQuery.toLowerCase();
@@ -104,51 +66,12 @@ const Messages = () => {
     input.click();
   };
 
-  const removeAttachment = () => {
-    if (attachmentPreview?.url) {
-      URL.revokeObjectURL(attachmentPreview.url);
-    }
-    setAttachmentPreview(null);
-  };
-
   const handleVoiceRecord = () => {
     setIsRecording(!isRecording);
     if (!isRecording) {
       toast({
         title: "Coming Soon",
         description: "Voice recording feature will be available soon!",
-      });
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return;
-
-    try {
-      const response = await api.sendMessage(selectedConversation.id, newMessage);
-      setSelectedConversation(prev => ({
-        ...prev,
-        messages: [...(prev?.messages || []), response]
-      }));
-      setNewMessage('');
-      
-      setConversations(prev => {
-        const updated = prev.map(conv => 
-          conv.id === selectedConversation.id 
-            ? { ...conv, messages: [...(conv.messages || []), response] }
-            : conv
-        );
-        return updated.sort((a, b) => {
-          const aLastMessage = a.messages[a.messages.length - 1];
-          const bLastMessage = b.messages[b.messages.length - 1];
-          return new Date(bLastMessage?.timestamp || 0) - new Date(aLastMessage?.timestamp || 0);
-        });
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
       });
     }
   };
@@ -172,50 +95,6 @@ const Messages = () => {
       });
     }
   };
-
-  const togglePinConversation = (convId) => {
-    if (pinnedConversations.includes(convId)) {
-      setPinnedConversations(prev => prev.filter(id => id !== convId));
-    } else {
-      setPinnedConversations(prev => [...prev, convId]);
-    }
-  };
-
-  const renderDateSeparator = (date) => {
-    if (isToday(date)) return "Today";
-    if (isYesterday(date)) return "Yesterday";
-    return format(date, 'MMMM d, yyyy');
-  };
-
-  const renderMessages = () => {
-    if (!selectedConversation?.messages?.length) return null;
-
-    let currentDate = null;
-    return selectedConversation.messages.map((message, index) => {
-      const messageDate = new Date(message.timestamp);
-      const showDateSeparator = !currentDate || !isSameDay(currentDate, messageDate);
-      
-      if (showDateSeparator) {
-        currentDate = messageDate;
-        return (
-          <React.Fragment key={message.id}>
-            <div className="flex justify-center my-4">
-              <span className="bg-muted px-3 py-1 rounded-full text-sm text-muted-foreground">
-                {renderDateSeparator(messageDate)}
-              </span>
-            </div>
-            <MessageItem message={message} onReaction={handleReaction} />
-          </React.Fragment>
-        );
-      }
-      
-      return <MessageItem key={message.id} message={message} onReaction={handleReaction} />;
-    });
-  };
-
-  const filteredMessages = selectedConversation?.messages?.filter(
-    message => message.content.toLowerCase().includes(messageSearch.toLowerCase())
-  ) || [];
 
   return (
     <div className="container mx-auto p-4">
@@ -245,25 +124,19 @@ const Messages = () => {
             {selectedConversation ? (
               <>
                 <div className="h-[calc(70vh-200px)] overflow-y-auto mb-4 p-4 space-y-4">
-                  {messageSearch ? (
-                    filteredMessages.length > 0 ? (
-                      filteredMessages.map(message => (
-                        <MessageItem key={message.id} message={message} onReaction={handleReaction} />
-                      ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-2">
-                        <MessageCircle className="h-12 w-12" />
-                        <p>No messages found</p>
-                      </div>
-                    )
-                  ) : (
-                    renderMessages()
-                  )}
+                  <MessageList
+                    messages={selectedConversation.messages}
+                    onReaction={handleReaction}
+                    messageSearch={messageSearch}
+                  />
                 </div>
                 <MessageInput
                   newMessage={newMessage}
                   onMessageChange={(e) => setNewMessage(e.target.value)}
-                  onSend={handleSendMessage}
+                  onSend={() => {
+                    handleSendMessage(newMessage);
+                    setNewMessage('');
+                  }}
                   onAttachment={handleAttachment}
                   onVoiceRecord={handleVoiceRecord}
                   isRecording={isRecording}
