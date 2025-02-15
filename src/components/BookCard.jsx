@@ -2,194 +2,237 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Flame, Heart, ThumbsUp } from "lucide-react";
+import { ShoppingCart, Flame, Heart, ThumbsUp, Loader } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/ui/use-toast";
 import confetti from 'canvas-confetti';
 
 const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
   const { addToCart } = useCart();
+  const { toast } = useToast();
   const [burnClicked, setBurnClicked] = useState(false);
   const [saveClicked, setSaveClicked] = useState(false);
   const [likeClicked, setLikeClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [retryAction, setRetryAction] = useState(null);
 
-  const handleBurn = () => {
-    setBurnClicked(true);
-    setTimeout(() => setBurnClicked(false), 1000);
-    onBurn(book.id);
+  const handleAction = async (action, handler) => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setRetryAction(null);
+
+    try {
+      switch(action) {
+        case 'burn':
+          setBurnClicked(true);
+          await handler();
+          setTimeout(() => setBurnClicked(false), 1000);
+          break;
+        case 'save':
+          setSaveClicked(true);
+          await handler();
+          setTimeout(() => setSaveClicked(false), 1000);
+          break;
+        case 'like':
+          setLikeClicked(true);
+          await handler();
+          setTimeout(() => setLikeClicked(false), 1000);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error during ${action} action:`, error);
+      setRetryAction({ action, handler });
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: `Failed to ${action} the book. Click to try again.`,
+        action: (
+          <Button 
+            variant="outline" 
+            onClick={() => handleAction(action, handler)}
+            className="bg-white text-red-500 hover:bg-red-50"
+          >
+            Retry
+          </Button>
+        ),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    setSaveClicked(true);
-    setTimeout(() => setSaveClicked(false), 1000);
-    onFavorite(book.id);
-  };
-
-  const handleLike = () => {
-    setLikeClicked(true);
-    setTimeout(() => setLikeClicked(false), 1000);
-    onLike(book.id);
-  };
-
-  const handleAddToCart = () => {
-    addToCart(book);
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(book);
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      toast({
+        title: "Added to Cart",
+        description: `${book.title} has been added to your cart`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to Add to Cart",
+        description: "Please try again",
+        action: (
+          <Button 
+            variant="outline" 
+            onClick={handleAddToCart}
+            className="bg-white text-red-500 hover:bg-red-50"
+          >
+            Retry
+          </Button>
+        ),
+      });
+    }
   };
 
   return (
-    <>
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black"
-      >
-        Skip to book content
-      </a>
-      
-      <Card 
-        className="w-full max-w-4xl mx-auto bg-black text-white"
-        role="article"
-        aria-label={`Book card for ${book.title} by ${book.author}`}
-      >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3 }}
+      className="w-full"
+    >
+      <Card className="w-full max-w-4xl mx-auto bg-black text-white overflow-hidden">
         <CardContent className="p-6">
           <motion.div 
             className="rounded-3xl bg-white text-black p-6 mb-6"
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300 }}
-            id="main-content"
           >
-            <motion.img 
-              src={book.coverUrl || '/placeholder.svg'} 
-              alt={`Book cover for ${book.title}`}
-              className="w-full h-64 object-cover rounded-lg mb-4 bg-gray-100"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            />
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={book.id}
+                src={book.coverUrl || '/placeholder.svg'} 
+                alt={book.title}
+                className="w-full h-64 object-cover rounded-lg mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              />
+            </AnimatePresence>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <h2 className="text-2xl font-bold mb-2" tabIndex={0}>{book.title}</h2>
-              <p className="text-lg mb-4" tabIndex={0}>by {book.author}</p>
-              <p className="text-xl" tabIndex={0}>{book.preview}</p>
-              <div 
-                className="flex flex-wrap gap-2 mt-2"
-                role="list"
-                aria-label="Book tags"
-              >
+              <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
+              <p className="text-lg mb-4">by {book.author}</p>
+              <p className="text-gray-600">{book.description}</p>
+              <div className="flex flex-wrap gap-2 mt-4">
                 {book.tags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className="text-sm px-3 py-1 bg-gray-100 rounded-full text-gray-600"
-                    role="listitem"
-                    tabIndex={0}
+                  <motion.span 
+                    key={tag}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="text-sm px-3 py-1 bg-gray-100 rounded-full"
                   >
                     {tag}
-                  </span>
+                  </motion.span>
                 ))}
               </div>
             </motion.div>
           </motion.div>
-          <div 
-            className="flex justify-between items-center"
-            role="group"
-            aria-label="Book actions"
-          >
-            <motion.div>
+          
+          <div className="flex justify-between items-center">
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
-                onClick={handleBurn}
-                className="rounded-full p-4 flex flex-col items-center focus:ring-2 focus:ring-red-500 focus:outline-none"
-                aria-label={`Burn ${book.title}`}
-                aria-pressed={burnClicked}
+                onClick={() => handleAction('burn', onBurn)}
+                className={`rounded-full p-4 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isLoading}
               >
-                <motion.div 
-                  className="text-red-500"
-                  animate={burnClicked ? {
-                    scale: [1, 1.2, 0],
-                    rotate: [0, -5, 10],
-                    opacity: [1, 1, 0]
-                  } : {}}
-                  transition={{ duration: 0.8 }}
-                >
-                  <Flame size={32} aria-hidden="true" />
-                  <span className="text-xs block mt-1">BURN</span>
-                </motion.div>
+                {isLoading && retryAction?.action === 'burn' ? (
+                  <Loader className="h-8 w-8 animate-spin" />
+                ) : (
+                  <motion.div 
+                    animate={burnClicked ? {
+                      rotate: [0, -10, 10, -10, 0],
+                      scale: [1, 1.2, 0.8, 1.1, 1]
+                    } : {}}
+                  >
+                    <Flame className="h-8 w-8 text-red-500" />
+                  </motion.div>
+                )}
               </Button>
             </motion.div>
 
-            <motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
-                onClick={handleSave}
-                className="rounded-full p-4 flex flex-col items-center focus:ring-2 focus:ring-pink-500 focus:outline-none"
-                aria-label={`Save ${book.title} to favorites`}
-                aria-pressed={saveClicked}
+                onClick={() => handleAction('save', onFavorite)}
+                className={`rounded-full p-4 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isLoading}
               >
-                <motion.div 
-                  className="text-pink-500"
-                  animate={saveClicked ? {
-                    scale: [1, 1.4, 0.8, 1.2, 1],
-                    rotate: [0, -15, 15, -15, 0]
-                  } : {}}
-                  transition={{ duration: 0.6 }}
-                >
-                  <Heart size={32} aria-hidden="true" />
-                  <span className="text-xs block mt-1">SAVE</span>
-                </motion.div>
+                {isLoading && retryAction?.action === 'save' ? (
+                  <Loader className="h-8 w-8 animate-spin" />
+                ) : (
+                  <motion.div 
+                    animate={saveClicked ? {
+                      scale: [1, 1.4, 0.8, 1.2, 1],
+                      rotate: [0, 15, -15, 15, 0]
+                    } : {}}
+                  >
+                    <Heart className="h-8 w-8 text-pink-500" />
+                  </motion.div>
+                )}
               </Button>
             </motion.div>
 
-            <motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 variant="ghost"
-                onClick={handleLike}
-                className="rounded-full p-4 flex flex-col items-center focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                aria-label={`Like ${book.title}`}
-                aria-pressed={likeClicked}
+                onClick={() => handleAction('like', onLike)}
+                className={`rounded-full p-4 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isLoading}
               >
-                <motion.div 
-                  className="text-blue-500"
-                  animate={likeClicked ? {
-                    scale: [1, 1.5, 1],
-                    y: [0, -10, 0],
-                    color: ['#3B82F6', '#10B981', '#3B82F6'],
-                    rotate: [0, 0, 360]
-                  } : {}}
-                  transition={{ 
-                    duration: 0.6,
-                    times: [0, 0.5, 1],
-                    ease: "easeInOut"
-                  }}
-                >
-                  <ThumbsUp size={32} aria-hidden="true" />
-                  <span className="text-xs block mt-1">LIKE</span>
-                </motion.div>
+                {isLoading && retryAction?.action === 'like' ? (
+                  <Loader className="h-8 w-8 animate-spin" />
+                ) : (
+                  <motion.div 
+                    animate={likeClicked ? {
+                      scale: [1, 1.5, 1],
+                      y: [0, -10, 0]
+                    } : {}}
+                  >
+                    <ThumbsUp className="h-8 w-8 text-blue-500" />
+                  </motion.div>
+                )}
               </Button>
             </motion.div>
           </div>
+
           <motion.div
+            className="mt-4"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="mt-4"
           >
             <Button 
-              onClick={handleAddToCart} 
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black focus:ring-2 focus:ring-yellow-600 focus:outline-none"
-              aria-label={`Add ${book.title} to cart`}
+              onClick={handleAddToCart}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
+              disabled={isLoading}
             >
-              <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
+              {isLoading ? (
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <ShoppingCart className="mr-2 h-4 w-4" />
+              )}
               Add to Cart
             </Button>
           </motion.div>
         </CardContent>
       </Card>
-    </>
+    </motion.div>
   );
 };
 
