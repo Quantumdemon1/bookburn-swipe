@@ -22,14 +22,20 @@ import {
 } from "@/components/ui/select";
 
 const Recent = () => {
-  const [viewMode, setViewMode] = useState('grid');
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [viewMode, setViewMode] = useState(() => 
+    localStorage.getItem('viewMode') || 'grid'
+  );
+  const [sortBy, setSortBy] = useState(() => 
+    localStorage.getItem('sortBy') || 'date'
+  );
+  const [sortOrder, setSortOrder] = useState(() => 
+    localStorage.getItem('sortOrder') || 'desc'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [minReadingTime, setMinReadingTime] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const recentBooks = [
     { 
       id: 1, 
@@ -109,36 +115,92 @@ const Recent = () => {
     return groups;
   }, {});
 
-  const handleShare = (book) => {
-    if (navigator.share) {
-      navigator.share({
-        title: book.title,
-        text: `Check out "${book.title}" by ${book.author}!`,
-        url: window.location.href
-      }).catch(() => {
-        navigator.clipboard.writeText(`${window.location.origin}/book/${book.id}`).then(() => {
-          toast({
-            title: "Share Link Copied!",
-            description: `Share link for "${book.title}" has been copied to clipboard.`
-          });
+  const handleShare = async (book) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: book.title,
+          text: `Check out "${book.title}" by ${book.author}!`,
+          url: `${window.location.origin}/book/${book.id}`
         });
-      });
-    } else {
-      navigator.clipboard.writeText(`${window.location.origin}/book/${book.id}`).then(() => {
+        toast({
+          title: "Shared Successfully!",
+          description: `"${book.title}" has been shared.`
+        });
+      } else {
+        await navigator.clipboard.writeText(`${window.location.origin}/book/${book.id}`);
         toast({
           title: "Share Link Copied!",
           description: `Share link for "${book.title}" has been copied to clipboard.`
         });
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        // User cancelled share
+        return;
+      }
+      toast({
+        title: "Share Failed",
+        description: "Could not share the book. Please try again.",
+        variant: "destructive"
       });
     }
   };
 
   const handleReread = (book) => {
+    try {
+      navigate(`/book/${book.id}`);
+      toast({
+        title: "Opening Book",
+        description: `Opening "${book.title}" for re-reading.`
+      });
+    } catch (error) {
+      toast({
+        title: "Navigation Failed",
+        description: "Could not open the book. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
     toast({
-      title: "Opening Book",
-      description: `Opening "${book.title}" for re-reading.`
+      title: `View Changed`,
+      description: `Switched to ${mode} view.`
     });
-    navigate(`/book/${book.id}`);
+  };
+
+  const handleSortOrderChange = () => {
+    setSortOrder(prev => {
+      const newOrder = prev === 'asc' ? 'desc' : 'asc';
+      toast({
+        title: "Sort Order Changed",
+        description: `Sorted in ${newOrder}ending order.`
+      });
+      return newOrder;
+    });
+  };
+
+  const handleSortByChange = (value) => {
+    setSortBy(value);
+    toast({
+      title: "Sort Changed",
+      description: `Sorted by ${value}.`
+    });
+  };
+
+  const handleMinReadingTimeChange = (e) => {
+    const value = Number(e.target.value);
+    if (value < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Reading time cannot be negative.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setMinReadingTime(value);
   };
 
   const totalTimeSpent = recentBooks.reduce((total, book) => total + book.timeSpent, 0);
@@ -202,6 +264,12 @@ const Recent = () => {
     }
   }, [totalTimeSpent, toast]);
 
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+    localStorage.setItem('sortBy', sortBy);
+    localStorage.setItem('sortOrder', sortOrder);
+  }, [viewMode, sortBy, sortOrder]);
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -211,16 +279,18 @@ const Recent = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setViewMode('grid')}
+              onClick={() => handleViewModeChange('grid')}
               className={`${viewMode === 'grid' ? 'bg-primary/10' : ''}`}
+              aria-label="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setViewMode('list')}
+              onClick={() => handleViewModeChange('list')}
               className={`${viewMode === 'list' ? 'bg-primary/10' : ''}`}
+              aria-label="List view"
             >
               <List className="h-4 w-4" />
             </Button>
@@ -234,8 +304,9 @@ const Recent = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-xs"
+          aria-label="Search books"
         />
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select value={sortBy} onValueChange={handleSortByChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
@@ -248,7 +319,8 @@ const Recent = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+          onClick={handleSortOrderChange}
+          aria-label={`Sort ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
         >
           {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
         </Button>
@@ -256,8 +328,10 @@ const Recent = () => {
           type="number"
           placeholder="Min reading time (minutes)"
           value={minReadingTime}
-          onChange={(e) => setMinReadingTime(Number(e.target.value))}
+          onChange={handleMinReadingTimeChange}
           className="max-w-xs"
+          min="0"
+          aria-label="Minimum reading time in minutes"
         />
       </div>
 
