@@ -72,9 +72,17 @@ const Match = () => {
       <motion.p 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-sm text-gray-400 mb-4 text-center"
+        className="text-sm text-gray-400 mb-4 text-center hidden md:block"
       >
         Swipe right to like, left to burn, or use arrow keys (←→) to navigate!
+      </motion.p>
+
+      <motion.p 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-sm text-gray-400 mb-4 text-center md:hidden"
+      >
+        Swipe right to like, left to burn!
       </motion.p>
       
       <AnimatePresence mode="wait">
@@ -104,6 +112,7 @@ const Match = () => {
             onDrag={(_, info) => {
               setDragDirection(info.offset.x > 0 ? 1 : -1);
             }}
+            className="max-w-md mx-auto md:max-w-2xl lg:max-w-3xl"
           >
             <BookCard
               book={{

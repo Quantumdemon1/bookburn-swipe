@@ -35,7 +35,7 @@ const Index = () => {
     if (!isSearching) {
       setIsLoading(true);
       const fetchBooks = async () => {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const initialBooks = getRecommendations(1, 1, selectedGenre);
         if (initialBooks.length > 0) {
           setCurrentBook(initialBooks[0]);
@@ -81,7 +81,6 @@ const Index = () => {
     setIsActionLoading(true);
     updateUserPreferences(bookId, action);
     
-    // Simulate network delay for the action
     await new Promise(resolve => setTimeout(resolve, 600));
     
     const nextBook = getNextRecommendation(bookId);
@@ -98,7 +97,6 @@ const Index = () => {
     setIsSearching(true);
     setIsLoading(true);
     
-    // Simulate network delay for search
     await new Promise(resolve => setTimeout(resolve, 800));
     
     const searchResults = searchBooks(query);
@@ -113,7 +111,6 @@ const Index = () => {
     setIsSearching(false);
     setIsLoading(true);
     
-    // Simulate network delay for genre change
     await new Promise(resolve => setTimeout(resolve, 800));
     
     const newBooks = getRecommendations(1, 1, genre);
@@ -138,23 +135,27 @@ const Index = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
       {isNewUser && (
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4"
+          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-r"
           role="alert"
         >
           <p className="font-bold">Welcome to Book Burn!</p>
-          <p>Start exploring books by swiping through recommendations or use the search bar to find specific titles.</p>
-          <p className="text-sm mt-2">Pro tip: Use arrow keys to navigate (←→ to burn/like, ↑ to favorite)</p>
+          <p className="hidden md:block">Start exploring books by swiping through recommendations or use the search bar to find specific titles.</p>
+          <p className="md:hidden">Start exploring books by swiping through recommendations!</p>
+          <p className="text-sm mt-2 hidden md:block">Pro tip: Use arrow keys to navigate (←→ to burn/like, ↑ to favorite)</p>
         </motion.div>
       )}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <SearchBar onSearch={handleSearch} />
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <div className="w-full md:w-auto">
+          <SearchBar onSearch={handleSearch} />
+        </div>
         <Select onValueChange={handleGenreChange} defaultValue="all">
-          <SelectTrigger className="w-[180px] mt-4 md:mt-0">
+          <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Select Genre" />
           </SelectTrigger>
           <SelectContent>
@@ -166,50 +167,56 @@ const Index = () => {
           </SelectContent>
         </Select>
       </div>
-      <AnimatePresence mode="wait">
-        {isLoading ? (
-          <motion.div
-            key="skeleton"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <BookCardSkeleton />
-          </motion.div>
-        ) : currentBook ? (
-          <motion.div
-            key={currentBook.id}
-            initial={{ opacity: 0, x: 200 }}
-            animate={{ 
-              opacity: 1, 
-              x: 0,
-              rotate: dragDirection * 5 
-            }}
-            exit={{ opacity: 0, x: -200 }}
-            drag={!isActionLoading ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            onDragEnd={handleDragEnd}
-            onDrag={(_, info) => {
-              setDragDirection(info.offset.x > 0 ? 1 : -1);
-            }}
-          >
-            <BookCard
-              book={currentBook}
-              onBurn={() => handleAction(currentBook.id, 'burn')}
-              onLike={() => handleAction(currentBook.id, 'like')}
-              onFavorite={() => handleAction(currentBook.id, 'favorite')}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center mt-8"
-          >
-            <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full max-w-md md:max-w-lg"
+            >
+              <BookCardSkeleton />
+            </motion.div>
+          ) : currentBook ? (
+            <motion.div
+              key={currentBook.id}
+              initial={{ opacity: 0, x: 200 }}
+              animate={{ 
+                opacity: 1, 
+                x: 0,
+                rotate: dragDirection * 5 
+              }}
+              exit={{ opacity: 0, x: -200 }}
+              drag={!isActionLoading ? "x" : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={handleDragEnd}
+              onDrag={(_, info) => {
+                setDragDirection(info.offset.x > 0 ? 1 : -1);
+              }}
+              className="w-full max-w-md md:max-w-lg"
+            >
+              <BookCard
+                book={currentBook}
+                onBurn={() => handleAction(currentBook.id, 'burn')}
+                onLike={() => handleAction(currentBook.id, 'like')}
+                onFavorite={() => handleAction(currentBook.id, 'favorite')}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
+            >
+              <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <div ref={ref} className="text-center mt-8">
         <Button 
           onClick={() => {
