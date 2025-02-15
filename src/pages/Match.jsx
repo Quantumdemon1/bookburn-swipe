@@ -15,56 +15,85 @@ const Match = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    initializeUserPreferences();
-    setIsLoading(true);
-    setCurrentBook(getNextRecommendation());
-    setIsLoading(false);
-
-    const handleKeyPress = (e) => {
-      if (!currentBook) return;
-      
-      switch(e.key) {
-        case 'ArrowLeft':
-          handleAction('burn');
-          break;
-        case 'ArrowRight':
-          handleAction('like');
-          break;
-        case 'ArrowUp':
-          handleAction('favorite');
-          break;
+    try {
+      initializeUserPreferences();
+      setIsLoading(true);
+      const nextBook = getNextRecommendation();
+      if (nextBook) {
+        setCurrentBook(nextBook);
       }
-    };
+      setIsLoading(false);
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+      const handleKeyPress = (e) => {
+        if (!currentBook) return;
+        
+        switch(e.key) {
+          case 'ArrowLeft':
+            handleAction('burn');
+            break;
+          case 'ArrowRight':
+            handleAction('like');
+            break;
+          case 'ArrowUp':
+            handleAction('favorite');
+            break;
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyPress);
+      return () => window.removeEventListener('keydown', handleKeyPress);
+    } catch (error) {
+      console.error('Error in Match component initialization:', error);
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load book recommendations. Please try again.",
+      });
+    }
   }, []);
 
   const handleAction = (action) => {
     if (!currentBook) return;
 
-    updateUserPreferences(currentBook.id, action);
-    toast({
-      title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-      description: `${currentBook.title} by ${currentBook.author}`,
-    });
-    
-    setIsLoading(true);
-    const nextBook = getNextRecommendation(currentBook.id);
-    setCurrentBook(nextBook);
-    setIsLoading(false);
+    try {
+      updateUserPreferences(currentBook.id, action);
+      toast({
+        title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
+        description: `${currentBook.title} by ${currentBook.author}`,
+      });
+      
+      setIsLoading(true);
+      const nextBook = getNextRecommendation(currentBook.id);
+      if (nextBook) {
+        setCurrentBook(nextBook);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error handling action:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process action. Please try again.",
+      });
+    }
   };
 
   const handleDragEnd = (_, info) => {
-    const offset = info.offset.x;
-    if (Math.abs(offset) > 100) {
-      if (offset > 0) {
-        handleAction('like');
-      } else {
-        handleAction('burn');
+    try {
+      const offset = info.offset.x;
+      if (Math.abs(offset) > 100) {
+        if (offset > 0) {
+          handleAction('like');
+        } else {
+          handleAction('burn');
+        }
       }
+      setDragDirection(0);
+    } catch (error) {
+      console.error('Error in drag handling:', error);
+      setDragDirection(0);
     }
-    setDragDirection(0);
   };
 
   return (
@@ -96,7 +125,7 @@ const Match = () => {
           >
             <Loader className="w-8 h-8 animate-spin" />
           </motion.div>
-        ) : currentBook && (
+        ) : currentBook ? (
           <motion.div
             key={currentBook.id}
             initial={{ opacity: 0, x: 200 }}
@@ -123,6 +152,14 @@ const Match = () => {
               onLike={() => handleAction('like')}
               onFavorite={() => handleAction('favorite')}
             />
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-gray-500 py-8"
+          >
+            No more books to show.
           </motion.div>
         )}
       </AnimatePresence>
