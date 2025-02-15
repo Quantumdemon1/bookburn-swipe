@@ -1,3 +1,4 @@
+
 import { books } from '../data';
 import { initializeUserPreferences } from './preferencesManager';
 import { calculateBookScore } from './bookScoring';
@@ -26,12 +27,13 @@ export const getRecommendations = (page = 1, limit = 10, selectedGenre = 'all') 
 
 // Get next recommended book
 export const getNextRecommendation = (currentBookId) => {
-  // Mark current book as shown
+  // Mark current book as shown if provided
   if (currentBookId) {
     addToShownBooks(currentBookId);
   }
 
   const preferences = initializeUserPreferences();
+  console.log('Books available:', books.length); // Debug log
   
   // Get all unshown books and score them
   const availableBooks = books
@@ -41,6 +43,8 @@ export const getNextRecommendation = (currentBookId) => {
       score: calculateBookScore(book, preferences)
     }))
     .sort((a, b) => b.score - a.score);
+
+  console.log('Available books:', availableBooks.length); // Debug log
 
   // If no more unshown books, reset and try again
   if (availableBooks.length === 0) {

@@ -10,47 +10,53 @@ import { Loader } from "lucide-react";
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [dragDirection, setDragDirection] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      initializeUserPreferences();
-      setIsLoading(true);
-      const nextBook = getNextRecommendation();
-      if (nextBook) {
-        setCurrentBook(nextBook);
-      }
-      setIsLoading(false);
-
-      const handleKeyPress = (e) => {
-        if (!currentBook) return;
-        
-        switch(e.key) {
-          case 'ArrowLeft':
-            handleAction('burn');
-            break;
-          case 'ArrowRight':
-            handleAction('like');
-            break;
-          case 'ArrowUp':
-            handleAction('favorite');
-            break;
+    const loadInitialBook = async () => {
+      try {
+        initializeUserPreferences();
+        const nextBook = getNextRecommendation();
+        console.log('Initial book:', nextBook); // Debug log
+        if (nextBook) {
+          setCurrentBook(nextBook);
+        } else {
+          console.log('No book found'); // Debug log
         }
-      };
+      } catch (error) {
+        console.error('Error in Match component initialization:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load book recommendations. Please try again.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      window.addEventListener('keydown', handleKeyPress);
-      return () => window.removeEventListener('keydown', handleKeyPress);
-    } catch (error) {
-      console.error('Error in Match component initialization:', error);
-      setIsLoading(false);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load book recommendations. Please try again.",
-      });
-    }
+    loadInitialBook();
+
+    const handleKeyPress = (e) => {
+      if (!currentBook) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          handleAction('burn');
+          break;
+        case 'ArrowRight':
+          handleAction('like');
+          break;
+        case 'ArrowUp':
+          handleAction('favorite');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
   const handleAction = (action) => {
@@ -65,6 +71,7 @@ const Match = () => {
       
       setIsLoading(true);
       const nextBook = getNextRecommendation(currentBook.id);
+      console.log('Next book:', nextBook); // Debug log
       if (nextBook) {
         setCurrentBook(nextBook);
       }
@@ -159,7 +166,7 @@ const Match = () => {
             animate={{ opacity: 1 }}
             className="text-center text-gray-500 py-8"
           >
-            No more books to show.
+            No more books to show. Check back later!
           </motion.div>
         )}
       </AnimatePresence>
