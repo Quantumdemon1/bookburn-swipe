@@ -3,34 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 const BookContent = ({
   book
 }) => {
-  return <motion.div className="rounded-3xl bg-white text-black p-4 sm:p-6 mb-4 sm:mb-6 w-full max-w-[1400px] mx-auto" whileHover={{
+  return <motion.div whileHover={{
     scale: 1.02
   }} transition={{
     type: "spring",
     stiffness: 300
-  }}>
+  }} className="bg-white text-black p-4 sm:p-6 mb-4 sm:mb-6 w-full max-w-[1400px] mx-auto px-[25px] py-[12px] rounded-xl">
       <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full">
         <AnimatePresence mode="wait">
-          <motion.div className="relative w-full ">
-            <div className="aspect-[32/9] relative">
-              <motion.img key={book.id} src={book.coverUrl || '/placeholder.svg'} alt={book.title} className="w-full h-full object-cover rounded-lg absolute inset-0" srcSet={`${book.coverUrl || '/placeholder.svg'} 300w,
-                        ${book.coverUrl || '/placeholder.svg'} 600w,
-                        ${book.coverUrl || '/placeholder.svg'} 900w`} sizes="(max-width: 640px) 100vw,
-                       (max-width: 1024px) 60vw,
-                       60vw" initial={{
-              opacity: 0,
-              y: 20
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} exit={{
-              opacity: 0,
-              y: -20
-            }} transition={{
-              duration: 0.3
-            }} loading="lazy" />
-            </div>
-          </motion.div>
+          
         </AnimatePresence>
         
         <motion.div initial={{
