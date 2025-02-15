@@ -1,5 +1,4 @@
-
-import { books } from '../data/books';
+import { books } from '../data';
 import { initializeUserPreferences } from './preferencesManager';
 import { calculateBookScore } from './bookScoring';
 import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesManager';
