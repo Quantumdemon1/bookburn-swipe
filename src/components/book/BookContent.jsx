@@ -48,14 +48,14 @@ const BookContent = ({ book }) => {
             <p className="text-gray-600 text-sm sm:text-base md:text-lg">{book.description}</p>
           </div>
           
-          <div className="flex flex-wrap gap-1.5 mt-auto pt-3 border-t border-gray-100">
+          <div className="flex flex-wrap gap-1 mt-auto pt-1.5 border-t border-gray-50">
             {book.tags.map((tag, index) => (
               <motion.span 
                 key={tag}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-[10px] px-2 py-0.5 bg-gray-50 text-gray-600 rounded-full"
+                className="text-[8px] px-1.5 py-0.25 bg-gray-50 text-gray-500 rounded-full tracking-tight"
               >
                 {tag}
               </motion.span>
