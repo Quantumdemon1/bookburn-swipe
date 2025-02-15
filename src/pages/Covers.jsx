@@ -1,23 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
-import BookCard from '@/components/BookCard';
-import BookCardSkeleton from '@/components/BookCardSkeleton';
-import SearchBar from '@/components/SearchBar';
 import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
 import { getRecommendations, searchBooks, getNextRecommendation } from '@/utils/recommendationEngine';
 import { updateUserPreferences } from '@/utils/interactionWeights';
-import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import WelcomeMessage from '@/components/covers/WelcomeMessage';
+import FilterSection from '@/components/covers/FilterSection';
+import BookDisplay from '@/components/covers/BookDisplay';
+import NextButton from '@/components/covers/NextButton';
 
-const Index = () => {
+const Covers = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -135,106 +127,40 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      {isNewUser && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-r"
-          role="alert"
-        >
-          <p className="font-bold">Welcome to Book Burn!</p>
-          <p className="hidden md:block">Start exploring books by swiping through recommendations or use the search bar to find specific titles.</p>
-          <p className="md:hidden">Start exploring books by swiping through recommendations!</p>
-          <p className="text-sm mt-2 hidden md:block">Pro tip: Use arrow keys to navigate (←→ to burn/like, ↑ to favorite)</p>
-        </motion.div>
-      )}
+      {isNewUser && <WelcomeMessage />}
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <div className="w-full md:w-auto">
-          <SearchBar onSearch={handleSearch} />
-        </div>
-        <Select onValueChange={handleGenreChange} defaultValue="all">
-          <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder="Select Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Genres</SelectItem>
-            <SelectItem value="adventure">Adventure</SelectItem>
-            <SelectItem value="classic">Classic</SelectItem>
-            <SelectItem value="horror">Horror</SelectItem>
-            <SelectItem value="non-fiction">Non-Fiction</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSection 
+        onSearch={handleSearch}
+        onGenreChange={handleGenreChange}
+      />
 
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full max-w-screen-xl"
-            >
-              <BookCardSkeleton />
-            </motion.div>
-          ) : currentBook ? (
-            <motion.div
-              key={currentBook.id}
-              initial={{ opacity: 0, x: 200 }}
-              animate={{ 
-                opacity: 1, 
-                x: 0,
-                rotate: dragDirection * 5 
-              }}
-              exit={{ opacity: 0, x: -200 }}
-              drag={!isActionLoading ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={handleDragEnd}
-              onDrag={(_, info) => {
-                setDragDirection(info.offset.x > 0 ? 1 : -1);
-              }}
-              className="w-full max-w-screen-xl"
-            >
-              <BookCard
-                book={currentBook}
-                onBurn={() => handleAction(currentBook.id, 'burn')}
-                onLike={() => handleAction(currentBook.id, 'like')}
-                onFavorite={() => handleAction(currentBook.id, 'favorite')}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center"
-            >
-              <p className="text-gray-500">No books found. Try adjusting your search or genre filter.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <BookDisplay 
+        isLoading={isLoading}
+        currentBook={currentBook}
+        dragDirection={dragDirection}
+        isActionLoading={isActionLoading}
+        onDragEnd={handleDragEnd}
+        onDrag={(_, info) => {
+          setDragDirection(info.offset.x > 0 ? 1 : -1);
+        }}
+        onBurn={() => handleAction(currentBook.id, 'burn')}
+        onLike={() => handleAction(currentBook.id, 'like')}
+        onFavorite={() => handleAction(currentBook.id, 'favorite')}
+      />
 
-      <div ref={ref} className="text-center mt-8">
-        <Button 
+      <div ref={ref}>
+        <NextButton 
           onClick={() => {
             if (currentBook && !isActionLoading) {
               const nextBook = getNextRecommendation(currentBook.id);
               setCurrentBook(nextBook);
             }
-          }} 
-          variant="outline"
-          className="hover:scale-105 transition-transform"
-          disabled={isActionLoading}
-        >
-          {isActionLoading ? (
-            <Loader className="w-4 h-4 animate-spin mr-2" />
-          ) : "Next Book"}
-        </Button>
+          }}
+          isLoading={isActionLoading}
+        />
       </div>
     </div>
   );
 };
 
-export default Index;
+export default Covers;
