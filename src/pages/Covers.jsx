@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import BookCardSkeleton from '@/components/BookCardSkeleton';
@@ -176,7 +175,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full max-w-md md:max-w-lg"
+              className="w-full max-w-screen-xl"
             >
               <BookCardSkeleton />
             </motion.div>
@@ -196,7 +195,7 @@ const Index = () => {
               onDrag={(_, info) => {
                 setDragDirection(info.offset.x > 0 ? 1 : -1);
               }}
-              className="w-full max-w-md md:max-w-lg"
+              className="w-full max-w-screen-xl"
             >
               <BookCard
                 book={currentBook}
