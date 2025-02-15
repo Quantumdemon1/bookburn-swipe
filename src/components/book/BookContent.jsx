@@ -14,7 +14,7 @@ const BookContent = ({ book }) => {
           <motion.div 
             className="relative w-full md:w-1/3"
           >
-            <div className="aspect-[3/4] md:aspect-[16/9] relative">
+            <div className="aspect-[16/9] relative">
               <motion.img 
                 key={book.id}
                 src={book.coverUrl || '/placeholder.svg'} 
@@ -48,14 +48,14 @@ const BookContent = ({ book }) => {
             <p className="text-gray-600 text-sm sm:text-base md:text-lg">{book.description}</p>
           </div>
           
-          <div className="flex flex-wrap gap-1 mt-auto pt-1.5 border-t border-gray-50">
+          <div className="flex flex-wrap gap-0.5 mt-auto pt-1 border-t border-gray-50">
             {book.tags.map((tag, index) => (
               <motion.span 
                 key={tag}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-[8px] px-1.5 py-0.25 bg-gray-50 text-gray-500 rounded-full tracking-tight"
+                className="text-[6px] px-1 py-0.25 bg-gray-50 text-gray-400 rounded-full tracking-tighter"
               >
                 {tag}
               </motion.span>
