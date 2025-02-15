@@ -14,7 +14,7 @@ const BookContent = ({ book }) => {
           key={book.id}
           src={book.coverUrl || '/placeholder.svg'} 
           alt={book.title}
-          className="w-full h-64 object-cover rounded-lg mb-4"
+          className="w-full h-48 object-cover rounded-lg mb-4" // Changed from h-64 to h-48
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
