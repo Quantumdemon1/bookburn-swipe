@@ -9,7 +9,6 @@ import {
   Settings as SettingsIcon,
   Clock,
   LogIn,
-  UserPlus,
   ShoppingCart
 } from 'lucide-react';
 import Match from './pages/Match';
@@ -67,16 +66,10 @@ export const navItems = [
     icon: <Clock className="h-4 w-4 mr-2" />
   },
   {
-    name: 'Login',
+    name: 'Login/Register',
     to: '/login',
     page: <Login />,
     icon: <LogIn className="h-4 w-4 mr-2" />
-  },
-  {
-    name: 'Register',
-    to: '/register',
-    page: <Register />,
-    icon: <UserPlus className="h-4 w-4 mr-2" />
   },
   {
     name: 'Checkout',
