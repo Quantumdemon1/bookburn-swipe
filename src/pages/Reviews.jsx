@@ -190,7 +190,7 @@ const Reviews = () => {
 
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">All Reviews</h2>
-            <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="border rounded-md p-2">
+            <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="border rounded-md p-2 bg-red-600 hover:bg-red-500">
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="mostLiked">Most Liked</option>
