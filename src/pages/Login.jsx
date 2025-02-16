@@ -78,7 +78,8 @@ const Login = () => {
       });
     }
     
-    navigate('/');
+    // Navigate to admin page if admin role, otherwise go to home
+    navigate(role === 'admin' ? '/admin' : '/');
   };
 
   return (
