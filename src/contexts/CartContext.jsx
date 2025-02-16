@@ -26,12 +26,17 @@ export const CartProvider = ({ children }) => {
   } = useCartOperations(user, setCart);
 
   useEffect(() => {
-    if (user) {
-      loadCart().finally(() => setIsLoading(false));
-    } else {
-      setCart([]);
+    const initializeCart = async () => {
+      setIsLoading(true);
+      if (user?.id) {
+        await loadCart();
+      } else {
+        setCart([]);
+      }
       setIsLoading(false);
-    }
+    };
+
+    initializeCart();
   }, [user, loadCart]);
 
   const value = {

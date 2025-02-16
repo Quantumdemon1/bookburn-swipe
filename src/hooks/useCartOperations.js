@@ -7,6 +7,11 @@ export const useCartOperations = (user, setCart) => {
   const { toast } = useToast();
 
   const loadCart = useCallback(async () => {
+    if (!user?.id) {
+      console.log('No user ID available for loading cart');
+      return [];
+    }
+
     try {
       const items = await cartService.getCartItems(user.id);
       setCart(items);
@@ -23,7 +28,7 @@ export const useCartOperations = (user, setCart) => {
   }, [user, setCart, toast]);
 
   const addToCart = useCallback(async (book) => {
-    if (!user) {
+    if (!user?.id) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -33,11 +38,22 @@ export const useCartOperations = (user, setCart) => {
     }
 
     try {
-      await cartService.addItem(user.id, book.id);
+      // First check if the item already exists in the cart
+      const currentCart = await loadCart();
+      const existingItem = currentCart.find(item => item.id === book.id);
       
+      if (existingItem) {
+        // If it exists, update the quantity
+        await cartService.updateQuantity(user.id, book.id, existingItem.quantity + 1);
+      } else {
+        // If it's new, add it
+        await cartService.addItem(user.id, book.id);
+      }
+      
+      // Update local state
       setCart(prevCart => {
-        const existingItem = prevCart.find(item => item.id === book.id);
-        if (existingItem) {
+        const existingItemInState = prevCart.find(item => item.id === book.id);
+        if (existingItemInState) {
           return prevCart.map(item =>
             item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
           );
@@ -57,10 +73,10 @@ export const useCartOperations = (user, setCart) => {
         description: "Failed to add item to cart"
       });
     }
-  }, [user, setCart, toast]);
+  }, [user, setCart, loadCart, toast]);
 
   const updateQuantity = useCallback(async (bookId, quantity) => {
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
       if (quantity <= 0) {
@@ -83,10 +99,10 @@ export const useCartOperations = (user, setCart) => {
         description: "Failed to update quantity"
       });
     }
-  }, [user, setCart, toast]);
+  }, [user, setCart, removeFromCart, toast]);
 
   const removeFromCart = useCallback(async (bookId) => {
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
       if (bookId) {
