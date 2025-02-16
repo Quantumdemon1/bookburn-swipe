@@ -58,7 +58,7 @@ const Match = () => {
     }
     setDragDirection(0);
   };
-  return <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+  return <div className="container mx-auto sm:px-6 lg:px-8 md:py-10 px-0 py-0">
       <h1 className="font-bold text-center mb-6 text-2xl">Match with Books</h1>
       <p className="text-gray-400 mb-8 text-center max-w-2xl mx-auto text-xs">
         Discover books through their content. Swipe right if you like what you read, left if it's not your style.
