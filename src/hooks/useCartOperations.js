@@ -86,7 +86,7 @@ export const useCartOperations = (user, setCart) => {
 
     try {
       // First check if the item already exists in the cart
-      const currentCart = await loadCart();
+      const currentCart = await cartService.getCartItems(user.id);
       const existingItem = currentCart.find(item => item.id === book.id);
       
       if (existingItem) {
@@ -120,7 +120,7 @@ export const useCartOperations = (user, setCart) => {
         description: "Failed to add item to cart"
       });
     }
-  }, [user, setCart, loadCart, toast]);
+  }, [user, setCart, toast]);
 
   return {
     loadCart,
