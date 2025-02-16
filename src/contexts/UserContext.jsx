@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/services/api';
+import { supabase } from '@/lib/supabase';
+import { useToast } from "@/components/ui/use-toast";
 
 const UserContext = createContext();
 
@@ -9,62 +10,88 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isAuthenticated = localStorage.getItem('isAuthenticated');
-      const storedUser = localStorage.getItem('currentUser');
-      
-      if (isAuthenticated && storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
-    };
+    });
 
-    checkAuth();
+    // Listen for changes on auth state (login, signup, signout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email, password) => {
     try {
-      const { user: loggedInUser } = await api.login(email, password);
-      setUser(loggedInUser);
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      setUser(data.user);
       return true;
     } catch (error) {
       console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
       return false;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('currentUser');
-    navigate('/login');
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const requestVerification = async () => {
     try {
-      const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]');
-      if (verificationRequests.some(req => req.userId === user.id)) {
-        throw new Error('Verification request already pending');
-      }
-      
-      const request = {
-        id: Date.now(),
-        userId: user.id,
-        status: 'pending',
-        timestamp: new Date().toISOString(),
-        userEmail: user.email,
-        userName: user.name
-      };
-      
-      verificationRequests.push(request);
-      localStorage.setItem('verificationRequests', JSON.stringify(verificationRequests));
-      return { success: true, request };
+      const { data, error } = await supabase
+        .from('verification_requests')
+        .insert([
+          { user_id: user.id, status: 'pending' }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Verification Requested",
+        description: "Your verification request has been submitted.",
+      });
+
+      return { success: true, request: data };
     } catch (error) {
       console.error('Verification request error:', error);
+      toast({
+        title: "Request Failed",
+        description: error.message,
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -75,71 +102,47 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]');
-      const verifiedUsers = JSON.parse(localStorage.getItem('verifiedUsers') || '[]');
-      
-      const requestIndex = verificationRequests.findIndex(req => req.id === requestId);
-      if (requestIndex === -1) {
-        throw new Error('Request not found');
-      }
+      const { data: request, error: fetchError } = await supabase
+        .from('verification_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
 
-      const request = verificationRequests[requestIndex];
-      const memberNumber = verifiedUsers.length + 1;
+      if (fetchError) throw fetchError;
 
       // Update user's verification status
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const userIndex = users.findIndex(u => u.id === request.userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex] = {
-          ...users[userIndex],
-          isVerified: true,
-          memberNumber,
-          verificationDate: new Date().toISOString()
-        };
-        localStorage.setItem('users', JSON.stringify(users));
-      }
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          is_verified: true,
+          verification_date: new Date().toISOString()
+        })
+        .eq('id', request.user_id);
 
-      // Update current user if it's the same user
-      if (user && user.id === request.userId) {
-        const updatedUser = {
-          ...user,
-          isVerified: true,
-          memberNumber,
-          verificationDate: new Date().toISOString()
-        };
-        setUser(updatedUser);
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      }
+      if (updateError) throw updateError;
 
-      // Update verification request status
-      verificationRequests[requestIndex] = {
-        ...request,
-        status: 'approved',
-        memberNumber,
-        approvedAt: new Date().toISOString()
-      };
+      // Update request status
+      const { error: requestError } = await supabase
+        .from('verification_requests')
+        .update({ 
+          status: 'approved',
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
 
-      verifiedUsers.push({
-        userId: request.userId,
-        memberNumber,
-        verificationDate: new Date().toISOString()
-      });
+      if (requestError) throw requestError;
 
-      localStorage.setItem('verificationRequests', JSON.stringify(verificationRequests));
-      localStorage.setItem('verifiedUsers', JSON.stringify(verifiedUsers));
-
-      return { success: true, memberNumber };
+      return { success: true };
     } catch (error) {
       console.error('Approval error:', error);
       throw error;
     }
   };
 
-  const isAdmin = () => user?.role === 'admin';
+  const isAdmin = () => user?.user_metadata?.role === 'admin';
   const isAuthenticated = () => !!user;
-  const isVerified = () => user?.isVerified || false;
-  const getMemberNumber = () => user?.memberNumber || null;
+  const isVerified = () => user?.user_metadata?.is_verified || false;
+  const getMemberNumber = () => user?.user_metadata?.member_number || null;
 
   return (
     <UserContext.Provider value={{
