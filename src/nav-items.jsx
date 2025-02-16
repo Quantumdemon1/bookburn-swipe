@@ -1,91 +1,88 @@
-import { BookOpen, Flame, Heart, Clock, Users, User, LogIn, UserPlus, ShoppingCart, Star, MessageSquare, Mail } from "lucide-react";
-import Covers from "./pages/Covers.jsx";
-import Match from "./pages/Match.jsx";
-import Favorites from "./pages/Favorites.jsx";
-import Recent from "./pages/Recent.jsx";
-import Friends from "./pages/Friends.jsx";
-import Profile from "./pages/Profile.jsx";
-import Ratings from "./pages/Ratings.jsx";
-import Reviews from "./pages/Reviews.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import Checkout from "./pages/Checkout.jsx";
-import Messages from "./pages/Messages.jsx";
+import React from 'react';
+import Match from './pages/Match';
+import Covers from './pages/Covers';
+import Reviews from './pages/Reviews';
+import Ratings from './pages/Ratings';
+import Favorites from './pages/Favorites';
+import Messages from './pages/Messages';
+import Friends from './pages/Friends';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import Recent from './pages/Recent';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Checkout from './pages/Checkout';
+import Discover from './pages/Discover';
 
-/**
- * Central place for defining the navigation items. Used for navigation components and routing.
- */
 export const navItems = [
   {
-    title: "Covers",
-    to: "/",
-    icon: <BookOpen className="h-4 w-4" />,
-    page: <Covers />,
+    name: 'Match',
+    to: '/',
+    page: <Match />
   },
   {
-    title: "Match",
-    to: "/match",
-    icon: <Flame className="h-4 w-4" />,
-    page: <Match />,
+    name: 'Covers',
+    to: '/covers',
+    page: <Covers />
   },
   {
-    title: "Favorites",
-    to: "/favorites",
-    icon: <Heart className="h-4 w-4" />,
-    page: <Favorites />,
+    name: 'Discover',
+    to: '/discover',
+    page: <Discover />
   },
   {
-    title: "Recent",
-    to: "/recent",
-    icon: <Clock className="h-4 w-4" />,
-    page: <Recent />,
+    name: 'Reviews',
+    to: '/reviews',
+    page: <Reviews />
   },
   {
-    title: "Friends",
-    to: "/friends",
-    icon: <Users className="h-4 w-4" />,
-    page: <Friends />,
+    name: 'Ratings',
+    to: '/ratings',
+    page: <Ratings />
   },
   {
-    title: "Messages",
-    to: "/messages",
-    icon: <Mail className="h-4 w-4" />,
-    page: <Messages />,
+    name: 'Favorites',
+    to: '/favorites',
+    page: <Favorites />
   },
   {
-    title: "Profile",
-    to: "/profile",
-    icon: <User className="h-4 w-4" />,
-    page: <Profile />,
+    name: 'Messages',
+    to: '/messages',
+    page: <Messages />
   },
   {
-    title: "Ratings",
-    to: "/ratings",
-    icon: <Star className="h-4 w-4" />,
-    page: <Ratings />,
+    name: 'Friends',
+    to: '/friends',
+    page: <Friends />
   },
   {
-    title: "Reviews",
-    to: "/reviews",
-    icon: <MessageSquare className="h-4 w-4" />,
-    page: <Reviews />,
+    name: 'Profile',
+    to: '/profile',
+    page: <Profile />
   },
   {
-    title: "Login",
-    to: "/login",
-    icon: <LogIn className="h-4 w-4" />,
-    page: <Login />,
+    name: 'Settings',
+    to: '/settings',
+    page: <Settings />
   },
   {
-    title: "Register",
-    to: "/register",
-    icon: <UserPlus className="h-4 w-4" />,
-    page: <Register />,
+    name: 'Recent',
+    to: '/recent',
+    page: <Recent />
   },
   {
-    title: "Checkout",
-    to: "/checkout",
-    icon: <ShoppingCart className="h-4 w-4" />,
-    page: <Checkout />,
+    name: 'Login',
+    to: '/login',
+    page: <Login />
+  },
+  {
+    name: 'Register',
+    to: '/register',
+    page: <Register />
+  },
+  {
+    name: 'Checkout',
+    to: '/checkout',
+    page: <Checkout />
   },
 ];
