@@ -81,7 +81,7 @@ const Layout = ({ children }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-popover">
-              {navItems.map(({ name, to, icon }) => (
+              {navItems.filter(item => !item.hidden).map(({ name, to, icon }) => (
                 <DropdownMenuItem key={to} asChild>
                   <Link to={to} className="flex items-center w-full px-2 py-2">
                     {icon}
