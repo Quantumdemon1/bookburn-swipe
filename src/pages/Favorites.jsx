@@ -75,7 +75,7 @@ const Favorites = () => {
         <Link to="/reviews" className="text-red-500 hover:underline mr-4">
           View All Reviews
         </Link>
-        <Link to="/ratings" className="text-blue-500 hover:underline">
+        <Link to="/ratings" className="text-red-500 hover:underline">
           View and Edit All Ratings
         </Link>
       </div>
