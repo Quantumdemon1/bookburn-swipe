@@ -8,12 +8,15 @@ import FilterBar from '@/components/friends/FilterBar';
 import ViewControls from '@/components/friends/ViewControls';
 import FriendCard from '@/components/friends/FriendCard';
 
+// Base64 encoded SVG placeholder
+const placeholderAvatar = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFNUU3RUIiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4NSIgcj0iMzUiIGZpbGw9IiM5Q0EzQUYiLz48cGF0aCBkPSJNNDAgMTgwQzQwIDE0MC4yMzUgNzIuMzU1IDEwOCAxMTIuMTIgMTA4SDE0MEMxNzkuNzY1IDEwOCAyMTIuMTIgMTQwLjIzNSAyMTIuMTIgMTgwSDQwWiIgZmlsbD0iIzlDQTNBRiIvPjwvc3ZnPg==";
+
 const Friends = () => {
   const [friends] = useState([
     { 
       id: 1, 
       name: "Alice Johnson", 
-      avatar: "/placeholder.svg", 
+      avatar: placeholderAvatar, 
       matchPercentage: 85,
       interests: ["Books", "Music", "Films"],
       isOnline: true
@@ -21,7 +24,7 @@ const Friends = () => {
     { 
       id: 2, 
       name: "Bob Smith", 
-      avatar: "/placeholder.svg", 
+      avatar: placeholderAvatar, 
       matchPercentage: 72,
       interests: ["Games", "Music"],
       isOnline: false
@@ -29,7 +32,7 @@ const Friends = () => {
     { 
       id: 3, 
       name: "Carol Williams", 
-      avatar: "/placeholder.svg", 
+      avatar: placeholderAvatar, 
       matchPercentage: 68,
       interests: ["Books", "Films"],
       isOnline: true
