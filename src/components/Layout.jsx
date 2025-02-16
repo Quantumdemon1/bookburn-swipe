@@ -11,6 +11,7 @@ import {
 import { navItems } from '../nav-items';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useUser } from '@/contexts/UserContext';
 import ShoppingCart from './ShoppingCart';
 import {
   Sheet,
@@ -23,6 +24,7 @@ import {
 
 const Layout = ({ children }) => {
   const { cart } = useCart();
+  const { isAdmin } = useUser();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -41,6 +43,13 @@ const Layout = ({ children }) => {
   const toggleTheme = () => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
+
+  // Filter navigation items based on admin status
+  const filteredNavItems = navItems.filter(item => {
+    if (item.hidden) return false;
+    if (item.adminOnly && !isAdmin()) return false;
+    return true;
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -81,7 +90,7 @@ const Layout = ({ children }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-popover">
-              {navItems.filter(item => !item.hidden).map(({ name, to, icon }) => (
+              {filteredNavItems.map(({ name, to, icon }) => (
                 <DropdownMenuItem key={to} asChild>
                   <Link to={to} className="flex items-center w-full px-2 py-2">
                     {icon}
