@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -14,10 +16,11 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast({
@@ -27,17 +30,37 @@ const Register = () => {
       });
       return;
     }
-    const newUser = { name, email, password };
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const updatedUsers = [...existingUsers, newUser];
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    localStorage.setItem('isAuthenticated', 'true');
-    toast({
-      title: "Success",
-      description: "Registration successful! You are now logged in.",
-    });
-    navigate('/');
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            username: email.split('@')[0], // Create a default username from email
+            avatar_url: null
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Registration Successful",
+        description: "Please check your email to verify your account.",
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        title: "Registration Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -114,7 +137,9 @@ const Register = () => {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700">Register</Button>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Register'}
+            </Button>
           </form>
           <div className="mt-4 text-center">
             <Link to="/login" className="text-red-400 hover:text-red-300">Already have an account? Log In</Link>
