@@ -5,7 +5,6 @@ import { CartProvider } from './contexts/CartContext';
 import { UserProvider } from './contexts/UserContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
-import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AnimatePresence } from 'framer-motion';
 import Routes from './Routes';
@@ -24,18 +23,16 @@ function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <UserProvider>
-            <CartProvider>
-              <ErrorBoundary>
-                <Layout>
-                  <AnimatePresence mode="wait">
-                    <Routes />
-                  </AnimatePresence>
-                </Layout>
-              </ErrorBoundary>
-              <Toaster />
-            </CartProvider>
-          </UserProvider>
+          <ErrorBoundary>
+            <UserProvider>
+              <CartProvider>
+                <AnimatePresence mode="wait">
+                  <Routes />
+                </AnimatePresence>
+                <Toaster />
+              </CartProvider>
+            </UserProvider>
+          </ErrorBoundary>
         </Router>
       </QueryClientProvider>
     </React.StrictMode>
