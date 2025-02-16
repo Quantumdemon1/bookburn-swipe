@@ -27,6 +27,53 @@ export const useCartOperations = (user, setCart) => {
     }
   }, [user, setCart, toast]);
 
+  const removeFromCart = useCallback(async (bookId) => {
+    if (!user?.id) return;
+
+    try {
+      if (bookId) {
+        await cartService.removeItem(user.id, bookId);
+        setCart(prevCart => prevCart.filter(item => item.id !== bookId));
+      } else {
+        await cartService.clearCart(user.id);
+        setCart([]);
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove item from cart"
+      });
+    }
+  }, [user, setCart, toast]);
+
+  const updateQuantity = useCallback(async (bookId, quantity) => {
+    if (!user?.id) return;
+
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(bookId);
+        return;
+      }
+
+      await cartService.updateQuantity(user.id, bookId, quantity);
+      
+      setCart(prevCart =>
+        prevCart.map(item =>
+          item.id === bookId ? { ...item, quantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update quantity"
+      });
+    }
+  }, [user, setCart, removeFromCart, toast]);
+
   const addToCart = useCallback(async (book) => {
     if (!user?.id) {
       toast({
@@ -74,53 +121,6 @@ export const useCartOperations = (user, setCart) => {
       });
     }
   }, [user, setCart, loadCart, toast]);
-
-  const updateQuantity = useCallback(async (bookId, quantity) => {
-    if (!user?.id) return;
-
-    try {
-      if (quantity <= 0) {
-        await removeFromCart(bookId);
-        return;
-      }
-
-      await cartService.updateQuantity(user.id, bookId, quantity);
-      
-      setCart(prevCart =>
-        prevCart.map(item =>
-          item.id === bookId ? { ...item, quantity } : item
-        )
-      );
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update quantity"
-      });
-    }
-  }, [user, setCart, removeFromCart, toast]);
-
-  const removeFromCart = useCallback(async (bookId) => {
-    if (!user?.id) return;
-
-    try {
-      if (bookId) {
-        await cartService.removeItem(user.id, bookId);
-        setCart(prevCart => prevCart.filter(item => item.id !== bookId));
-      } else {
-        await cartService.clearCart(user.id);
-        setCart([]);
-      }
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to remove item from cart"
-      });
-    }
-  }, [user, setCart, toast]);
 
   return {
     loadCart,
