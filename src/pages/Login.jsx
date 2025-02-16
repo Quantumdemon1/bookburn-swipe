@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
 import { User, Users, UserCog } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setUser } = useUser();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +27,7 @@ const Login = () => {
         title: "Login Successful",
         description: "Welcome back!",
       });
+      setUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('isAuthenticated', 'true');
       navigate('/');
@@ -45,6 +48,7 @@ const Login = () => {
       case 'unregistered':
         localStorage.removeItem('currentUser');
         localStorage.removeItem('isAuthenticated');
+        setUser(null);
         break;
       case 'user':
         user = {
@@ -65,6 +69,7 @@ const Login = () => {
     }
 
     if (user) {
+      setUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('isAuthenticated', 'true');
       toast({

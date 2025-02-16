@@ -54,7 +54,8 @@ export const UserProvider = ({ children }) => {
       login,
       logout,
       isAdmin,
-      isAuthenticated
+      isAuthenticated,
+      setUser // Add this to allow direct user updates
     }}>
       {children}
     </UserContext.Provider>
