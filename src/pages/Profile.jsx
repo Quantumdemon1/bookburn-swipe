@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,7 +9,6 @@ import EditProfile from '@/components/EditProfile';
 import Ratings from './Ratings';
 import Reviews from './Reviews';
 import Favorites from './Favorites';
-
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState({
@@ -21,28 +19,22 @@ const Profile = () => {
     favoriteGenres: ["Fiction", "Mystery", "Science Fiction", "Fantasy", "Thriller"],
     booksRead: 127,
     reviews: 45,
-    rating: 4.7,
+    rating: 4.7
   });
-
   const handleEditProfile = () => {
     setIsEditing(true);
   };
-
-  const handleSaveProfile = (updatedUser) => {
+  const handleSaveProfile = updatedUser => {
     setUser(updatedUser);
     setIsEditing(false);
   };
-
   const handleCancelEdit = () => {
     setIsEditing(false);
   };
-
   if (isEditing) {
     return <EditProfile user={user} onSave={handleSaveProfile} onCancel={handleCancelEdit} />;
   }
-
-  return (
-    <div className="container mx-auto p-4">
+  return <div className="container mx-auto p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="relative">
           <div className="absolute top-4 right-4">
@@ -65,9 +57,7 @@ const Profile = () => {
           <div className="mb-6">
             <h3 className="font-semibold mb-2">Favorite Genres</h3>
             <div className="flex flex-wrap gap-2">
-              {user.favoriteGenres.map((genre, index) => (
-                <Badge key={index} variant="secondary">{genre}</Badge>
-              ))}
+              {user.favoriteGenres.map((genre, index) => <Badge key={index} variant="secondary">{genre}</Badge>)}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center mb-8">
@@ -90,7 +80,7 @@ const Profile = () => {
 
           <Tabs defaultValue="reviews" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="reviews" className="flex items-center gap-2">
+              <TabsTrigger value="reviews" className="flex items-center gap-2 bg-red-600 hover:bg-red-500">
                 <MessageSquare className="h-4 w-4" />
                 Reviews
               </TabsTrigger>
@@ -115,8 +105,6 @@ const Profile = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default Profile;
