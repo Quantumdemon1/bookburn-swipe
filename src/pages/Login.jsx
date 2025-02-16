@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
-import { api } from '@/services/api';
 import { User, Users, UserCog } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { supabase } from '@/lib/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,21 +15,20 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { setUser } = useUser();
+  const { login } = useUser();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { user } = await api.login(email, password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      setUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/');
+      const success = await login(email, password);
+      if (success) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        navigate('/');
+      }
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -83,7 +81,6 @@ const Login = () => {
       });
     }
     
-    // Navigate to admin page if admin role, otherwise go to home
     navigate(role === 'admin' ? '/admin' : '/');
   };
 
