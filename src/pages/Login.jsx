@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
+import { User, Users, UserCog } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -35,6 +37,48 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDemoLogin = (role) => {
+    let user;
+    switch (role) {
+      case 'unregistered':
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('isAuthenticated');
+        break;
+      case 'user':
+        user = {
+          id: 'demo-user',
+          email: 'user@demo.com',
+          name: 'Demo User',
+          role: 'user'
+        };
+        break;
+      case 'admin':
+        user = {
+          id: 'demo-admin',
+          email: 'admin@demo.com',
+          name: 'Demo Admin',
+          role: 'admin'
+        };
+        break;
+    }
+
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('isAuthenticated', 'true');
+      toast({
+        title: "Demo Login",
+        description: `Logged in as ${role}`,
+      });
+    } else {
+      toast({
+        title: "Demo Mode",
+        description: "Browsing as unregistered user",
+      });
+    }
+    
+    navigate('/');
   };
 
   return (
@@ -73,6 +117,45 @@ const Login = () => {
               {isLoading ? 'Logging in...' : 'Log In'}
             </Button>
           </form>
+          
+          <div className="mt-6 space-y-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-gray-900 px-2 text-gray-400">Demo Accounts</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleDemoLogin('unregistered')}
+                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Unregistered
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleDemoLogin('user')}
+                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              >
+                <User className="mr-2 h-4 w-4" />
+                User
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleDemoLogin('admin')}
+                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                Admin
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-4 text-center">
             <Link to="/register" className="text-red-400 hover:text-red-300">Don't have an account? Register</Link>
           </div>
