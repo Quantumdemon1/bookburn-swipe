@@ -1,15 +1,13 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { api } from '@/utils/api';
+import { api } from '@/services/api';
 
-const ReviewEditor = ({
-  bookId,
-  onReviewSubmitted
-}) => {
+const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,12 +21,13 @@ const ReviewEditor = ({
     }
   };
 
-  const applyFormat = format => {
+  const applyFormat = (format) => {
     const textarea = document.querySelector('textarea');
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const currentContent = content;
     let formattedText = '';
+
     switch (format) {
       case 'bold':
         formattedText = `**${selectedText}**`;
@@ -54,18 +53,20 @@ const ReviewEditor = ({
       default:
         return;
     }
+
     if (formattedText) {
       const newContent = currentContent.substring(0, start) + formattedText + currentContent.substring(end);
       setContent(newContent);
     }
   };
 
-  const handleShare = async platform => {
+  const handleShare = async (platform) => {
     const shareData = {
       title: 'Check out this review',
       text: content.substring(0, 100) + '...',
       url: window.location.href
     };
+
     switch (platform) {
       case 'twitter':
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`, '_blank');
@@ -124,7 +125,9 @@ const ReviewEditor = ({
       });
       setContent('');
       setRating(0);
-      onReviewSubmitted?.();
+      if (onReviewSubmitted) {
+        await onReviewSubmitted();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -144,7 +147,7 @@ const ReviewEditor = ({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center space-x-1 mb-4">
-            {[1, 2, 3, 4, 5].map(star => (
+            {[1, 2, 3, 4, 5].map((star) => (
               <Button
                 key={star}
                 variant="ghost"
@@ -152,7 +155,11 @@ const ReviewEditor = ({
                 type="button"
                 onClick={() => setRating(star)}
               >
-                <Star className={`w-6 h-6 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                <Star 
+                  className={`w-6 h-6 ${
+                    star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                  }`} 
+                />
               </Button>
             ))}
           </div>
@@ -188,7 +195,7 @@ const ReviewEditor = ({
 
           <Button 
             type="submit" 
-            disabled={isSubmitting} 
+            disabled={isSubmitting}
             className="w-full bg-red-600 hover:bg-red-500"
           >
             {isSubmitting ? "Posting..." : "Post Review"}
