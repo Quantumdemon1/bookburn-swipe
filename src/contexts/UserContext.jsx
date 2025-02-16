@@ -15,13 +15,33 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const sessionUser = session?.user;
+      if (sessionUser) {
+        // Set admin role for specific email
+        if (sessionUser.email === 'kellis209@gmail.com') {
+          sessionUser.user_metadata = {
+            ...sessionUser.user_metadata,
+            role: 'admin'
+          };
+        }
+      }
+      setUser(sessionUser ?? null);
       setLoading(false);
     });
 
     // Listen for changes on auth state (login, signup, signout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const sessionUser = session?.user;
+      if (sessionUser) {
+        // Set admin role for specific email
+        if (sessionUser.email === 'kellis209@gmail.com') {
+          sessionUser.user_metadata = {
+            ...sessionUser.user_metadata,
+            role: 'admin'
+          };
+        }
+      }
+      setUser(sessionUser ?? null);
       setLoading(false);
     });
 
@@ -36,6 +56,14 @@ export const UserProvider = ({ children }) => {
       });
 
       if (error) throw error;
+
+      // Set admin role for specific email after login
+      if (data.user.email === 'kellis209@gmail.com') {
+        data.user.user_metadata = {
+          ...data.user.user_metadata,
+          role: 'admin'
+        };
+      }
 
       setUser(data.user);
       return true;
@@ -67,7 +95,12 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const isAdmin = () => user?.user_metadata?.role === 'admin';
+  const isAdmin = () => {
+    if (!user) return false;
+    // Check for specific email or admin role in metadata
+    return user.email === 'kellis209@gmail.com' || user?.user_metadata?.role === 'admin';
+  };
+  
   const isAuthenticated = () => !!user;
   const isVerified = () => user?.user_metadata?.is_verified || false;
   const getMemberNumber = () => user?.user_metadata?.member_number || null;
