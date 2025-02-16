@@ -27,7 +27,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
       label: 'BURN',
       onClick: () => handleAction('burn', onBurn),
       isClicked: burnClicked,
-      color: 'red',
+      color: '#ea384c', // Red color for burn
       animation: {
         rotate: [0, -10, 10, -10, 0],
         scale: [1, 1.2, 0.8, 1.1, 1]
@@ -38,7 +38,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
       label: 'SAVE',
       onClick: () => handleAction('save', onFavorite),
       isClicked: saveClicked,
-      color: 'pink',
+      color: '#FFFFFF', // White color for save
       animation: {
         scale: [1, 1.4, 0.8, 1.2, 1],
         rotate: [0, 15, -15, 15, 0]
@@ -49,7 +49,7 @@ const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
       label: 'LIKE',
       onClick: () => handleAction('like', onLike),
       isClicked: likeClicked,
-      color: 'blue',
+      color: '#1EAEDB', // Blue color for like
       animation: {
         scale: [1, 1.5, 1],
         y: [0, -10, 0]
