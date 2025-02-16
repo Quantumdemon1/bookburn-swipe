@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, BookOpen, ShoppingCart as CartIcon, Moon, Sun } from 'lucide-react';
+import { Menu, BookOpen, ShoppingCart as CartIcon, Moon, Sun, LogOut, LogIn } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,8 +25,9 @@ import {
 
 const Layout = () => {
   const { cart } = useCart();
-  const { isAdmin } = useUser();
+  const { isAdmin, isAuthenticated, logout } = useUser();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') || 'light';
@@ -45,12 +46,19 @@ const Layout = () => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
-  // Filter navigation items based on admin status
+  // Filter navigation items based on admin status and authentication
   const filteredNavItems = navItems.filter(item => {
     if (item.hidden) return false;
     if (item.adminOnly && !isAdmin()) return false;
+    // Hide Login/Register when authenticated
+    if (item.name === 'Login/Register' && isAuthenticated()) return false;
     return true;
   });
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -99,6 +107,12 @@ const Layout = () => {
                   </Link>
                 </DropdownMenuItem>
               ))}
+              {isAuthenticated() && (
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center w-full px-2 py-2 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
