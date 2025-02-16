@@ -7,6 +7,9 @@ import { api } from '@/services/api';
 import FilterBar from '@/components/friends/FilterBar';
 import ViewControls from '@/components/friends/ViewControls';
 import FriendCard from '@/components/friends/FriendCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, MessageCircle } from 'lucide-react';
+import Messages from './Messages';
 
 // Base64 encoded SVG placeholder
 const placeholderAvatar = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFNUU3RUIiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4NSIgcj0iMzUiIGZpbGw9IiM5Q0EzQUYiLz48cGF0aCBkPSJNNDAgMTgwQzQwIDE0MC4yMzUgNzIuMzU1IDEwOCAxMTIuMTIgMTA4SDE0MEMxNzkuNzY1IDEwOCAyMTIuMTIgMTQwLjIzNSAyMTIuMTIgMTgwSDQwWiIgZmlsbD0iIzlDQTNBRiIvPjwvc3ZnPg==";
@@ -80,7 +83,6 @@ const Friends = () => {
       
       setMessage('');
       setSelectedFriend(null);
-      navigate('/messages');
     } catch (error) {
       toast({
         title: "Error",
@@ -90,65 +92,81 @@ const Friends = () => {
     }
   };
 
-  const handleViewProfile = (friend) => {
-    navigate(`/messages?friend=${friend.id}&name=${encodeURIComponent(friend.name)}&avatar=${encodeURIComponent(friend.avatar)}`);
-  };
-
   return (
-    <div className="container mx-auto p-4 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">Friends with Similar Tastes</h1>
-        <div className="flex flex-wrap gap-4">
-          <FilterBar
-            matchFilter={matchFilter}
-            setMatchFilter={setMatchFilter}
-            selectedInterest={selectedInterest}
-            setSelectedInterest={setSelectedInterest}
-          />
-          <ViewControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-          />
-        </div>
-      </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Friends & Messages</h1>
       
-      <div className={`
-        grid gap-4 animate-fade-in
-        ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}
-      `}>
-        {filteredAndSortedFriends.map((friend) => (
-          <FriendCard
-            key={friend.id}
-            friend={friend}
-            viewMode={viewMode}
-            selectedInterest={selectedInterest}
-            selectedFriend={selectedFriend}
-            setSelectedFriend={setSelectedFriend}
-            message={message}
-            setMessage={setMessage}
-            handleSendMessage={handleSendMessage}
-            handleViewProfile={handleViewProfile}
-          />
-        ))}
-      </div>
-      
-      {filteredAndSortedFriends.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-lg text-muted-foreground">No friends match your current filters</p>
-          <Button 
-            variant="ghost" 
-            onClick={() => {
-              setMatchFilter([0]);
-              setSelectedInterest("all");
-            }}
-            className="mt-4"
-          >
-            Reset Filters
-          </Button>
-        </div>
-      )}
+      <Tabs defaultValue="friends" className="w-full">
+        <TabsList className="w-full grid grid-cols-2 mb-6">
+          <TabsTrigger value="friends" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Friends
+          </TabsTrigger>
+          <TabsTrigger value="messages" className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Messages
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="friends" className="mt-0">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex flex-wrap gap-4">
+              <FilterBar
+                matchFilter={matchFilter}
+                setMatchFilter={setMatchFilter}
+                selectedInterest={selectedInterest}
+                setSelectedInterest={setSelectedInterest}
+              />
+              <ViewControls
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+              />
+            </div>
+          </div>
+          
+          <div className={`
+            grid gap-4 animate-fade-in
+            ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}
+          `}>
+            {filteredAndSortedFriends.map((friend) => (
+              <FriendCard
+                key={friend.id}
+                friend={friend}
+                viewMode={viewMode}
+                selectedInterest={selectedInterest}
+                selectedFriend={selectedFriend}
+                setSelectedFriend={setSelectedFriend}
+                message={message}
+                setMessage={setMessage}
+                handleSendMessage={handleSendMessage}
+                handleViewProfile={() => {}}
+              />
+            ))}
+          </div>
+          
+          {filteredAndSortedFriends.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No friends match your current filters</p>
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setMatchFilter([0]);
+                  setSelectedInterest("all");
+                }}
+                className="mt-4"
+              >
+                Reset Filters
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="messages" className="mt-0">
+          <Messages />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

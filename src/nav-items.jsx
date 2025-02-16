@@ -4,7 +4,6 @@ import {
   Gamepad2, 
   Book, 
   Compass,
-  MessageCircle,
   Users,
   User,
   Settings as SettingsIcon,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import Match from './pages/Match';
 import Covers from './pages/Covers';
-import Messages from './pages/Messages';
 import Friends from './pages/Friends';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
@@ -43,12 +41,6 @@ export const navItems = [
     to: '/discover',
     page: <Discover />,
     icon: <Compass className="h-4 w-4 mr-2" />
-  },
-  {
-    name: 'Messages',
-    to: '/messages',
-    page: <Messages />,
-    icon: <MessageCircle className="h-4 w-4 mr-2" />
   },
   {
     name: 'Friends',
