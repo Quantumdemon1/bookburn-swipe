@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { cartService } from '@/services/cartService';
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from '@/lib/supabase';
 
 export const useCartOperations = (user, setCart) => {
   const { toast } = useToast();
@@ -31,8 +32,22 @@ export const useCartOperations = (user, setCart) => {
     if (!user?.id || !bookId) return;
 
     try {
-      await cartService.removeItem(user.id, bookId);
+      // First delete from the database
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('book_id', bookId);
+
+      if (error) throw error;
+
+      // Only update the UI state if the database operation was successful
       setCart(prevCart => prevCart.filter(item => item.id !== bookId));
+      
+      toast({
+        title: "Removed from Cart",
+        description: "Item has been removed from your cart"
+      });
     } catch (error) {
       console.error('Error removing from cart:', error);
       toast({
@@ -40,8 +55,10 @@ export const useCartOperations = (user, setCart) => {
         title: "Error",
         description: "Failed to remove item from cart"
       });
+      // Reload the cart to ensure UI is in sync with database
+      loadCart();
     }
-  }, [user, setCart, toast]);
+  }, [user, setCart, toast, loadCart]);
 
   const updateQuantity = useCallback(async (bookId, quantity) => {
     if (!user?.id || !bookId) return;
