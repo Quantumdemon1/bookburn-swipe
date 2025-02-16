@@ -4,9 +4,6 @@ import {
   Gamepad2, 
   Book, 
   Compass,
-  MessageSquare, 
-  Star, 
-  Heart, 
   MessageCircle,
   Users,
   User,
@@ -18,9 +15,6 @@ import {
 } from 'lucide-react';
 import Match from './pages/Match';
 import Covers from './pages/Covers';
-import Reviews from './pages/Reviews';
-import Ratings from './pages/Ratings';
-import Favorites from './pages/Favorites';
 import Messages from './pages/Messages';
 import Friends from './pages/Friends';
 import Profile from './pages/Profile';
@@ -49,24 +43,6 @@ export const navItems = [
     to: '/discover',
     page: <Discover />,
     icon: <Compass className="h-4 w-4 mr-2" />
-  },
-  {
-    name: 'Reviews',
-    to: '/reviews',
-    page: <Reviews />,
-    icon: <MessageSquare className="h-4 w-4 mr-2" />
-  },
-  {
-    name: 'Ratings',
-    to: '/ratings',
-    page: <Ratings />,
-    icon: <Star className="h-4 w-4 mr-2" />
-  },
-  {
-    name: 'Favorites',
-    to: '/favorites',
-    page: <Favorites />,
-    icon: <Heart className="h-4 w-4 mr-2" />
   },
   {
     name: 'Messages',

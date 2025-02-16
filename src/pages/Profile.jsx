@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Book, Star, PenTool } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Book, Star, PenTool, Heart, MessageSquare } from 'lucide-react';
 import EditProfile from '@/components/EditProfile';
+import Ratings from './Ratings';
+import Reviews from './Reviews';
+import Favorites from './Favorites';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,7 +43,7 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader className="relative">
           <div className="absolute top-4 right-4">
             <Button variant="outline" onClick={handleEditProfile}>Edit Profile</Button>
@@ -66,7 +70,7 @@ const Profile = () => {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-4 text-center mb-8">
             <div className="flex flex-col items-center">
               <Book className="w-8 h-8 mb-2 text-blue-500" />
               <p className="text-2xl font-bold">{user.booksRead}</p>
@@ -83,6 +87,32 @@ const Profile = () => {
               <p className="text-sm text-gray-600">Avg. Rating</p>
             </div>
           </div>
+
+          <Tabs defaultValue="reviews" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Reviews
+              </TabsTrigger>
+              <TabsTrigger value="ratings" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Ratings
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="reviews" className="mt-4">
+              <Reviews />
+            </TabsContent>
+            <TabsContent value="ratings" className="mt-4">
+              <Ratings />
+            </TabsContent>
+            <TabsContent value="favorites" className="mt-4">
+              <Favorites />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
