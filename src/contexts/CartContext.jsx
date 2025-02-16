@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/components/ui/use-toast";
@@ -36,12 +35,7 @@ export const CartProvider = ({ children }) => {
         .from('cart_items')
         .select(`
           quantity,
-          books:book_id (
-            id,
-            title,
-            price,
-            image_url
-          )
+          books(id, title, price, image_url)
         `)
         .eq('user_id', user.id);
 
