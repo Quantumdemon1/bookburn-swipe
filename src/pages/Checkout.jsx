@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +7,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useUser } from '@/contexts/UserContext';
 
 const Checkout = () => {
-  const { cart, clearCart } = useCart();
+  const { cart, removeFromCart } = useCart();
+  const { user } = useUser();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleRemoveItem = async (bookId) => {
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('book_id', bookId);
+
+      if (error) throw error;
+
+      // Update local state after successful backend deletion
+      removeFromCart(bookId);
+      
+      toast({
+        title: "Item Removed",
+        description: "Item has been removed from your cart",
+      });
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove item. Please try again."
+      });
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,7 +53,7 @@ const Checkout = () => {
       title: "Order Placed",
       description: "Thank you for your purchase!",
     });
-    clearCart();
+    removeFromCart(); // Clear the cart
     navigate('/');
   };
 
@@ -35,9 +67,21 @@ const Checkout = () => {
           </CardHeader>
           <CardContent>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between mb-2">
-                <span>{item.title} (x{item.quantity})</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
+              <div key={item.id} className="flex justify-between items-center mb-2">
+                <div className="flex-grow">
+                  <span>{item.title} (x{item.quantity})</span>
+                  <div className="text-sm text-gray-500">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveItem(item.id)}
+                  className="ml-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             ))}
             <div className="mt-4 pt-4 border-t">
