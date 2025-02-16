@@ -57,7 +57,8 @@ export const navItems = [
     name: 'Settings',
     to: '/settings',
     page: <Settings />,
-    icon: <SettingsIcon className="h-4 w-4 mr-2" />
+    icon: <SettingsIcon className="h-4 w-4 mr-2" />,
+    hidden: true
   },
   {
     name: 'Recent',
@@ -81,6 +82,6 @@ export const navItems = [
     name: 'Register',
     to: '/register',
     page: <Register />,
-    hidden: true // This route will be available but not shown in navigation
+    hidden: true
   },
 ];

@@ -1,16 +1,20 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Star, PenTool, Heart, MessageSquare } from 'lucide-react';
+import { Book, Star, PenTool, Heart, MessageSquare, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import EditProfile from '@/components/EditProfile';
 import Ratings from './Ratings';
 import Reviews from './Reviews';
 import Favorites from './Favorites';
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
   const [user, setUser] = useState({
     name: "John Doe",
     age: 28,
@@ -21,24 +25,34 @@ const Profile = () => {
     reviews: 45,
     rating: 4.7
   });
+
   const handleEditProfile = () => {
     setIsEditing(true);
   };
+
   const handleSaveProfile = updatedUser => {
     setUser(updatedUser);
     setIsEditing(false);
   };
+
   const handleCancelEdit = () => {
     setIsEditing(false);
   };
+
   if (isEditing) {
     return <EditProfile user={user} onSave={handleSaveProfile} onCancel={handleCancelEdit} />;
   }
-  return <div className="container mx-auto p-4">
+
+  return (
+    <div className="container mx-auto p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="relative">
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 flex gap-2">
             <Button variant="outline" onClick={handleEditProfile}>Edit Profile</Button>
+            <Button variant="outline" onClick={() => navigate('/settings')}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
           </div>
           <div className="flex flex-col items-center">
             <Avatar className="w-32 h-32 mb-4">
@@ -57,7 +71,9 @@ const Profile = () => {
           <div className="mb-6">
             <h3 className="font-semibold mb-2">Favorite Genres</h3>
             <div className="flex flex-wrap gap-2">
-              {user.favoriteGenres.map((genre, index) => <Badge key={index} variant="secondary">{genre}</Badge>)}
+              {user.favoriteGenres.map((genre, index) => (
+                <Badge key={index} variant="secondary">{genre}</Badge>
+              ))}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center mb-8">
@@ -105,6 +121,8 @@ const Profile = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default Profile;
