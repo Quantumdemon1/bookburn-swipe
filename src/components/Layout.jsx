@@ -30,9 +30,9 @@ const Layout = () => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'light';
+      return localStorage.getItem('theme') || 'dark'; // Changed default to 'dark'
     }
-    return 'light';
+    return 'dark'; // Changed default to 'dark'
   });
 
   useEffect(() => {
