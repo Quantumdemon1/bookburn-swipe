@@ -1,5 +1,5 @@
 
-import { books } from '../utils/recommendationAlgorithm';
+import { books } from '../utils/recommendationEngine';
 import type { Book } from '../types';
 
 // Simulated API delay
