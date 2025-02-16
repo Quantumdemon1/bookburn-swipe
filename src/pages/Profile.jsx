@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,7 +18,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isVerified, getMemberNumber, requestVerification } = useUser();
+  const { user, isVerified, getMemberNumber, requestVerification, setUser } = useUser();
   const [isRequestingVerification, setIsRequestingVerification] = useState(false);
 
   const handleVerificationRequest = async () => {
@@ -52,6 +53,14 @@ const Profile = () => {
     setIsEditing(false);
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
+
   if (isEditing) {
     return <EditProfile user={user} onSave={handleSaveProfile} onCancel={handleCancelEdit} />;
   }
@@ -69,11 +78,11 @@ const Profile = () => {
           </div>
           <div className="flex flex-col items-center">
             <Avatar className="w-32 h-32 mb-4">
-              <AvatarImage src={user?.avatar} alt={user?.name} />
-              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-3xl mb-1">
-              {user?.name}
+              {user.name}
               {isVerified() && (
                 <Badge className="ml-2 bg-blue-500" variant="secondary">
                   <Shield className="w-3 h-3 mr-1" />
@@ -96,55 +105,55 @@ const Profile = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-gray-600 mb-6">{user.bio}</p>
+          <p className="text-center text-gray-600 mb-6">{user.bio || 'No bio available'}</p>
           <div className="mb-6">
             <h3 className="font-semibold mb-2">Favorite Genres</h3>
             <div className="flex flex-wrap gap-2">
-              {user.favoriteGenres.map((genre, index) => (
+              {user.favoriteGenres?.map((genre, index) => (
                 <Badge key={index} variant="secondary">{genre}</Badge>
-              ))}
+              )) || <p className="text-gray-500">No favorite genres added</p>}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center mb-8">
             <div className="flex flex-col items-center">
               <Book className="w-8 h-8 mb-2 text-blue-500" />
-              <p className="text-2xl font-bold">{user.booksRead}</p>
+              <p className="text-2xl font-bold">{user.booksRead || 0}</p>
               <p className="text-sm text-gray-600">Books Read</p>
             </div>
             <div className="flex flex-col items-center">
               <PenTool className="w-8 h-8 mb-2 text-green-500" />
-              <p className="text-2xl font-bold">{user.reviews}</p>
+              <p className="text-2xl font-bold">{user.reviews || 0}</p>
               <p className="text-sm text-gray-600">Reviews</p>
             </div>
             <div className="flex flex-col items-center">
               <Star className="w-8 h-8 mb-2 text-yellow-500" />
-              <p className="text-2xl font-bold">{user.rating.toFixed(1)}</p>
+              <p className="text-2xl font-bold">{(user.rating || 0).toFixed(1)}</p>
               <p className="text-sm text-gray-600">Avg. Rating</p>
             </div>
           </div>
 
           <Tabs defaultValue="reviews" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="reviews" className="flex items-center gap-2 bg-red-600 hover:bg-red-500">
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Reviews
               </TabsTrigger>
-              <TabsTrigger value="ratings" className="flex items-center gap-2 bg-red-600 hover:bg-red-500">
+              <TabsTrigger value="ratings" className="flex items-center gap-2">
                 <Star className="h-4 w-4" />
                 Ratings
               </TabsTrigger>
-              <TabsTrigger value="favorites" className="flex items-center gap-2 bg-red-600 hover:bg-red-500">
+              <TabsTrigger value="favorites" className="flex items-center gap-2">
                 <Heart className="h-4 w-4" />
                 Favorites
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="reviews" className="mt-4">
+            <TabsContent value="reviews">
               <Reviews />
             </TabsContent>
-            <TabsContent value="ratings" className="mt-4">
+            <TabsContent value="ratings">
               <Ratings />
             </TabsContent>
-            <TabsContent value="favorites" className="mt-4">
+            <TabsContent value="favorites">
               <Favorites />
             </TabsContent>
           </Tabs>
