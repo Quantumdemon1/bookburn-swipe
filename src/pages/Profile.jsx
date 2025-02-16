@@ -84,7 +84,7 @@ const Profile = () => {
                 <MessageSquare className="h-4 w-4" />
                 Reviews
               </TabsTrigger>
-              <TabsTrigger value="ratings" className="flex items-center gap-2">
+              <TabsTrigger value="ratings" className="flex items-center gap-2 bg-red-600 hover:bg-red-500">
                 <Star className="h-4 w-4" />
                 Ratings
               </TabsTrigger>
