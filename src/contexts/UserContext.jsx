@@ -67,78 +67,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const requestVerification = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('verification_requests')
-        .insert([
-          { user_id: user.id, status: 'pending' }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Verification Requested",
-        description: "Your verification request has been submitted.",
-      });
-
-      return { success: true, request: data };
-    } catch (error) {
-      console.error('Verification request error:', error);
-      toast({
-        title: "Request Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const approveVerification = async (requestId) => {
-    if (!isAdmin()) {
-      throw new Error('Unauthorized');
-    }
-
-    try {
-      const { data: request, error: fetchError } = await supabase
-        .from('verification_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Update user's verification status
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          is_verified: true,
-          verification_date: new Date().toISOString()
-        })
-        .eq('id', request.user_id);
-
-      if (updateError) throw updateError;
-
-      // Update request status
-      const { error: requestError } = await supabase
-        .from('verification_requests')
-        .update({ 
-          status: 'approved',
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', requestId);
-
-      if (requestError) throw requestError;
-
-      return { success: true };
-    } catch (error) {
-      console.error('Approval error:', error);
-      throw error;
-    }
-  };
-
   const isAdmin = () => user?.user_metadata?.role === 'admin';
   const isAuthenticated = () => !!user;
   const isVerified = () => user?.user_metadata?.is_verified || false;
@@ -147,16 +75,14 @@ export const UserProvider = ({ children }) => {
   return (
     <UserContext.Provider value={{
       user,
+      setUser,
       loading,
       login,
       logout,
       isAdmin,
       isAuthenticated,
       isVerified,
-      getMemberNumber,
-      requestVerification,
-      approveVerification,
-      setUser
+      getMemberNumber
     }}>
       {children}
     </UserContext.Provider>

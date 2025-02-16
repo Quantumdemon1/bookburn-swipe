@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login, setUser } = useUser();  // Add setUser here
+  const { login, setUser } = useUser();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,36 +41,36 @@ const Login = () => {
     }
   };
 
-  const handleDemoLogin = (role) => {
-    let user;
+  const handleDemoLogin = useCallback((role) => {
+    let demoUser;
     switch (role) {
       case 'unregistered':
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('isAuthenticated');
         setUser(null);
         break;
       case 'user':
-        user = {
+        demoUser = {
           id: 'demo-user',
           email: 'user@demo.com',
-          name: 'Demo User',
-          role: 'user'
+          user_metadata: {
+            name: 'Demo User',
+            role: 'user'
+          }
         };
         break;
       case 'admin':
-        user = {
+        demoUser = {
           id: 'demo-admin',
           email: 'admin@demo.com',
-          name: 'Demo Admin',
-          role: 'admin'
+          user_metadata: {
+            name: 'Demo Admin',
+            role: 'admin'
+          }
         };
         break;
     }
 
-    if (user) {
-      setUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('isAuthenticated', 'true');
+    if (demoUser) {
+      setUser(demoUser);
       toast({
         title: "Demo Login",
         description: `Logged in as ${role}`,
@@ -83,7 +83,7 @@ const Login = () => {
     }
     
     navigate(role === 'admin' ? '/admin' : '/');
-  };
+  }, [setUser, toast, navigate]);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
