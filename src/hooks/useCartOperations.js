@@ -88,17 +88,31 @@ export const useCartOperations = (user, setCart) => {
     }
 
     try {
-      // First check if the item already exists in the cart
-      const currentCart = await cartService.getCartItems(user.id);
-      const existingItem = currentCart.find(item => item.id === book.id);
-      
+      // Update the cart state optimistically
+      setCart(prevCart => {
+        const existingItem = prevCart.find(item => item.id === book.id);
+        if (existingItem) {
+          return prevCart.map(item =>
+            item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
+          );
+        }
+        return [...prevCart, { ...book, quantity: 1 }];
+      });
+
+      // Perform the backend operation based on whether the item exists
+      const { data: existingItem } = await supabase
+        .from('cart_items')
+        .select('quantity')
+        .eq('user_id', user.id)
+        .eq('book_id', book.id)
+        .single();
+
       if (existingItem) {
         // If item exists, update its quantity
-        await updateQuantity(book.id, existingItem.quantity + 1);
+        await cartService.updateQuantity(user.id, book.id, existingItem.quantity + 1);
       } else {
         // If item doesn't exist, add it
         await cartService.addItem(user.id, book.id);
-        setCart(prevCart => [...prevCart, { ...book, quantity: 1 }]);
       }
 
       toast({
@@ -106,6 +120,8 @@ export const useCartOperations = (user, setCart) => {
         description: `${book.title} has been added to your cart`
       });
     } catch (error) {
+      // Revert the optimistic update on error
+      loadCart(); // Reload the cart from the server
       console.error('Error adding to cart:', error);
       toast({
         variant: "destructive",
@@ -113,7 +129,7 @@ export const useCartOperations = (user, setCart) => {
         description: error.message || "Failed to add item to cart"
       });
     }
-  }, [user, setCart, updateQuantity, toast]);
+  }, [user, setCart, loadCart, toast]);
 
   return {
     loadCart,
