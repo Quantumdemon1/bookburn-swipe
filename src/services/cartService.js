@@ -1,0 +1,86 @@
+
+import { supabase } from '@/lib/supabase';
+
+export const cartService = {
+  async getCartItems(userId) {
+    // Get cart items
+    const { data: cartItems, error: cartError } = await supabase
+      .from('cart_items')
+      .select('book_id, quantity')
+      .eq('user_id', userId);
+
+    if (cartError) throw cartError;
+    
+    if (!cartItems || cartItems.length === 0) {
+      return [];
+    }
+
+    // Get book details
+    const bookIds = cartItems.map(item => item.book_id);
+    const { data: books, error: booksError } = await supabase
+      .from('books')
+      .select('id, title, price, image_url')
+      .in('id', bookIds);
+
+    if (booksError) throw booksError;
+
+    // Combine cart items with book details
+    return cartItems.map(cartItem => {
+      const book = books.find(b => b.id === cartItem.book_id);
+      return {
+        id: cartItem.book_id,
+        title: book?.title,
+        price: book?.price,
+        image_url: book?.image_url,
+        quantity: cartItem.quantity
+      };
+    });
+  },
+
+  async addItem(userId, bookId) {
+    const { error } = await supabase
+      .from('cart_items')
+      .upsert({
+        user_id: userId,
+        book_id: bookId,
+        quantity: 1
+      }, {
+        onConflict: 'user_id,book_id'
+      });
+
+    if (error) throw error;
+  },
+
+  async updateQuantity(userId, bookId, quantity) {
+    const { error } = await supabase
+      .from('cart_items')
+      .upsert({
+        user_id: userId,
+        book_id: bookId,
+        quantity
+      }, {
+        onConflict: 'user_id,book_id'
+      });
+
+    if (error) throw error;
+  },
+
+  async removeItem(userId, bookId) {
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', userId)
+      .eq('book_id', bookId);
+
+    if (error) throw error;
+  },
+
+  async clearCart(userId) {
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  }
+};

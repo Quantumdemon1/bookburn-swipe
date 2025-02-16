@@ -1,8 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useToast } from "@/components/ui/use-toast";
 import { useUser } from '@/contexts/UserContext';
+import { useCartOperations } from '@/hooks/useCartOperations';
 
 const CartContext = createContext();
 
@@ -18,188 +17,22 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
-  const { toast } = useToast();
+  
+  const {
+    loadCart,
+    addToCart,
+    updateQuantity,
+    removeFromCart
+  } = useCartOperations(user, setCart);
 
   useEffect(() => {
     if (user) {
-      loadCart();
+      loadCart().finally(() => setIsLoading(false));
     } else {
       setCart([]);
       setIsLoading(false);
     }
-  }, [user]);
-
-  const loadCart = async () => {
-    try {
-      // First get cart items
-      const { data: cartItems, error: cartError } = await supabase
-        .from('cart_items')
-        .select('book_id, quantity')
-        .eq('user_id', user.id);
-
-      if (cartError) throw cartError;
-
-      if (!cartItems || cartItems.length === 0) {
-        setCart([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Then get the book details for each cart item
-      const bookIds = cartItems.map(item => item.book_id);
-      
-      const { data: books, error: booksError } = await supabase
-        .from('books')
-        .select('id, title, price, image_url')
-        .in('id', bookIds);
-
-      if (booksError) throw booksError;
-
-      // Combine cart items with book details
-      const formattedCart = cartItems.map(cartItem => {
-        const book = books.find(b => b.id === cartItem.book_id);
-        return {
-          id: cartItem.book_id,
-          title: book?.title,
-          price: book?.price,
-          image_url: book?.image_url,
-          quantity: cartItem.quantity
-        };
-      });
-
-      setCart(formattedCart);
-    } catch (error) {
-      console.error('Error loading cart:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load cart items"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addToCart = async (book) => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please login to add items to cart"
-      });
-      return;
-    }
-
-    try {
-      // Add or update item in Supabase
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
-          user_id: user.id,
-          book_id: book.id,
-          quantity: 1
-        }, {
-          onConflict: 'user_id,book_id'
-        });
-
-      if (error) throw error;
-
-      // Update local state
-      setCart(prevCart => {
-        const existingItem = prevCart.find(item => item.id === book.id);
-        if (existingItem) {
-          return prevCart.map(item =>
-            item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
-          );
-        }
-        return [...prevCart, { ...book, quantity: 1 }];
-      });
-
-      toast({
-        title: "Added to Cart",
-        description: `${book.title} has been added to your cart`
-      });
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to add item to cart"
-      });
-    }
-  };
-
-  const updateQuantity = async (bookId, quantity) => {
-    if (!user) return;
-
-    try {
-      if (quantity <= 0) {
-        await removeFromCart(bookId);
-        return;
-      }
-
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
-          user_id: user.id,
-          book_id: bookId,
-          quantity
-        }, {
-          onConflict: 'user_id,book_id'
-        });
-
-      if (error) throw error;
-
-      setCart(prevCart =>
-        prevCart.map(item =>
-          item.id === bookId ? { ...item, quantity } : item
-        )
-      );
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update quantity"
-      });
-    }
-  };
-
-  const removeFromCart = async (bookId) => {
-    if (!user) return;
-
-    try {
-      if (bookId) {
-        // Remove specific item
-        const { error } = await supabase
-          .from('cart_items')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('book_id', bookId);
-
-        if (error) throw error;
-
-        setCart(prevCart => prevCart.filter(item => item.id !== bookId));
-      } else {
-        // Clear entire cart
-        const { error } = await supabase
-          .from('cart_items')
-          .delete()
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        setCart([]);
-      }
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to remove item from cart"
-      });
-    }
-  };
+  }, [user, loadCart]);
 
   const value = {
     cart,
