@@ -69,21 +69,10 @@ const Match = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-      <motion.p 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-sm text-gray-400 mb-4 text-center hidden md:block"
-      >
-        Swipe right to like, left to burn, or use arrow keys (←→) to navigate!
-      </motion.p>
-
-      <motion.p 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-sm text-gray-400 mb-4 text-center md:hidden"
-      >
-        Swipe right to like, left to burn!
-      </motion.p>
+      <h1 className="text-2xl font-bold text-center mb-6">Match with Books</h1>
+      <p className="text-sm text-gray-400 mb-8 text-center max-w-2xl mx-auto">
+        Discover books through their content. Swipe right if you like what you read, left if it's not your style.
+      </p>
       
       <AnimatePresence mode="wait">
         {isLoading ? (
@@ -115,10 +104,7 @@ const Match = () => {
             className="w-full max-w-screen-xl mx-auto"
           >
             <BookCard
-              book={{
-                ...currentBook,
-                preview: currentBook.preview.slice(0, 200) + (currentBook.preview.length > 200 ? '...' : '')
-              }}
+              book={currentBook}
               onBurn={() => handleAction('burn')}
               onLike={() => handleAction('like')}
               onFavorite={() => handleAction('favorite')}
