@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, BookOpen, ShoppingCart as CartIcon, Moon, Sun } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Outlet } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const Layout = ({ children }) => {
+const Layout = () => {
   const { cart } = useCart();
   const { isAdmin } = useUser();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -103,7 +104,7 @@ const Layout = ({ children }) => {
         </div>
       </header>
       <main className="flex-grow p-6">
-        {children}
+        <Outlet />
       </main>
     </div>
   );
