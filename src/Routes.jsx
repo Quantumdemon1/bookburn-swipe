@@ -10,11 +10,7 @@ const Routes = () => {
   return (
     <RouterRoutes>
       <Route path="/login" element={<Login />} />
-      <Route element={
-        <CartProvider>
-          <Layout />
-        </CartProvider>
-      }>
+      <Route element={<CartProvider><Layout /></CartProvider>}>
         {navItems.map(({ to, page }) => (
           <Route key={to} path={to} element={page} />
         ))}

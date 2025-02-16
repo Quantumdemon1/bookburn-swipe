@@ -6,11 +6,12 @@ export const cartService = {
     if (!userId) throw new Error('User ID is required');
 
     try {
+      // First join cart_items with books
       const { data: cartItems, error } = await supabase
         .from('cart_items')
         .select(`
           quantity,
-          books (
+          book:book_id (
             id,
             title,
             price,
@@ -21,11 +22,12 @@ export const cartService = {
 
       if (error) throw error;
       
-      return cartItems.map(item => ({
-        id: item.books.id,
-        title: item.books.title,
-        price: item.books.price,
-        image_url: item.books.image_url,
+      // Transform the data to match the expected format
+      return (cartItems || []).map(item => ({
+        id: item.book.id,
+        title: item.book.title,
+        price: item.book.price,
+        image_url: item.book.image_url,
         quantity: item.quantity
       }));
     } catch (error) {
