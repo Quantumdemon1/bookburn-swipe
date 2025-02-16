@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/components/ui/use-toast";
@@ -19,7 +20,6 @@ export const CartProvider = ({ children }) => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  // Load initial cart state from Supabase
   useEffect(() => {
     if (user) {
       loadCart();
@@ -31,24 +31,41 @@ export const CartProvider = ({ children }) => {
 
   const loadCart = async () => {
     try {
-      const { data: cartItems, error } = await supabase
+      // First get cart items
+      const { data: cartItems, error: cartError } = await supabase
         .from('cart_items')
-        .select(`
-          quantity,
-          books(id, title, price, image_url)
-        `)
+        .select('book_id, quantity')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (cartError) throw cartError;
 
-      // Transform the data to match our cart structure
-      const formattedCart = cartItems.map(item => ({
-        id: item.books.id,
-        title: item.books.title,
-        price: item.books.price,
-        image_url: item.books.image_url,
-        quantity: item.quantity
-      }));
+      if (!cartItems || cartItems.length === 0) {
+        setCart([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Then get the book details for each cart item
+      const bookIds = cartItems.map(item => item.book_id);
+      
+      const { data: books, error: booksError } = await supabase
+        .from('books')
+        .select('id, title, price, image_url')
+        .in('id', bookIds);
+
+      if (booksError) throw booksError;
+
+      // Combine cart items with book details
+      const formattedCart = cartItems.map(cartItem => {
+        const book = books.find(b => b.id === cartItem.book_id);
+        return {
+          id: cartItem.book_id,
+          title: book?.title,
+          price: book?.price,
+          image_url: book?.image_url,
+          quantity: cartItem.quantity
+        };
+      });
 
       setCart(formattedCart);
     } catch (error) {
