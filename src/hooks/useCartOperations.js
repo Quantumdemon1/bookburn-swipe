@@ -28,16 +28,11 @@ export const useCartOperations = (user, setCart) => {
   }, [user, setCart, toast]);
 
   const removeFromCart = useCallback(async (bookId) => {
-    if (!user?.id) return;
+    if (!user?.id || !bookId) return;
 
     try {
-      if (bookId) {
-        await cartService.removeItem(user.id, bookId);
-        setCart(prevCart => prevCart.filter(item => item.id !== bookId));
-      } else {
-        await cartService.clearCart(user.id);
-        setCart([]);
-      }
+      await cartService.removeItem(user.id, bookId);
+      setCart(prevCart => prevCart.filter(item => item.id !== bookId));
     } catch (error) {
       console.error('Error removing from cart:', error);
       toast({
@@ -49,7 +44,7 @@ export const useCartOperations = (user, setCart) => {
   }, [user, setCart, toast]);
 
   const updateQuantity = useCallback(async (bookId, quantity) => {
-    if (!user?.id) return;
+    if (!user?.id || !bookId) return;
 
     try {
       if (quantity <= 0) {
@@ -58,7 +53,6 @@ export const useCartOperations = (user, setCart) => {
       }
 
       await cartService.updateQuantity(user.id, bookId, quantity);
-      
       setCart(prevCart =>
         prevCart.map(item =>
           item.id === bookId ? { ...item, quantity } : item
@@ -84,20 +78,25 @@ export const useCartOperations = (user, setCart) => {
       return;
     }
 
+    if (!book?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid book data"
+      });
+      return;
+    }
+
     try {
-      // First check if the item already exists in the cart
       const currentCart = await cartService.getCartItems(user.id);
       const existingItem = currentCart.find(item => item.id === book.id);
       
       if (existingItem) {
-        // If it exists, update the quantity
         await cartService.updateQuantity(user.id, book.id, existingItem.quantity + 1);
       } else {
-        // If it's new, add it
         await cartService.addItem(user.id, book.id);
       }
       
-      // Update local state
       setCart(prevCart => {
         const existingItemInState = prevCart.find(item => item.id === book.id);
         if (existingItemInState) {
@@ -117,7 +116,7 @@ export const useCartOperations = (user, setCart) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add item to cart"
+        description: error.message || "Failed to add item to cart"
       });
     }
   }, [user, setCart, toast]);
