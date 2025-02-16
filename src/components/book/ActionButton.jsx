@@ -34,7 +34,7 @@ const ActionButton = ({
         ) : (
           <>
             <Icon className={`h-5 w-5 sm:h-6 sm:w-6`} style={{ color: color }} />
-            <span className="text-xs sm:text-sm font-medium">{label}</span>
+            <span className="text-xs sm:text-sm font-medium" style={{ color: color }}>{label}</span>
           </>
         )}
       </Button>
