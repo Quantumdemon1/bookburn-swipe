@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { api } from '@/services/api';
+import { api } from '@/utils/api';
+
 const ReviewEditor = ({
   bookId,
   onReviewSubmitted
@@ -13,15 +14,15 @@ const ReviewEditor = ({
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedText, setSelectedText] = useState('');
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleTextSelect = () => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
       setSelectedText(selection.toString());
     }
   };
+
   const applyFormat = format => {
     const textarea = document.querySelector('textarea');
     const start = textarea.selectionStart;
@@ -58,6 +59,7 @@ const ReviewEditor = ({
       setContent(newContent);
     }
   };
+
   const handleShare = async platform => {
     const shareData = {
       title: 'Check out this review',
@@ -86,7 +88,8 @@ const ReviewEditor = ({
         }
     }
   };
-  const handleSubmit = async e => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim()) {
       toast({
@@ -96,6 +99,16 @@ const ReviewEditor = ({
       });
       return;
     }
+
+    if (rating === 0) {
+      toast({
+        title: "Error",
+        description: "Please select a rating before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const reviewData = {
@@ -103,6 +116,7 @@ const ReviewEditor = ({
         rating,
         createdAt: new Date().toISOString()
       };
+
       await api.addReview(1, bookId, reviewData);
       toast({
         title: "Success",
@@ -121,17 +135,28 @@ const ReviewEditor = ({
       setIsSubmitting(false);
     }
   };
-  return <Card className="mb-6">
+
+  return (
+    <Card className="mb-6">
       <CardHeader>
         <CardTitle>Write a Review</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center space-x-1 mb-4">
-            {[1, 2, 3, 4, 5].map(star => <Button key={star} variant="ghost" size="sm" type="button" onClick={() => setRating(star)}>
+            {[1, 2, 3, 4, 5].map(star => (
+              <Button
+                key={star}
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={() => setRating(star)}
+              >
                 <Star className={`w-6 h-6 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-              </Button>)}
+              </Button>
+            ))}
           </div>
+
           <div className="flex items-center space-x-2 mb-2">
             <Button type="button" variant="outline" size="sm" onClick={() => applyFormat('bold')}>
               <Bold className="w-4 h-4" />
@@ -152,10 +177,23 @@ const ReviewEditor = ({
               <LinkIcon className="w-4 h-4" />
             </Button>
           </div>
-          <Textarea placeholder="Share your thoughts about this book..." value={content} onChange={e => setContent(e.target.value)} onSelect={handleTextSelect} className="min-h-[150px] font-mono" />
-          <Button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-500">
+
+          <Textarea
+            placeholder="Share your thoughts about this book..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onSelect={handleTextSelect}
+            className="min-h-[150px] font-mono"
+          />
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="w-full bg-red-600 hover:bg-red-500"
+          >
             {isSubmitting ? "Posting..." : "Post Review"}
           </Button>
+
           <div className="flex flex-wrap gap-2 mt-4">
             <Button type="button" variant="outline" size="sm" onClick={() => handleShare('twitter')}>
               Share on Twitter
@@ -169,6 +207,8 @@ const ReviewEditor = ({
           </div>
         </form>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default ReviewEditor;
