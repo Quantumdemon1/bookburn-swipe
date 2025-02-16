@@ -79,14 +79,19 @@ export const useBookActions = (book, addToCart) => {
         }
       };
 
-      // Update user preferences
+      // Update user preferences with correct upsert options
       const { error: prefError } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          preference_data: updatedPrefs,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            preference_data: updatedPrefs,
+            updated_at: new Date().toISOString()
+          },
+          {
+            onConflict: 'user_id'
+          }
+        );
 
       if (prefError) throw prefError;
 
