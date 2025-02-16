@@ -57,11 +57,16 @@ export const cartService = {
 
     const { error } = await supabase
       .from('cart_items')
-      .upsert({
-        user_id: userId,
-        book_id: bookId,
-        quantity: 1
-      });
+      .upsert(
+        {
+          user_id: userId,
+          book_id: bookId,
+          quantity: 1
+        },
+        {
+          onConflict: 'user_id,book_id'
+        }
+      );
 
     if (error) throw error;
   },
@@ -73,11 +78,16 @@ export const cartService = {
 
     const { error } = await supabase
       .from('cart_items')
-      .upsert({
-        user_id: userId,
-        book_id: bookId,
-        quantity
-      });
+      .upsert(
+        {
+          user_id: userId,
+          book_id: bookId,
+          quantity
+        },
+        {
+          onConflict: 'user_id,book_id'
+        }
+      );
 
     if (error) throw error;
   },
