@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import BookCard from '@/components/BookCard';
 import { useToast } from "@/components/ui/use-toast";
@@ -6,18 +7,19 @@ import { updateUserPreferences } from '@/utils/interactionWeights';
 import { getNextRecommendation } from '@/utils/recommendationEngine';
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "lucide-react";
+
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dragDirection, setDragDirection] = useState(0);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   useEffect(() => {
     initializeUserPreferences();
     setIsLoading(true);
     setCurrentBook(getNextRecommendation());
     setIsLoading(false);
+
     const handleKeyPress = e => {
       if (!currentBook) return;
       switch (e.key) {
@@ -32,9 +34,11 @@ const Match = () => {
           break;
       }
     };
+
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
+
   const handleAction = action => {
     if (!currentBook) return;
     updateUserPreferences(currentBook.id, action);
@@ -47,6 +51,7 @@ const Match = () => {
     setCurrentBook(nextBook);
     setIsLoading(false);
   };
+
   const handleDragEnd = (_, info) => {
     const offset = info.offset.x;
     if (Math.abs(offset) > 100) {
@@ -58,7 +63,8 @@ const Match = () => {
     }
     setDragDirection(0);
   };
-  return <div className="container mx-auto sm:px-6 lg:px-8 md:py-10 px-0 py-0">
+
+  return <div className="w-full">
       <h1 className="font-bold text-center mb-6 text-2xl">Match with Books</h1>
       <p className="text-gray-400 mb-8 text-center max-w-2xl mx-auto text-xs">
         Discover books through their content. Swipe right if you like what you read, left if it's not your style.
@@ -94,4 +100,5 @@ const Match = () => {
       </AnimatePresence>
     </div>;
 };
+
 export default Match;
