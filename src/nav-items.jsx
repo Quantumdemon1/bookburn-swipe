@@ -9,7 +9,8 @@ import {
   Settings as SettingsIcon,
   Clock,
   LogIn,
-  ShoppingCart
+  ShoppingCart,
+  Shield
 } from 'lucide-react';
 import Match from './pages/Match';
 import Covers from './pages/Covers';
@@ -21,6 +22,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
 import Discover from './pages/Discover';
+import Admin from './pages/Admin';
 
 export const navItems = [
   {
@@ -84,5 +86,12 @@ export const navItems = [
     to: '/register',
     page: <Register />,
     hidden: true
+  },
+  {
+    name: 'Admin',
+    to: '/admin',
+    page: <Admin />,
+    icon: <Shield className="h-4 w-4 mr-2" />,
+    adminOnly: true
   },
 ];
