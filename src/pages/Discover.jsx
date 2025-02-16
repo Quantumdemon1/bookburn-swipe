@@ -18,7 +18,7 @@ const Discover = () => {
   const handleReviewClick = bookId => {
     navigate('/reviews');
   };
-  return <div className="container mx-auto p-4 space-y-8">
+  return <div className="container mx-auto p-4 space-y-8 py-0 px-[210px]">
       <h1 className="text-3xl font-bold mb-6">Discover Books</h1>
       
       <section className="space-y-4">
