@@ -43,7 +43,7 @@ export const books = [
     price: 11.99,
     tags: ["adventure", "classic", "revenge"],
     preview: "On the 24th of February, 1815, the look-out at Notre-Dame de la Garde signalled the three-master, the Pharaon from Smyrna, Trieste, and Naples.",
-    coverUrl: "https://images.unsplash.com/photo-1512820790803-83d5b814b5a6?w=500&auto=format&fit=crop&q=60"
+    coverUrl: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=500&auto=format&fit=crop&q=60"
   },
   {
     id: 6, 
