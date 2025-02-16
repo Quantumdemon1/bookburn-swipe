@@ -21,7 +21,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isVerified, getMemberNumber, setUser } = useUser();
+  const { user, isVerified, getMemberNumber } = useUser();
   const [isRequestingVerification, setIsRequestingVerification] = useState(false);
 
   useEffect(() => {
@@ -32,19 +32,44 @@ const Profile = () => {
 
   const loadProfileData = async () => {
     try {
-      const { data, error } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (checkError && checkError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user.id,
+              name: user.user_metadata?.name || user.email,
+              favorite_genres: [],
+              books_read: 0,
+              reviews: 0,
+              rating: 0
+            }
+          ])
+          .select()
+          .single();
 
-      if (data) {
+        if (insertError) throw insertError;
+        
         setProfileData({
           ...user,
-          ...data,
-          favoriteGenres: data.favorite_genres || []
+          ...newProfile,
+          favoriteGenres: []
+        });
+      } else if (checkError) {
+        throw checkError;
+      } else {
+        setProfileData({
+          ...user,
+          ...existingProfile,
+          favoriteGenres: existingProfile.favorite_genres || []
         });
       }
     } catch (error) {
