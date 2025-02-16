@@ -1,7 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useUser } from '@/contexts/UserContext';
-import { useCartOperations } from '@/hooks/useCartOperations';
+import React, { createContext, useContext, useState } from 'react';
 
 const CartContext = createContext();
 
@@ -15,36 +13,41 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
-  
-  const {
-    loadCart,
-    addToCart,
-    updateQuantity,
-    removeFromCart
-  } = useCartOperations(user, setCart);
 
-  useEffect(() => {
-    const initializeCart = async () => {
-      setIsLoading(true);
-      if (user?.id) {
-        await loadCart();
-      } else {
-        setCart([]);
+  const addToCart = (book) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === book.id);
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
       }
-      setIsLoading(false);
-    };
+      return [...prevCart, { ...book, quantity: 1 }];
+    });
+  };
 
-    initializeCart();
-  }, [user, loadCart]);
+  const removeFromCart = (bookId) => {
+    setCart((prevCart) => prevCart.filter((item) => item.id !== bookId));
+  };
+
+  const updateQuantity = (bookId, quantity) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === bookId ? { ...item, quantity: Math.max(0, quantity) } : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
 
   const value = {
     cart,
-    isLoading,
     addToCart,
     removeFromCart,
-    updateQuantity
+    updateQuantity,
+    clearCart
   };
 
   return (
