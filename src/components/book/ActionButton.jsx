@@ -25,7 +25,6 @@ const ActionButton = ({
         onClick={onClick}
         disabled={isLoading}
         className={`w-full h-14 sm:h-16 rounded-xl touch-manipulation 
-          ${isClicked ? `text-${color}-500` : ''} 
           active:scale-95 transition-transform
           flex flex-col items-center justify-center
           space-y-1`}
@@ -34,7 +33,7 @@ const ActionButton = ({
           <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
           <>
-            <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${isClicked ? `text-${color}-500` : ''}`} />
+            <Icon className={`h-5 w-5 sm:h-6 sm:w-6`} style={{ color: color }} />
             <span className="text-xs sm:text-sm font-medium">{label}</span>
           </>
         )}
