@@ -97,8 +97,7 @@ export const CartProvider = ({ children }) => {
         .upsert({
           user_id: user.id,
           book_id: book.id,
-          quantity: 1,
-          updated_at: new Date().toISOString()
+          quantity: 1
         }, {
           onConflict: 'user_id,book_id'
         });
@@ -126,6 +125,42 @@ export const CartProvider = ({ children }) => {
         variant: "destructive",
         title: "Error",
         description: "Failed to add item to cart"
+      });
+    }
+  };
+
+  const updateQuantity = async (bookId, quantity) => {
+    if (!user) return;
+
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(bookId);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('cart_items')
+        .upsert({
+          user_id: user.id,
+          book_id: bookId,
+          quantity
+        }, {
+          onConflict: 'user_id,book_id'
+        });
+
+      if (error) throw error;
+
+      setCart(prevCart =>
+        prevCart.map(item =>
+          item.id === bookId ? { ...item, quantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update quantity"
       });
     }
   };
@@ -162,43 +197,6 @@ export const CartProvider = ({ children }) => {
         variant: "destructive",
         title: "Error",
         description: "Failed to remove item from cart"
-      });
-    }
-  };
-
-  const updateQuantity = async (bookId, quantity) => {
-    if (!user) return;
-
-    try {
-      if (quantity <= 0) {
-        await removeFromCart(bookId);
-        return;
-      }
-
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
-          user_id: user.id,
-          book_id: bookId,
-          quantity,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,book_id'
-        });
-
-      if (error) throw error;
-
-      setCart(prevCart =>
-        prevCart.map(item =>
-          item.id === bookId ? { ...item, quantity } : item
-        )
-      );
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update quantity"
       });
     }
   };
