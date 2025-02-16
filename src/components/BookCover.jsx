@@ -28,7 +28,7 @@ const BookCover = ({
   return <Card className="w-full max-w-4xl mx-auto bg-black text-white">
       <CardContent className="p-6">
         <div className="rounded-3xl bg-white text-black p-6 mb-6">
-          <img src={book.coverUrl} alt={`Cover of ${book.title}`} className="w-full h-65 rounded-none object-cover" />
+          <img src={book.coverUrl} alt={`Cover of ${book.title}`} className="w-full h-25 rounded-none object-cover" />
         </div>
         <div className="flex justify-between items-center">
           <Button variant="ghost" onClick={handleBurn} className={`rounded-full p-4 flex flex-col items-center transition-transform ${burnClicked ? 'animate-burn' : ''}`}>
