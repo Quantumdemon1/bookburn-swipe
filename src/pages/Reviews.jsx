@@ -156,7 +156,7 @@ const Reviews = () => {
         <h1 className="text-3xl font-bold">Book Reviews</h1>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="bg-red-600 hover:bg-red-500">
+            <Button className="bg-red-600 hover:bg-red-500 text-slate-50">
               <BookPlus className="h-4 w-4 mr-2" />
               Add Book Review
             </Button>
