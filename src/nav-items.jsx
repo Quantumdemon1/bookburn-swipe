@@ -77,4 +77,10 @@ export const navItems = [
     page: <Checkout />,
     icon: <ShoppingCart className="h-4 w-4 mr-2" />
   },
+  {
+    name: 'Register',
+    to: '/register',
+    page: <Register />,
+    hidden: true // This route will be available but not shown in navigation
+  },
 ];
