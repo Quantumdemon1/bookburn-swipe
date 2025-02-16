@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,47 +30,42 @@ const Profile = () => {
   }, [user?.id]);
 
   const loadProfileData = async () => {
+    if (!user?.id) return;
+    
     try {
-      // First check if profile exists
-      const { data: existingProfile, error: checkError } = await supabase
+      setIsLoading(true);
+      
+      // Try to upsert the profile first
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          name: user.user_metadata?.name || user.email,
+          favorite_genres: [],
+          books_read: 0,
+          reviews: 0,
+          rating: 0
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        });
+
+      if (upsertError) throw upsertError;
+
+      // Then fetch the profile data
+      const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (checkError && checkError.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              name: user.user_metadata?.name || user.email,
-              favorite_genres: [],
-              books_read: 0,
-              reviews: 0,
-              rating: 0
-            }
-          ])
-          .select()
-          .single();
+      if (fetchError) throw fetchError;
 
-        if (insertError) throw insertError;
-        
-        setProfileData({
-          ...user,
-          ...newProfile,
-          favoriteGenres: []
-        });
-      } else if (checkError) {
-        throw checkError;
-      } else {
-        setProfileData({
-          ...user,
-          ...existingProfile,
-          favoriteGenres: existingProfile.favorite_genres || []
-        });
-      }
+      setProfileData({
+        ...user,
+        ...profile,
+        favoriteGenres: profile.favorite_genres || []
+      });
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({

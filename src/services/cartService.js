@@ -6,11 +6,9 @@ export const cartService = {
     if (!userId) throw new Error('User ID is required');
 
     try {
-      // Get cart items
-      const { data: cartItems, error: cartError } = await supabase
+      const { data: cartItems, error } = await supabase
         .from('cart_items')
         .select(`
-          book_id,
           quantity,
           books (
             id,
@@ -21,20 +19,15 @@ export const cartService = {
         `)
         .eq('user_id', userId);
 
-      if (cartError) throw cartError;
+      if (error) throw error;
       
-      if (!cartItems || cartItems.length === 0) {
-        return [];
-      }
-
-      // Transform the joined data into the expected format
       return cartItems.map(item => ({
         id: item.books.id,
         title: item.books.title,
         price: item.books.price,
         image_url: item.books.image_url,
         quantity: item.quantity
-      })).filter(Boolean);
+      }));
     } catch (error) {
       console.error('Error in getCartItems:', error);
       throw error;
@@ -46,18 +39,6 @@ export const cartService = {
     if (!bookId) throw new Error('Book ID is required');
 
     try {
-      // First verify the book exists
-      const { data: book, error: bookError } = await supabase
-        .from('books')
-        .select('id')
-        .eq('id', bookId)
-        .single();
-
-      if (bookError || !book) {
-        throw new Error('Book not found');
-      }
-
-      // Then add/update the cart item
       const { error } = await supabase
         .from('cart_items')
         .upsert({
