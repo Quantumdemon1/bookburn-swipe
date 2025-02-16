@@ -76,7 +76,8 @@ export const navItems = [
     name: 'Checkout',
     to: '/checkout',
     page: <Checkout />,
-    icon: <ShoppingCart className="h-4 w-4 mr-2" />
+    icon: <ShoppingCart className="h-4 w-4 mr-2" />,
+    hidden: true
   },
   {
     name: 'Register',
