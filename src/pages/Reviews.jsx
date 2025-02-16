@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import ReviewEditor from '@/components/ReviewEditor';
@@ -13,12 +14,13 @@ const Reviews = () => {
   const [reviews, setReviews] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredBooks, setFilteredBooks] = useState([]);
+  const [filteredBooks, setFilteredBooks] = useState(books || []);
   const { toast } = useToast();
   const [expandedComments, setExpandedComments] = useState({});
   const [newComments, setNewComments] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
   const [sortOrder, setSortOrder] = useState('newest');
+  const [isLoading, setIsLoading] = useState(false);
   const dummyUserId = 1;
 
   useEffect(() => {
@@ -28,6 +30,7 @@ const Reviews = () => {
   }, [selectedBook, sortOrder]);
 
   useEffect(() => {
+    if (!books) return;
     setFilteredBooks(
       books.filter(book => 
         book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -38,25 +41,26 @@ const Reviews = () => {
 
   const loadReviews = async () => {
     if (!selectedBook) return;
+    setIsLoading(true);
     try {
       const fetchedReviews = await api.getReviews(selectedBook.id);
-      const sortedReviews = sortReviews(fetchedReviews, sortOrder);
+      const sortedReviews = sortReviews(fetchedReviews || [], sortOrder);
       setReviews(sortedReviews);
     } catch (error) {
+      console.error('Error loading reviews:', error);
       toast({
         title: "Error",
         description: "Failed to load reviews",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleBookSelect = (book) => {
-    setSelectedBook(book);
-    setSearchQuery('');
-  };
-
   const sortReviews = (reviewsToSort, order) => {
+    if (!Array.isArray(reviewsToSort)) return [];
+    
     return [...reviewsToSort].sort((a, b) => {
       switch (order) {
         case 'newest':
@@ -71,94 +75,66 @@ const Reviews = () => {
     });
   };
 
-  const handleLike = async reviewId => {
+  const handleBookSelect = (book) => {
+    if (!book) return;
+    setSelectedBook(book);
+    setSearchQuery('');
+  };
+
+  const handleLike = async (reviewId) => {
     try {
-      const {
-        likes,
-        hasLiked
-      } = await api.toggleLike(reviewId, dummyUserId);
-      setReviews(prevReviews => prevReviews.map(review => review.id === reviewId ? {
-        ...review,
-        likes,
-        hasLiked
-      } : review));
+      await api.likeReview(reviewId);
+      await loadReviews();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update like",
+        description: "Failed to like review",
         variant: "destructive"
       });
     }
   };
 
-  const handleReaction = async (reviewId, commentId, reactionType) => {
+  const handleReaction = async (reviewId, commentId, type) => {
     try {
-      const updatedReactions = await api.addReaction(reviewId, commentId, dummyUserId, reactionType);
-      setReviews(prevReviews => prevReviews.map(review => {
-        if (review.id !== reviewId) return review;
-        if (!commentId) {
-          return {
-            ...review,
-            reactions: updatedReactions
-          };
-        }
-        const updateCommentReactions = comments => comments.map(comment => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              reactions: updatedReactions
-            };
-          }
-          if (comment.replies?.length) {
-            return {
-              ...comment,
-              replies: updateCommentReactions(comment.replies)
-            };
-          }
-          return comment;
-        });
-        return {
-          ...review,
-          comments: updateCommentReactions(review.comments || [])
-        };
-      }));
+      await api.addReaction(reviewId, commentId, type);
+      await loadReviews();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update reaction",
+        description: "Failed to add reaction",
         variant: "destructive"
       });
     }
   };
 
-  const toggleComments = reviewId => {
+  const toggleComments = (reviewId) => {
     setExpandedComments(prev => ({
       ...prev,
       [reviewId]: !prev[reviewId]
     }));
   };
 
-  const handleCommentChange = (reviewId, value) => {
+  const handleCommentChange = (reviewId, comment) => {
     setNewComments(prev => ({
       ...prev,
-      [reviewId]: value
+      [reviewId]: comment
     }));
   };
 
-  const handleCommentSubmit = async (reviewId, parentId = null) => {
-    const content = newComments[reviewId]?.trim();
-    if (!content) return;
+  const handleCommentSubmit = async (reviewId, parentCommentId = null) => {
+    if (!newComments[reviewId]?.trim()) return;
+
     try {
-      const comment = await api.addComment(reviewId, dummyUserId, content, parentId);
-      setReviews(prevReviews => prevReviews.map(review => review.id === reviewId ? {
-        ...review,
-        comments: parentId ? updateCommentsWithReply(review.comments || [], parentId, comment) : [...(review.comments || []), comment]
-      } : review));
+      await api.addComment(reviewId, {
+        content: newComments[reviewId],
+        parentCommentId
+      });
       setNewComments(prev => ({
         ...prev,
         [reviewId]: ''
       }));
       setReplyingTo(null);
+      await loadReviews();
     } catch (error) {
       toast({
         title: "Error",
@@ -168,36 +144,30 @@ const Reviews = () => {
     }
   };
 
-  const updateCommentsWithReply = (comments, parentId, newReply) => {
-    return comments.map(comment => {
-      if (comment.id === parentId) {
-        return {
-          ...comment,
-          replies: [...(comment.replies || []), newReply]
-        };
-      }
-      if (comment.replies?.length) {
-        return {
-          ...comment,
-          replies: updateCommentsWithReply(comment.replies, parentId, newReply)
-        };
-      }
-      return comment;
-    });
-  };
-
-  const handleShare = async review => {
+  const handleShare = async (review) => {
     try {
-      await navigator.share({
-        title: 'Check out this book review',
-        text: `${review.content.substring(0, 100)}...`,
+      const shareData = {
+        title: `Review of ${selectedBook?.title}`,
+        text: review.content.substring(0, 100) + '...',
         url: window.location.href
-      });
+      };
+      
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        toast({
+          title: "Info",
+          description: "Sharing is not supported on this device"
+        });
+      }
     } catch (error) {
-      toast({
-        title: "Info",
-        description: "Sharing is not supported on this device"
-      });
+      if (error.name !== 'AbortError') {
+        toast({
+          title: "Error",
+          description: "Failed to share review",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -260,7 +230,7 @@ const Reviews = () => {
             <select 
               value={sortOrder} 
               onChange={(e) => setSortOrder(e.target.value)}
-              className="border rounded-md p-2 bg-red-600 hover:bg-red-500"
+              className="border rounded-md p-2"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
