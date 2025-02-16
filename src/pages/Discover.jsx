@@ -59,7 +59,7 @@ const Discover = () => {
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+          <CardContent className="p-6 flex flex-col items-center text-center space-y-4 py-0 px-0">
             <Star className="w-12 h-12 text-yellow-400" />
             <h3 className="text-xl font-semibold">Rate Books</h3>
             <p className="text-muted-foreground">Share your opinion and help others discover great books</p>
@@ -68,7 +68,7 @@ const Discover = () => {
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+          <CardContent className="p-6 flex flex-col items-center text-center space-y-4 px-0 py-0">
             <MessageSquare className="w-12 h-12 text-blue-400" />
             <h3 className="text-xl font-semibold">Write Reviews</h3>
             <p className="text-muted-foreground">Share detailed thoughts and connect with other readers</p>
