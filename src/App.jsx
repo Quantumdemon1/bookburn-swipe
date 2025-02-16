@@ -23,9 +23,9 @@ function App() {
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <CartProvider>
-          <Router>
-            <UserProvider>
+        <Router>
+          <UserProvider>
+            <CartProvider>
               <ErrorBoundary>
                 <Layout>
                   <AnimatePresence mode="wait">
@@ -33,10 +33,10 @@ function App() {
                   </AnimatePresence>
                 </Layout>
               </ErrorBoundary>
-            </UserProvider>
-            <Toaster />
-          </Router>
-        </CartProvider>
+              <Toaster />
+            </CartProvider>
+          </UserProvider>
+        </Router>
       </QueryClientProvider>
     </React.StrictMode>
   );
