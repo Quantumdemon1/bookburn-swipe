@@ -88,24 +88,18 @@ export const useCartOperations = (user, setCart) => {
     }
 
     try {
+      // First check if the item already exists in the cart
       const currentCart = await cartService.getCartItems(user.id);
       const existingItem = currentCart.find(item => item.id === book.id);
       
       if (existingItem) {
-        await cartService.updateQuantity(user.id, book.id, existingItem.quantity + 1);
+        // If item exists, update its quantity
+        await updateQuantity(book.id, existingItem.quantity + 1);
       } else {
+        // If item doesn't exist, add it
         await cartService.addItem(user.id, book.id);
+        setCart(prevCart => [...prevCart, { ...book, quantity: 1 }]);
       }
-      
-      setCart(prevCart => {
-        const existingItemInState = prevCart.find(item => item.id === book.id);
-        if (existingItemInState) {
-          return prevCart.map(item =>
-            item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
-          );
-        }
-        return [...prevCart, { ...book, quantity: 1 }];
-      });
 
       toast({
         title: "Added to Cart",
@@ -119,7 +113,7 @@ export const useCartOperations = (user, setCart) => {
         description: error.message || "Failed to add item to cart"
       });
     }
-  }, [user, setCart, toast]);
+  }, [user, setCart, updateQuantity, toast]);
 
   return {
     loadCart,
