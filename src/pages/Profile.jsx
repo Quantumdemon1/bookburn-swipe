@@ -1,30 +1,43 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Star, PenTool, Heart, MessageSquare, Settings } from 'lucide-react';
+import { Book, Star, PenTool, Heart, MessageSquare, Settings, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/components/ui/use-toast";
 import EditProfile from '@/components/EditProfile';
 import Ratings from './Ratings';
 import Reviews from './Reviews';
 import Favorites from './Favorites';
+import { useUser } from '@/contexts/UserContext';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: "John Doe",
-    age: 28,
-    avatar: "/placeholder.svg",
-    bio: "Book lover, coffee addict, and aspiring author. Always on the lookout for the next great read!",
-    favoriteGenres: ["Fiction", "Mystery", "Science Fiction", "Fantasy", "Thriller"],
-    booksRead: 127,
-    reviews: 45,
-    rating: 4.7
-  });
+  const { toast } = useToast();
+  const { user, isVerified, getMemberNumber, requestVerification } = useUser();
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false);
+
+  const handleVerificationRequest = async () => {
+    try {
+      setIsRequestingVerification(true);
+      await requestVerification();
+      toast({
+        title: "Verification Requested",
+        description: "Your verification request has been submitted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Request Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingVerification(false);
+    }
+  };
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -56,14 +69,30 @@ const Profile = () => {
           </div>
           <div className="flex flex-col items-center">
             <Avatar className="w-32 h-32 mb-4">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={user?.avatar} alt={user?.name} />
+              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
-            <CardTitle className="text-3xl mb-1">{user.name}, {user.age}</CardTitle>
-            <div className="flex items-center mb-2">
-              <Star className="w-5 h-5 text-yellow-400 mr-1" />
-              <span className="font-semibold">{user.rating.toFixed(1)}</span>
-            </div>
+            <CardTitle className="text-3xl mb-1">
+              {user?.name}
+              {isVerified() && (
+                <Badge className="ml-2 bg-blue-500" variant="secondary">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Member #{getMemberNumber()}
+                </Badge>
+              )}
+            </CardTitle>
+            {!isVerified() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVerificationRequest}
+                disabled={isRequestingVerification}
+                className="mt-2"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Request Verification
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
