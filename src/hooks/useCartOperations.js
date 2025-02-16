@@ -2,7 +2,6 @@
 import { useCallback } from 'react';
 import { cartService } from '@/services/cartService';
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from '@/lib/supabase';
 
 export const useCartOperations = (user, setCart) => {
   const { toast } = useToast();
@@ -32,16 +31,7 @@ export const useCartOperations = (user, setCart) => {
     if (!user?.id || !bookId) return;
 
     try {
-      // First delete from the database
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('book_id', bookId);
-
-      if (error) throw error;
-
-      // Only update the UI state if the database operation was successful
+      await cartService.removeItem(user.id, bookId);
       setCart(prevCart => prevCart.filter(item => item.id !== bookId));
       
       toast({
@@ -55,8 +45,7 @@ export const useCartOperations = (user, setCart) => {
         title: "Error",
         description: "Failed to remove item from cart"
       });
-      // Reload the cart to ensure UI is in sync with database
-      loadCart();
+      loadCart(); // Reload the cart to ensure UI is in sync with database
     }
   }, [user, setCart, toast, loadCart]);
 
@@ -82,8 +71,9 @@ export const useCartOperations = (user, setCart) => {
         title: "Error",
         description: "Failed to update quantity"
       });
+      loadCart(); // Reload cart on error to ensure UI is in sync
     }
-  }, [user, setCart, removeFromCart, toast]);
+  }, [user, setCart, removeFromCart, toast, loadCart]);
 
   const addToCart = useCallback(async (book) => {
     if (!user?.id) {
@@ -105,7 +95,9 @@ export const useCartOperations = (user, setCart) => {
     }
 
     try {
-      // Update the cart state optimistically
+      await cartService.addItem(user.id, book.id);
+      
+      // Update cart state after successful database operation
       setCart(prevCart => {
         const existingItem = prevCart.find(item => item.id === book.id);
         if (existingItem) {
@@ -116,35 +108,18 @@ export const useCartOperations = (user, setCart) => {
         return [...prevCart, { ...book, quantity: 1 }];
       });
 
-      // Perform the backend operation based on whether the item exists
-      const { data: existingItem } = await supabase
-        .from('cart_items')
-        .select('quantity')
-        .eq('user_id', user.id)
-        .eq('book_id', book.id)
-        .single();
-
-      if (existingItem) {
-        // If item exists, update its quantity
-        await cartService.updateQuantity(user.id, book.id, existingItem.quantity + 1);
-      } else {
-        // If item doesn't exist, add it
-        await cartService.addItem(user.id, book.id);
-      }
-
       toast({
         title: "Added to Cart",
         description: `${book.title} has been added to your cart`
       });
     } catch (error) {
-      // Revert the optimistic update on error
-      loadCart(); // Reload the cart from the server
       console.error('Error adding to cart:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to add item to cart"
       });
+      loadCart(); // Reload cart on error to ensure UI is in sync
     }
   }, [user, setCart, loadCart, toast]);
 
