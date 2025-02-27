@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import confetti from 'canvas-confetti';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
+import { handleError } from '@/lib/errorHandler';
 
 export const useBookActions = (book, addToCart) => {
   const { toast } = useToast();
@@ -16,10 +17,19 @@ export const useBookActions = (book, addToCart) => {
   const [retryAction, setRetryAction] = useState(null);
 
   const handleAction = async (action, handler) => {
-    if (isLoading || !user) {
+    if (isLoading) {
       toast({
         title: "Action Failed",
-        description: user ? "Please wait..." : "Please login to perform this action",
+        description: "Please wait...",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!user) {
+      toast({
+        title: "Action Failed",
+        description: "Please login to perform this action",
         variant: "destructive",
       });
       return;
@@ -29,7 +39,28 @@ export const useBookActions = (book, addToCart) => {
     setRetryAction(null);
 
     try {
-      // First record the interaction in Supabase
+      // Check if books table has the book
+      const { data: existingBook, error: checkError } = await supabase
+        .from('books')
+        .select('id')
+        .eq('id', book.id)
+        .single();
+      
+      // If book doesn't exist in DB, insert it
+      if (checkError && checkError.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('books')
+          .insert({
+            id: book.id,
+            title: book.title,
+            price: book.price || 9.99,
+            image_url: book.image_url || book.cover_url
+          });
+          
+        if (insertError) throw insertError;
+      }
+
+      // Record the interaction in Supabase
       const { error: dbError } = await supabase
         .from('book_interactions')
         .insert({
@@ -41,39 +72,75 @@ export const useBookActions = (book, addToCart) => {
 
       if (dbError) throw dbError;
 
-      // Then update the local UI state
+      // Update the local UI state
       switch(action) {
         case 'burn':
           setBurnClicked(true);
-          await handler?.();
+          if (handler) await handler();
           setTimeout(() => setBurnClicked(false), 1000);
           break;
         case 'save':
           setSaveClicked(true);
-          await handler?.();
+          if (handler) await handler();
           setTimeout(() => setSaveClicked(false), 1000);
           break;
         case 'like':
           setLikeClicked(true);
-          await handler?.();
+          if (handler) await handler();
           setTimeout(() => setLikeClicked(false), 1000);
           break;
       }
 
-      // Update user preferences
-      const { error: prefError } = await supabase
+      // Create user_preferences record if it doesn't exist
+      const { data: existingPref } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          preference_data: {
-            [action]: {
-              [book.id]: true,
-              timestamp: new Date().toISOString()
-            }
-          }
-        });
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      // Update user preferences
+      if (!existingPref) {
+        // Create new preferences record
+        const prefData = {};
+        prefData[action] = {};
+        prefData[action][book.id] = true;
+        
+        const { error: createPrefError } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: user.id,
+            preference_data: prefData
+          });
+        
+        if (createPrefError) throw createPrefError;
+      } else {
+        // Update existing preferences
+        const { data: currentPrefs, error: getPrefError } = await supabase
+          .from('user_preferences')
+          .select('preference_data')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (getPrefError) throw getPrefError;
+        
+        const updatedPrefs = { ...currentPrefs.preference_data };
+        if (!updatedPrefs[action]) updatedPrefs[action] = {};
+        updatedPrefs[action][book.id] = true;
+        updatedPrefs[action].timestamp = new Date().toISOString();
+        
+        const { error: updatePrefError } = await supabase
+          .from('user_preferences')
+          .update({ preference_data: updatedPrefs })
+          .eq('user_id', user.id);
+          
+        if (updatePrefError) throw updatePrefError;
+      }
 
-      if (prefError) throw prefError;
+      // Show success toast
+      toast({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Successful`,
+        description: `You have ${action}ed "${book.title}"`,
+      });
 
     } catch (error) {
       console.error(`Error during ${action} action:`, error);
@@ -107,15 +174,47 @@ export const useBookActions = (book, addToCart) => {
       return;
     }
 
+    if (isLoading) {
+      toast({
+        title: "Please Wait",
+        description: "Already processing an action",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
+      // Check if book exists in database, add if not
+      const { data: existingBook, error: checkError } = await supabase
+        .from('books')
+        .select('id')
+        .eq('id', book.id)
+        .single();
+      
+      if (checkError && checkError.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('books')
+          .insert({
+            id: book.id,
+            title: book.title,
+            price: book.price || 9.99,
+            image_url: book.image_url || book.cover_url
+          });
+          
+        if (insertError) throw insertError;
+      }
+      
       // Add to cart in Supabase
       const { error: cartError } = await supabase
         .from('cart_items')
         .upsert({
           user_id: user.id,
           book_id: book.id,
-          quantity: 1,
-          created_at: new Date().toISOString()
+          quantity: 1
+        }, {
+          onConflict: 'user_id,book_id'
         });
 
       if (cartError) throw cartError;
@@ -149,6 +248,8 @@ export const useBookActions = (book, addToCart) => {
           </Button>
         ),
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
