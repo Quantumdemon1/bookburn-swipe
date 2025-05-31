@@ -1,4 +1,4 @@
-import { supabase, safeOperation, queueOperation, isOffline } from '@/lib/supabaseClient';
+import { supabase, safeOperation, queueOperation, isOfflineMode } from '@/lib/supabaseClient';
 import { books as mockBooks } from '@/data/books';
 
 export const api = {
@@ -29,7 +29,7 @@ export const api = {
 
   // Book operations
   getBooks: async (filters = {}) => {
-    if (isOffline()) {
+    if (isOfflineMode()) {
       let filteredBooks = [...mockBooks];
       
       if (filters.searchQuery) {
@@ -65,7 +65,7 @@ export const api = {
   },
 
   getBookById: async (id) => {
-    if (isOffline()) {
+    if (isOfflineMode()) {
       const book = mockBooks.find(book => book.id === id);
       // Return in consistent format with online mode
       return { data: book || null, error: null };
@@ -109,7 +109,7 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    if (isOffline()) {
+    if (isOfflineMode()) {
       await queueOperation({
         type: 'insert',
         table: 'reviews',
@@ -151,7 +151,7 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    if (isOffline()) {
+    if (isOfflineMode()) {
       const tempId = `temp_${Date.now()}`;
       await queueOperation({
         type: 'insert',
@@ -192,7 +192,7 @@ export const api = {
       updated_at: new Date().toISOString()
     };
 
-    if (isOffline()) {
+    if (isOfflineMode()) {
       await queueOperation({
         type: 'upsert',
         table: 'user_preferences',
@@ -224,7 +224,7 @@ export const api = {
       reaction.review_id = reviewId;
     }
 
-    if (isOffline()) {
+    if (isOfflineMode()) {
       await queueOperation({
         type: 'insert',
         table: 'reactions',
@@ -251,7 +251,7 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    if (isOffline()) {
+    if (isOfflineMode()) {
       await queueOperation({
         type: 'insert',
         table: 'book_interactions',
