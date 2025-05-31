@@ -145,3 +145,5 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
     </Card>
   );
 };
+
+export default ReviewEditor

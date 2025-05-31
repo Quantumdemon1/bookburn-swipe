@@ -175,3 +175,5 @@ const Match = () => {
     </div>
   );
 };
+
+export default Match
