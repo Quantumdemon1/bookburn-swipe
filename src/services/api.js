@@ -1,4 +1,4 @@
-import { supabase, safeOperation, queueOperation, isOffline as isOfflineMode } from '@/lib/supabaseClient';
+import { supabase, safeOperation, isOffline as isOfflineMode } from '@/lib/supabaseClient';
 import { books as mockBooks } from '@/data/books';
 
 export const api = {
@@ -82,15 +82,6 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    if (isOfflineMode()) {
-      await queueOperation({
-        type: 'insert',
-        table: 'reviews',
-        data: review
-      });
-      return { data: review, error: null };
-    }
-
     return safeOperation(() =>
       supabase
         .from('reviews')
@@ -117,15 +108,6 @@ export const api = {
       preferences,
       updated_at: new Date().toISOString()
     };
-
-    if (isOfflineMode()) {
-      await queueOperation({
-        type: 'upsert',
-        table: 'user_preferences',
-        data
-      });
-      return { data, error: null };
-    }
 
     return safeOperation(() =>
       supabase
