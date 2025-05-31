@@ -5,38 +5,32 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Track offline status
-let offline = false;
-
-export const isOffline = () => offline;
-
-export const setOffline = (status) => {
-  offline = status;
+export const isOffline = () => {
+  return !window.navigator.onLine || !supabaseUrl || !supabaseAnonKey;
 };
 
-// Utility function to safely handle Supabase operations
-export const safeOperation = async (operation, fallback = null) => {
+export const safeOperation = async (operation) => {
+  if (isOffline()) {
+    console.warn('Operating in offline mode');
+    return { data: null, error: new Error('Offline mode') };
+  }
+
   try {
     const result = await operation();
-    if (result.error) throw result.error;
-    return { data: result.data, error: null };
+    return result;
   } catch (error) {
     console.error('Supabase operation failed:', error);
-    return { 
-      data: fallback,
-      error: {
-        message: "Failed to connect to the server. Please check your internet connection and try again.",
-        originalError: error
-      }
+    return {
+      data: null,
+      error: new Error('Failed to connect to the server. Please check your internet connection and try again.')
     };
   }
 };
 
-// Profile-specific fallback data
 export const profileFallback = {
-  name: null,
+  name: 'Demo User',
   avatar_url: null,
-  bio: null,
+  bio: 'This is a demo account',
   is_verified: false,
   member_number: null,
   reviews_count: 0,

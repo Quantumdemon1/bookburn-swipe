@@ -1,6 +1,37 @@
 import { supabase, safeOperation, isOffline as isOfflineMode } from '@/lib/supabaseClient';
 import { books as mockBooks } from '@/data/books';
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isValidUUID = (id) => {
+  return UUID_REGEX.test(id);
+};
+
+const mockUserPreferences = {
+  theme: 'light',
+  notifications: true,
+  language: 'en',
+  reading_goals: {
+    daily: 30,
+    weekly: 5
+  }
+};
+
+const mockReview = {
+  id: 1,
+  content: "Great book!",
+  rating: 5,
+  created_at: new Date().toISOString(),
+  user: {
+    name: "Demo User",
+    avatar_url: null
+  },
+  likes: 0,
+  comments: [],
+  reactions: {}
+};
+
 export const api = {
   // Book operations
   getBooks: async (filters = {}) => {
@@ -55,6 +86,10 @@ export const api = {
 
   // Review operations
   getReviews: async (bookId) => {
+    if (isOfflineMode()) {
+      return { data: [mockReview], error: null };
+    }
+
     return safeOperation(() =>
       supabase
         .from('reviews')
@@ -73,12 +108,24 @@ export const api = {
     );
   },
 
-  addReview: async (bookId, userId, content, rating) => {
+  addReview: async (userId, bookId, reviewData) => {
+    if (!isValidUUID(userId) || isOfflineMode()) {
+      return {
+        data: {
+          ...mockReview,
+          ...reviewData,
+          user_id: userId,
+          book_id: bookId
+        },
+        error: null
+      };
+    }
+
     const review = {
       book_id: bookId,
       user_id: userId,
-      content,
-      rating,
+      content: reviewData.content,
+      rating: reviewData.rating,
       created_at: new Date().toISOString()
     };
 
@@ -93,6 +140,10 @@ export const api = {
 
   // User preferences operations
   getUserPreferences: async (userId) => {
+    if (!isValidUUID(userId) || isOfflineMode()) {
+      return { data: mockUserPreferences, error: null };
+    }
+
     return safeOperation(() =>
       supabase
         .from('user_preferences')
@@ -103,6 +154,10 @@ export const api = {
   },
 
   updateUserPreferences: async (userId, preferences) => {
+    if (!isValidUUID(userId) || isOfflineMode()) {
+      return { data: { ...mockUserPreferences, ...preferences }, error: null };
+    }
+
     const data = {
       user_id: userId,
       preferences,
@@ -115,6 +170,42 @@ export const api = {
         .upsert(data)
         .select()
         .single()
+    );
+  },
+
+  // Reaction operations
+  toggleLike: async (reviewId, userId) => {
+    if (!isValidUUID(userId) || isOfflineMode()) {
+      return { data: null, error: null };
+    }
+
+    return safeOperation(() =>
+      supabase
+        .from('reactions')
+        .upsert({
+          review_id: reviewId,
+          user_id: userId,
+          type: 'like',
+          created_at: new Date().toISOString()
+        })
+    );
+  },
+
+  addReaction: async (reviewId, commentId, userId, type) => {
+    if (!isValidUUID(userId) || isOfflineMode()) {
+      return { data: null, error: null };
+    }
+
+    return safeOperation(() =>
+      supabase
+        .from('reactions')
+        .upsert({
+          review_id: reviewId,
+          comment_id: commentId,
+          user_id: userId,
+          type,
+          created_at: new Date().toISOString()
+        })
     );
   }
 };
