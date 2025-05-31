@@ -27,7 +27,6 @@ const fetchWithRetry = async (url, options = {}, retries = RETRY_COUNT) => {
       return fetchWithRetry(url, options, retries - 1);
     }
     
-    // If all retries fail, return a mock response based on the endpoint
     if (url.includes('/rest/v1/')) {
       return new Response(JSON.stringify({ data: [] }), {
         status: 200,
