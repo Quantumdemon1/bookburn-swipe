@@ -28,12 +28,29 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       try {
         const response = await fetch(...args);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Return a proper Response object for non-OK responses
+          return new Response(JSON.stringify({
+            error: `HTTP error! status: ${response.status}`
+          }), {
+            status: response.status,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
         return response;
       } catch (error) {
-        await handleOfflineOperation(args[0], args[1]);
-        throw new Error('OFFLINE');
+        // Try to handle offline operation
+        const offlineResponse = await handleOfflineOperation(args[0], args[1]);
+        if (offlineResponse) {
+          return offlineResponse;
+        }
+        
+        // Return a proper Response object for network errors
+        return new Response(JSON.stringify({
+          error: 'Network error or offline'
+        }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
     }
   }
@@ -105,7 +122,7 @@ export const processSyncQueue = async () => {
 const handleOfflineOperation = async (url, options) => {
   const path = new URL(url).pathname;
   const matches = path.match(/\/rest\/v1\/([^/]+)/);
-  if (!matches) return;
+  if (!matches) return null;
 
   const table = matches[1];
   const method = options.method || 'GET';
@@ -125,16 +142,32 @@ const handleOfflineOperation = async (url, options) => {
       table,
       data
     });
+    
+    // Return a success response for offline mutations
+    return new Response(JSON.stringify({
+      status: 'queued',
+      message: 'Operation queued for sync'
+    }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
+  
+  return null;
 };
 
 // Safe operation wrapper
 export const safeOperation = async (operation) => {
   try {
-    if (isOffline()) {
-      throw new Error('OFFLINE');
-    }
     const result = await operation();
+    
+    // Handle offline/error responses
+    if (result.error) {
+      if (result.status === 503) {
+        return { data: null, error: 'Offline mode', isOffline: true };
+      }
+      return { data: null, error: result.error };
+    }
     
     // Cache successful GET results
     if (operation.toString().includes('.select(')) {
@@ -146,10 +179,12 @@ export const safeOperation = async (operation) => {
     
     return result;
   } catch (error) {
-    if (error.message === 'OFFLINE') {
-      return { data: null, error: 'Offline mode' };
-    }
-    throw error;
+    console.error('Operation error:', error);
+    return { 
+      data: null, 
+      error: error.message || 'Operation failed',
+      isOffline: isOffline()
+    };
   }
 };
 
