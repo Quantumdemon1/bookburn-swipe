@@ -1,4 +1,4 @@
-import { supabase, safeOperation, queueOperation, isOfflineMode } from '@/lib/supabaseClient';
+import { supabase, safeOperation, queueOperation, isOffline as isOfflineMode } from '@/lib/supabaseClient';
 import { books as mockBooks } from '@/data/books';
 
 export const api = {
