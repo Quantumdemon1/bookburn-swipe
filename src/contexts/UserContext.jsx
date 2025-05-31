@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
 
 const UserContext = createContext();
@@ -105,7 +105,6 @@ export const UserProvider = ({ children }) => {
         throw new Error('User is already verified');
       }
 
-      // Get the next available member number
       const { data: maxMember, error: maxError } = await supabase
         .from('profiles')
         .select('member_number')
@@ -128,7 +127,6 @@ export const UserProvider = ({ children }) => {
 
       if (updateError) throw updateError;
 
-      // Update local user state
       setUser(prev => ({
         ...prev,
         user_metadata: {

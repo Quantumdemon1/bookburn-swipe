@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import confetti from 'canvas-confetti';
-import { supabase, isOfflineMode, safeSupabaseOperation, setOfflineMode } from '@/lib/supabase';
+import { supabase, safeOperation, isOffline } from '@/lib/supabaseClient';
 import { useUser } from '@/contexts/UserContext';
-import { handleError } from '@/lib/errorHandler';
 
 export const useBookActions = (book, addToCart) => {
   const { toast } = useToast();
@@ -16,25 +14,6 @@ export const useBookActions = (book, addToCart) => {
   const [isLoading, setIsLoading] = useState(false);
   const [retryAction, setRetryAction] = useState(null);
 
-  // Check network status on mount and when window comes online/offline
-  useEffect(() => {
-    const handleNetworkChange = () => {
-      setOfflineMode(!window.navigator.onLine);
-    };
-
-    window.addEventListener('online', handleNetworkChange);
-    window.addEventListener('offline', handleNetworkChange);
-
-    // Initial check
-    handleNetworkChange();
-
-    return () => {
-      window.removeEventListener('online', handleNetworkChange);
-      window.removeEventListener('offline', handleNetworkChange);
-    };
-  }, []);
-
-  // Simple local storage helper for offline mode
   const updateLocalActionHistory = (actionType, bookId) => {
     try {
       const key = `book_${actionType}_${user?.id || 'anonymous'}`;
@@ -69,7 +48,6 @@ export const useBookActions = (book, addToCart) => {
     setRetryAction(null);
 
     try {
-      // Update the local UI state immediately for better UX
       switch(action) {
         case 'burn':
           setBurnClicked(true);
@@ -82,19 +60,15 @@ export const useBookActions = (book, addToCart) => {
           break;
       }
 
-      // Store action in local storage for offline support
       updateLocalActionHistory(action, book.id);
       
-      // Try to sync with Supabase if we're online
-      if (!isOfflineMode()) {
-        // Check if books table has the book
-        const existingBook = await safeSupabaseOperation(
+      if (!isOffline()) {
+        const { data: existingBook, error: checkError } = await safeOperation(
           () => supabase.from('books').select('id').eq('id', book.id).single()
         );
         
-        // If book doesn't exist in DB, insert it
-        if (!existingBook || existingBook.length === 0) {
-          await safeSupabaseOperation(
+        if (!existingBook) {
+          await safeOperation(
             () => supabase.from('books').insert({
               id: book.id,
               title: book.title,
@@ -104,8 +78,7 @@ export const useBookActions = (book, addToCart) => {
           );
         }
   
-        // Record the interaction in Supabase
-        await safeSupabaseOperation(
+        await safeOperation(
           () => supabase.from('book_interactions').insert({
             user_id: user.id,
             book_id: book.id,
@@ -115,10 +88,8 @@ export const useBookActions = (book, addToCart) => {
         );
       }
 
-      // Execute any additional handler
       if (handler) await handler();
       
-      // Reset UI state after a delay
       setTimeout(() => {
         switch(action) {
           case 'burn':
@@ -133,17 +104,15 @@ export const useBookActions = (book, addToCart) => {
         }
       }, 1000);
 
-      // Show success toast
       toast({
         title: `${action.charAt(0).toUpperCase() + action.slice(1)} Successful`,
-        description: `You have ${action}ed "${book.title}"${isOfflineMode() ? ' (offline mode)' : ''}`,
+        description: `You have ${action}ed "${book.title}"${isOffline() ? ' (offline mode)' : ''}`,
       });
 
     } catch (error) {
       console.error(`Error during ${action} action:`, error);
       setRetryAction({ action, handler });
       
-      // Reset UI state if there was an error
       switch(action) {
         case 'burn':
           setBurnClicked(false);
@@ -197,25 +166,21 @@ export const useBookActions = (book, addToCart) => {
     setIsLoading(true);
 
     try {
-      // Store cart action in local storage for offline support
       updateLocalActionHistory('cart', book.id);
       
-      // Run confetti effect immediately for better UX
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 }
       });
       
-      // Try to sync with Supabase if online
-      if (!isOfflineMode()) {
-        // Check if book exists in database, add if not
-        const existingBook = await safeSupabaseOperation(
+      if (!isOffline()) {
+        const { data: existingBook, error: checkError } = await safeOperation(
           () => supabase.from('books').select('id').eq('id', book.id).single()
         );
         
-        if (!existingBook || existingBook.length === 0) {
-          await safeSupabaseOperation(
+        if (!existingBook) {
+          await safeOperation(
             () => supabase.from('books').insert({
               id: book.id,
               title: book.title,
@@ -225,8 +190,7 @@ export const useBookActions = (book, addToCart) => {
           );
         }
         
-        // Add to cart in Supabase
-        await safeSupabaseOperation(
+        await safeOperation(
           () => supabase.from('cart_items').upsert({
             user_id: user.id,
             book_id: book.id,
@@ -237,12 +201,11 @@ export const useBookActions = (book, addToCart) => {
         );
       }
 
-      // Update local cart context
       await addToCart(book);
       
       toast({
         title: "Added to Cart",
-        description: `${book.title} has been added to your cart${isOfflineMode() ? ' (offline mode)' : ''}`,
+        description: `${book.title} has been added to your cart${isOffline() ? ' (offline mode)' : ''}`,
       });
     } catch (error) {
       console.error('Error adding to cart:', error);
