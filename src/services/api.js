@@ -37,17 +37,18 @@ export const api = {
         filteredBooks = filteredBooks.filter(book => 
           book.title.toLowerCase().includes(query) ||
           book.author.toLowerCase().includes(query) ||
-          book.tags.some(tag => tag.toLowerCase().includes(query))
+          (book.tags || []).some(tag => tag.toLowerCase().includes(query))
         );
       }
       
       if (filters.genre && filters.genre !== 'all') {
         filteredBooks = filteredBooks.filter(book => 
-          book.tags.includes(filters.genre)
+          (book.tags || []).includes(filters.genre)
         );
       }
       
-      return filteredBooks;
+      // Return in consistent format with online mode
+      return { data: filteredBooks, error: null };
     }
 
     let query = supabase.from('books').select('*');
@@ -65,7 +66,9 @@ export const api = {
 
   getBookById: async (id) => {
     if (isOffline()) {
-      return mockBooks.find(book => book.id === id);
+      const book = mockBooks.find(book => book.id === id);
+      // Return in consistent format with online mode
+      return { data: book || null, error: null };
     }
 
     return safeOperation(() => 
