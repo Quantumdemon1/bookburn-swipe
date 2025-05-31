@@ -1,7 +1,8 @@
-import { supabase, safeOperation, queueSync, getDB, isOffline } from '../lib/db';
+import { supabase, safeOperation, queueOperation, isOffline } from '@/lib/supabaseClient';
+import { books as mockBooks } from '@/data/books';
 
 export const api = {
-  // User operations
+  // Auth operations
   login: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -27,181 +28,204 @@ export const api = {
   },
 
   // Book operations
-  getBooks: async () => {
-    const db = await getDB();
+  getBooks: async (filters = {}) => {
     if (isOffline()) {
-      return db.getAll('books');
+      return mockBooks.filter(book => {
+        if (filters.genre && filters.genre !== 'all') {
+          return book.tags.includes(filters.genre);
+        }
+        return true;
+      });
     }
+
+    let query = supabase.from('books').select('*');
     
-    const { data, error } = await supabase
-      .from('books')
-      .select('*');
-    
-    if (error) throw error;
-    
-    // Cache books locally
-    const tx = db.transaction('books', 'readwrite');
-    await Promise.all([
-      ...data.map(book => tx.store.put(book)),
-      tx.done
-    ]);
-    
-    return data;
+    if (filters.genre && filters.genre !== 'all') {
+      query = query.contains('tags', [filters.genre]);
+    }
+
+    return safeOperation(() => query);
   },
 
-  addBook: async (bookData) => {
-    const operation = async () => {
-      const { data, error } = await supabase
-        .from('books')
-        .insert(bookData)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Update local cache
-      const db = await getDB();
-      await db.put('books', data);
-      
-      return data;
-    };
-
+  getBookById: async (id) => {
     if (isOffline()) {
-      const db = await getDB();
-      const tempId = `temp_${Date.now()}`;
-      const tempBook = { ...bookData, id: tempId };
-      await db.put('books', tempBook);
-      await queueSync({
-        type: 'insert',
-        table: 'books',
-        data: bookData
-      });
-      return tempBook;
+      return mockBooks.find(book => book.id === id);
     }
 
-    return safeOperation(operation);
+    return safeOperation(() => 
+      supabase
+        .from('books')
+        .select('*')
+        .eq('id', id)
+        .single()
+    );
   },
 
   // Review operations
   getReviews: async (bookId) => {
-    const db = await getDB();
-    if (isOffline()) {
-      const reviews = await db.getAll('reviews');
-      return reviews.filter(review => review.bookId === bookId);
-    }
-    
-    const { data, error } = await supabase
-      .from('reviews')
-      .select(`
-        *,
-        user:users(name, avatar_url),
-        comments(
+    return safeOperation(() =>
+      supabase
+        .from('reviews')
+        .select(`
           *,
-          user:users(name, avatar_url)
-        )
-      `)
-      .eq('book_id', bookId);
-    
-    if (error) throw error;
-    
-    // Cache reviews locally
-    const tx = db.transaction('reviews', 'readwrite');
-    await Promise.all([
-      ...data.map(review => tx.store.put(review)),
-      tx.done
-    ]);
-    
-    return data;
+          user:user_id (name, avatar_url),
+          comments (
+            *,
+            user:user_id (name, avatar_url)
+          )
+        `)
+        .eq('book_id', bookId)
+        .order('created_at', { ascending: false })
+    );
   },
 
-  addReview: async (reviewData) => {
-    const operation = async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .insert(reviewData)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Update local cache
-      const db = await getDB();
-      await db.put('reviews', data);
-      
-      return data;
+  addReview: async (bookId, userId, content, rating) => {
+    const review = {
+      book_id: bookId,
+      user_id: userId,
+      content,
+      rating,
+      created_at: new Date().toISOString()
     };
 
     if (isOffline()) {
-      const db = await getDB();
-      const tempId = `temp_${Date.now()}`;
-      const tempReview = { ...reviewData, id: tempId };
-      await db.put('reviews', tempReview);
-      await queueSync({
+      await queueOperation({
         type: 'insert',
         table: 'reviews',
-        data: reviewData
+        data: review
       });
-      return tempReview;
+      return { data: review, error: null };
     }
 
-    return safeOperation(operation);
+    return safeOperation(() =>
+      supabase
+        .from('reviews')
+        .insert(review)
+        .select()
+        .single()
+    );
+  },
+
+  // Comment operations
+  addComment: async (reviewId, userId, content, parentId = null) => {
+    const comment = {
+      review_id: reviewId,
+      user_id: userId,
+      content,
+      parent_id: parentId,
+      created_at: new Date().toISOString()
+    };
+
+    if (isOffline()) {
+      await queueOperation({
+        type: 'insert',
+        table: 'comments',
+        data: comment
+      });
+      return { data: comment, error: null };
+    }
+
+    return safeOperation(() =>
+      supabase
+        .from('comments')
+        .insert(comment)
+        .select()
+        .single()
+    );
   },
 
   // User preferences operations
   getUserPreferences: async (userId) => {
-    const db = await getDB();
-    if (isOffline()) {
-      return db.get('userPreferences', userId);
-    }
-    
-    const { data, error } = await supabase
-      .from('user_preferences')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') throw error;
-    
-    if (data) {
-      // Cache preferences locally
-      await db.put('userPreferences', data);
-    }
-    
-    return data;
+    return safeOperation(() =>
+      supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+    );
   },
 
   updateUserPreferences: async (userId, preferences) => {
-    const operation = async () => {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          ...preferences
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Update local cache
-      const db = await getDB();
-      await db.put('userPreferences', data);
-      
-      return data;
+    const data = {
+      user_id: userId,
+      preferences,
+      updated_at: new Date().toISOString()
     };
 
     if (isOffline()) {
-      const db = await getDB();
-      const prefs = { user_id: userId, ...preferences };
-      await db.put('userPreferences', prefs);
-      await queueSync({
-        type: 'update',
+      await queueOperation({
+        type: 'upsert',
         table: 'user_preferences',
-        data: prefs
+        data
       });
-      return prefs;
+      return { data, error: null };
     }
 
-    return safeOperation(operation);
+    return safeOperation(() =>
+      supabase
+        .from('user_preferences')
+        .upsert(data)
+        .select()
+        .single()
+    );
+  },
+
+  // Reaction operations
+  addReaction: async (reviewId, commentId, userId, type) => {
+    const reaction = {
+      user_id: userId,
+      type,
+      created_at: new Date().toISOString()
+    };
+
+    if (commentId) {
+      reaction.comment_id = commentId;
+    } else {
+      reaction.review_id = reviewId;
+    }
+
+    if (isOffline()) {
+      await queueOperation({
+        type: 'insert',
+        table: 'reactions',
+        data: reaction
+      });
+      return { data: reaction, error: null };
+    }
+
+    return safeOperation(() =>
+      supabase
+        .from('reactions')
+        .insert(reaction)
+        .select()
+        .single()
+    );
+  },
+
+  // Book interaction operations
+  recordBookInteraction: async (userId, bookId, action) => {
+    const interaction = {
+      user_id: userId,
+      book_id: bookId,
+      action,
+      created_at: new Date().toISOString()
+    };
+
+    if (isOffline()) {
+      await queueOperation({
+        type: 'insert',
+        table: 'book_interactions',
+        data: interaction
+      });
+      return { data: interaction, error: null };
+    }
+
+    return safeOperation(() =>
+      supabase
+        .from('book_interactions')
+        .insert(interaction)
+        .select()
+        .single()
+    );
   }
 };

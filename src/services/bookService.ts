@@ -1,25 +1,25 @@
-
-import { books } from '../data/books';
+import { api } from './api';
 import type { Book } from '../types';
 
-// Simulated API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const bookService = {
-  getBooks: async (): Promise<Book[]> => {
-    await delay(300);
-    return books;
+  getBooks: async (filters = {}): Promise<Book[]> => {
+    const { data, error } = await api.getBooks(filters);
+    if (error) throw error;
+    return data || [];
   },
 
   getBookById: async (id: number): Promise<Book | undefined> => {
-    await delay(200);
-    return books.find(book => book.id === id);
+    const { data, error } = await api.getBookById(id);
+    if (error) throw error;
+    return data;
   },
 
   searchBooks: async (query: string): Promise<Book[]> => {
-    await delay(200);
+    const { data, error } = await api.getBooks();
+    if (error) throw error;
+    
     const lowercaseQuery = query.toLowerCase();
-    return books.filter(book => 
+    return (data || []).filter(book => 
       book.title.toLowerCase().includes(lowercaseQuery) ||
       book.author.toLowerCase().includes(lowercaseQuery) ||
       book.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
@@ -27,14 +27,17 @@ export const bookService = {
   },
 
   getFavorites: async (userId: string): Promise<Book[]> => {
-    await delay(200);
-    const favorites = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    return books.filter(book => favorites.includes(book.id));
+    const { data: preferences, error } = await api.getUserPreferences(userId);
+    if (error) throw error;
+    
+    const favoriteIds = preferences?.favorites || [];
+    const { data: books } = await api.getBooks();
+    return (books || []).filter(book => favoriteIds.includes(book.id));
   },
 
   toggleFavorite: async (userId: string, bookId: number): Promise<void> => {
-    await delay(200);
-    const favorites = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+    const { data: preferences } = await api.getUserPreferences(userId);
+    const favorites = preferences?.favorites || [];
     const index = favorites.indexOf(bookId);
     
     if (index === -1) {
@@ -43,6 +46,9 @@ export const bookService = {
       favorites.splice(index, 1);
     }
     
-    localStorage.setItem(`favorites_${userId}`, JSON.stringify(favorites));
+    await api.updateUserPreferences(userId, {
+      ...preferences,
+      favorites
+    });
   }
 };
