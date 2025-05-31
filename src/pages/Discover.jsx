@@ -4,56 +4,111 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { getRecommendations } from '@/utils/recommendationEngine';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Star, MessageSquare } from 'lucide-react';
+import { Star, MessageSquare, Loader } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+
 const Discover = () => {
   const [recommendedBooks, setRecommendedBooks] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
   React.useEffect(() => {
-    const books = getRecommendations(1, 5);
-    setRecommendedBooks(books);
+    const loadRecommendations = async () => {
+      try {
+        setIsLoading(true);
+        const books = await getRecommendations(1, 5);
+        if (books && books.length > 0) {
+          setRecommendedBooks(books);
+        } else {
+          toast({
+            title: "No Recommendations",
+            description: "Unable to load book recommendations at this time.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error loading recommendations:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load book recommendations",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecommendations();
   }, []);
+
   const handleRateClick = bookId => {
     navigate('/ratings');
   };
+
   const handleReviewClick = bookId => {
     navigate('/reviews');
   };
-  return <div className="container mx-auto p-4 space-y-8 py-0 px-[210px]">
+
+  return (
+    <div className="container mx-auto p-4 space-y-8 py-0 px-[210px]">
       <h1 className="text-3xl font-bold mb-6">Discover Books</h1>
       
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Recommended for You</h2>
         <div className="relative">
-          <Carousel className="w-full max-w-screen-xl mx-auto">
-            <CarouselContent>
-              {recommendedBooks.map(book => <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="h-full">
-                    <CardContent className="p-4 space-y-4">
-                      <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
-                        <img src={book.coverUrl} alt={book.title} className="object-cover w-full h-full hover:scale-55 transition-transform duration-200" />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="font-semibold truncate">{book.title}</h3>
-                        <p className="text-sm text-muted-foreground">{book.author}</p>
-                        <p className="text-sm line-clamp-2">{book.preview}</p>
-                        <div className="flex gap-2 pt-2">
-                          <Button variant="outline" size="sm" className="flex-1" onClick={() => handleRateClick(book.id)}>
-                            <Star className="w-4 h-4 mr-2" />
-                            Rate
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1" onClick={() => handleReviewClick(book.id)}>
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Review
-                          </Button>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader className="w-8 h-8 animate-spin" />
+            </div>
+          ) : (
+            <Carousel className="w-full max-w-screen-xl mx-auto">
+              <CarouselContent>
+                {recommendedBooks.map(book => (
+                  <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
+                    <Card className="h-full">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
+                          <img
+                            src={book.coverUrl}
+                            alt={book.title}
+                            className="object-cover w-full h-full hover:scale-55 transition-transform duration-200"
+                          />
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>)}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
+                        <div className="space-y-2">
+                          <h3 className="font-semibold truncate">{book.title}</h3>
+                          <p className="text-sm text-muted-foreground">{book.author}</p>
+                          <p className="text-sm line-clamp-2">{book.preview}</p>
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleRateClick(book.id)}
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Rate
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleReviewClick(book.id)}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Review
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          )}
         </div>
       </section>
 
@@ -76,6 +131,8 @@ const Discover = () => {
           </CardContent>
         </Card>
       </section>
-    </div>;
+    </div>
+  );
 };
+
 export default Discover;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { useInView } from 'react-intersection-observer';
@@ -24,18 +23,35 @@ const Covers = () => {
   });
 
   useEffect(() => {
-    if (!isSearching) {
-      setIsLoading(true);
-      const fetchBooks = async () => {
+    const fetchBooks = async () => {
+      if (isSearching) return;
+      
+      try {
+        setIsLoading(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const initialBooks = getRecommendations(1, 1, selectedGenre);
-        if (initialBooks.length > 0) {
+        const initialBooks = await getRecommendations(1, 1, selectedGenre);
+        if (initialBooks && initialBooks.length > 0) {
           setCurrentBook(initialBooks[0]);
+        } else {
+          toast({
+            title: "No Books Found",
+            description: "No books available for the selected genre.",
+            variant: "destructive"
+          });
         }
+      } catch (error) {
+        console.error('Error fetching books:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load books",
+          variant: "destructive"
+        });
+      } finally {
         setIsLoading(false);
-      };
-      fetchBooks();
-    }
+      }
+    };
+
+    fetchBooks();
   }, [isSearching, selectedGenre]);
 
   useEffect(() => {
@@ -51,46 +67,96 @@ const Covers = () => {
   const handleAction = async (action) => {
     if (isActionLoading || !currentBook) return;
     
-    setIsActionLoading(true);
-    updateUserPreferences(currentBook.id, action);
-    
-    toast({
-      title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-      description: `${currentBook.title} by ${currentBook.author}`,
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const nextBook = getNextRecommendation(currentBook.id);
-    setCurrentBook(nextBook);
-    setIsActionLoading(false);
+    try {
+      setIsActionLoading(true);
+      await updateUserPreferences(currentBook.id, action);
+      
+      toast({
+        title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
+        description: `${currentBook.title} by ${currentBook.author}`,
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      const nextBook = await getNextRecommendation(currentBook.id);
+      if (nextBook) {
+        setCurrentBook(nextBook);
+      } else {
+        toast({
+          title: "No More Books",
+          description: "No more recommendations available.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error(`Error handling ${action}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${action} the book`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleSearch = async (query) => {
-    setIsSearching(true);
-    setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const searchResults = searchBooks(query);
-    if (searchResults.length > 0) {
-      setCurrentBook(searchResults[0]);
+    try {
+      setIsSearching(true);
+      setIsLoading(true);
+      
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const searchResults = await searchBooks(query);
+      if (searchResults && searchResults.length > 0) {
+        setCurrentBook(searchResults[0]);
+      } else {
+        toast({
+          title: "No Results",
+          description: "No books found matching your search.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error searching books:', error);
+      toast({
+        title: "Search Failed",
+        description: "Failed to search for books",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleGenreChange = async (genre) => {
-    setSelectedGenre(genre);
-    setIsSearching(false);
-    setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const newBooks = getRecommendations(1, 1, genre);
-    if (newBooks.length > 0) {
-      setCurrentBook(newBooks[0]);
+    try {
+      setSelectedGenre(genre);
+      setIsSearching(false);
+      setIsLoading(true);
+      
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const newBooks = await getRecommendations(1, 1, genre);
+      if (newBooks && newBooks.length > 0) {
+        setCurrentBook(newBooks[0]);
+      } else {
+        toast({
+          title: "No Books Found",
+          description: "No books available for this genre.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error changing genre:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load books for this genre",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDragEnd = (_, info) => {
