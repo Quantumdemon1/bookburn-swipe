@@ -1,303 +1,207 @@
-import { books } from '../data/books';
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { supabase, safeOperation, queueSync, getDB, isOffline } from '../lib/db';
 
 export const api = {
+  // User operations
   login: async (email, password) => {
-    await delay(500); // Simulate network delay
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      return { success: true, user: { ...user, password: undefined } };
-    }
-    throw new Error('Invalid credentials');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+    return data;
   },
 
   register: async (userData) => {
-    await delay(500);
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    if (users.some(u => u.email === userData.email)) {
-      throw new Error('Email already exists');
+    const { data, error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          name: userData.name,
+          avatar_url: userData.avatar_url
+        }
+      }
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Book operations
+  getBooks: async () => {
+    const db = await getDB();
+    if (isOffline()) {
+      return db.getAll('books');
     }
-    const newUser = { ...userData, id: Date.now() };
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    return { success: true, user: { ...newUser, password: undefined } };
+    
+    const { data, error } = await supabase
+      .from('books')
+      .select('*');
+    
+    if (error) throw error;
+    
+    // Cache books locally
+    const tx = db.transaction('books', 'readwrite');
+    await Promise.all([
+      ...data.map(book => tx.store.put(book)),
+      tx.done
+    ]);
+    
+    return data;
   },
 
-  getRecommendations: async (userId) => {
-    await delay(300);
-    const userPreferences = JSON.parse(localStorage.getItem(`userPreferences_${userId}`) || '{}');
-    return books.map(book => ({
-      ...book,
-      score: book.tags.reduce((sum, tag) => sum + (userPreferences[tag] || 1), 0)
-    })).sort((a, b) => b.score - a.score);
-  },
+  addBook: async (bookData) => {
+    const operation = async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .insert(bookData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update local cache
+      const db = await getDB();
+      await db.put('books', data);
+      
+      return data;
+    };
 
-  updatePreferences: async (userId, bookId, action) => {
-    await delay(200);
-    const userPreferences = JSON.parse(localStorage.getItem(`userPreferences_${userId}`) || '{}');
-    const book = books.find(b => b.id === bookId);
-    if (book) {
-      book.tags.forEach(tag => {
-        userPreferences[tag] = (userPreferences[tag] || 1) + (action === 'like' ? 0.1 : -0.1);
+    if (isOffline()) {
+      const db = await getDB();
+      const tempId = `temp_${Date.now()}`;
+      const tempBook = { ...bookData, id: tempId };
+      await db.put('books', tempBook);
+      await queueSync({
+        type: 'insert',
+        table: 'books',
+        data: bookData
       });
+      return tempBook;
     }
-    localStorage.setItem(`userPreferences_${userId}`, JSON.stringify(userPreferences));
-    return { success: true };
+
+    return safeOperation(operation);
   },
 
-  getUserProfile: async (userId) => {
-    await delay(300);
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      return { ...user, password: undefined };
-    }
-    throw new Error('User not found');
-  },
-
-  updateUserProfile: async (userId, userData) => {
-    await delay(300);
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const index = users.findIndex(u => u.id === userId);
-    if (index !== -1) {
-      users[index] = { ...users[index], ...userData };
-      localStorage.setItem('users', JSON.stringify(users));
-      return { success: true, user: { ...users[index], password: undefined } };
-    }
-    throw new Error('User not found');
-  },
-
-  addReview: async (userId, bookId, reviewData) => {
-    await delay(300);
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const newReview = {
-      id: Date.now(),
-      userId,
-      bookId,
-      ...reviewData,
-      likes: 0,
-      comments: [],
-      reactions: {
-        like: 0,
-        heart: 0,
-        laugh: 0,
-        surprised: 0,
-      },
-      likedBy: [],
-      reactedBy: {},
-    };
-    reviews.push(newReview);
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-    return { success: true, review: newReview };
-  },
-
+  // Review operations
   getReviews: async (bookId) => {
-    await delay(300);
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    return reviews.filter(review => review.bookId === bookId);
-  },
-
-  addComment: async (reviewId, userId, content, parentId = null) => {
-    await delay(200);
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+    const db = await getDB();
+    if (isOffline()) {
+      const reviews = await db.getAll('reviews');
+      return reviews.filter(review => review.bookId === bookId);
+    }
     
-    if (reviewIndex === -1) {
-      throw new Error('Review not found');
-    }
-
-    const newComment = {
-      id: Date.now(),
-      userId,
-      content,
-      createdAt: new Date().toISOString(),
-      parentId,
-      reactions: {
-        like: 0,
-        heart: 0,
-        laugh: 0,
-        surprised: 0,
-      },
-      replies: [],
-    };
-
-    if (parentId) {
-      // Add reply to parent comment
-      const addReplyToComment = (comments) => {
-        for (let comment of comments) {
-          if (comment.id === parentId) {
-            comment.replies.push(newComment);
-            return true;
-          }
-          if (comment.replies?.length) {
-            const found = addReplyToComment(comment.replies);
-            if (found) return true;
-          }
-        }
-        return false;
-      };
-
-      addReplyToComment(reviews[reviewIndex].comments);
-    } else {
-      // Add top-level comment
-      if (!reviews[reviewIndex].comments) {
-        reviews[reviewIndex].comments = [];
-      }
-      reviews[reviewIndex].comments.push(newComment);
-    }
-
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-    return newComment;
-  },
-
-  addReaction: async (reviewId, commentId, userId, reactionType) => {
-    await delay(200);
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const review = reviews.find(r => r.id === reviewId);
+    const { data, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        user:users(name, avatar_url),
+        comments(
+          *,
+          user:users(name, avatar_url)
+        )
+      `)
+      .eq('book_id', bookId);
     
-    if (!review) {
-      throw new Error('Review not found');
-    }
-
-    const updateReactions = (item) => {
-      if (!item.reactedBy) {
-        item.reactedBy = {};
-      }
-      if (!item.reactions) {
-        item.reactions = { like: 0, heart: 0, laugh: 0, surprised: 0 };
-      }
-
-      const previousReaction = item.reactedBy[userId];
-      if (previousReaction === reactionType) {
-        // Remove reaction
-        delete item.reactedBy[userId];
-        item.reactions[reactionType]--;
-      } else {
-        // Update reaction
-        if (previousReaction) {
-          item.reactions[previousReaction]--;
-        }
-        item.reactedBy[userId] = reactionType;
-        item.reactions[reactionType]++;
-      }
-
-      return item.reactions;
-    };
-
-    if (commentId) {
-      const findAndUpdateComment = (comments) => {
-        for (let comment of comments) {
-          if (comment.id === commentId) {
-            return updateReactions(comment);
-          }
-          if (comment.replies?.length) {
-            const result = findAndUpdateComment(comment.replies);
-            if (result) return result;
-          }
-        }
-        return null;
-      };
-
-      const updatedReactions = findAndUpdateComment(review.comments);
-      if (!updatedReactions) {
-        throw new Error('Comment not found');
-      }
-
-      localStorage.setItem('reviews', JSON.stringify(reviews));
-      return updatedReactions;
-    } else {
-      const updatedReactions = updateReactions(review);
-      localStorage.setItem('reviews', JSON.stringify(reviews));
-      return updatedReactions;
-    }
-  },
-
-  toggleLike: async (reviewId, userId) => {
-    await delay(200);
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const reviewIndex = reviews.findIndex(r => r.id === reviewId);
+    if (error) throw error;
     
-    if (reviewIndex === -1) {
-      throw new Error('Review not found');
-    }
+    // Cache reviews locally
+    const tx = db.transaction('reviews', 'readwrite');
+    await Promise.all([
+      ...data.map(review => tx.store.put(review)),
+      tx.done
+    ]);
+    
+    return data;
+  },
 
-    const likedBy = reviews[reviewIndex].likedBy || [];
-    const hasLiked = likedBy.includes(userId);
-
-    if (hasLiked) {
-      reviews[reviewIndex].likedBy = likedBy.filter(id => id !== userId);
-      reviews[reviewIndex].likes = (reviews[reviewIndex].likes || 0) - 1;
-    } else {
-      reviews[reviewIndex].likedBy = [...likedBy, userId];
-      reviews[reviewIndex].likes = (reviews[reviewIndex].likes || 0) + 1;
-    }
-
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-    return {
-      likes: reviews[reviewIndex].likes,
-      hasLiked: !hasLiked
+  addReview: async (reviewData) => {
+    const operation = async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert(reviewData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update local cache
+      const db = await getDB();
+      await db.put('reviews', data);
+      
+      return data;
     };
-  },
 
-  updateRating: async (userId, bookId, rating) => {
-    await delay(200);
-    const ratings = JSON.parse(localStorage.getItem('ratings') || '[]');
-    const index = ratings.findIndex(r => r.userId === userId && r.bookId === bookId);
-    if (index !== -1) {
-      ratings[index].rating = rating;
-    } else {
-      ratings.push({ userId, bookId, rating });
+    if (isOffline()) {
+      const db = await getDB();
+      const tempId = `temp_${Date.now()}`;
+      const tempReview = { ...reviewData, id: tempId };
+      await db.put('reviews', tempReview);
+      await queueSync({
+        type: 'insert',
+        table: 'reviews',
+        data: reviewData
+      });
+      return tempReview;
     }
-    localStorage.setItem('ratings', JSON.stringify(ratings));
-    return { success: true };
+
+    return safeOperation(operation);
   },
 
-  getConversations: async () => {
-    await delay(300);
-    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    return conversations.map(conv => ({
-      id: conv.id,
-      participants: conv.participants || [],
-      messages: conv.messages || [],
-      friendName: conv.friendName || 'User',
-      friendAvatar: conv.friendAvatar || '/placeholder.svg'
-    }));
-  },
-
-  sendMessage: async (conversationId, message) => {
-    await delay(200);
-    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    const conversationIndex = conversations.findIndex(c => c.id === conversationId);
-    if (conversationIndex === -1) {
-      throw new Error('Conversation not found');
+  // User preferences operations
+  getUserPreferences: async (userId) => {
+    const db = await getDB();
+    if (isOffline()) {
+      return db.get('userPreferences', userId);
     }
-    const newMessage = {
-      id: Date.now(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date().toISOString(),
-      delivered: true,
-      read: false
-    };
-    conversations[conversationIndex].messages.push(newMessage);
-    localStorage.setItem('conversations', JSON.stringify(conversations));
-    return newMessage;
+    
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    
+    if (data) {
+      // Cache preferences locally
+      await db.put('userPreferences', data);
+    }
+    
+    return data;
   },
 
-  createConversation: async (userId, friendId, friendName, friendAvatar) => {
-    await delay(300);
-    const newConversation = {
-      id: Date.now(),
-      participants: [userId, friendId],
-      messages: [],
-      friendName: friendName || 'User',
-      friendAvatar: friendAvatar || '/placeholder.svg'
+  updateUserPreferences: async (userId, preferences) => {
+    const operation = async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          ...preferences
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update local cache
+      const db = await getDB();
+      await db.put('userPreferences', data);
+      
+      return data;
     };
-    const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    conversations.push(newConversation);
-    localStorage.setItem('conversations', JSON.stringify(conversations));
-    return newConversation;
-  },
+
+    if (isOffline()) {
+      const db = await getDB();
+      const prefs = { user_id: userId, ...preferences };
+      await db.put('userPreferences', prefs);
+      await queueSync({
+        type: 'update',
+        table: 'user_preferences',
+        data: prefs
+      });
+      return prefs;
+    }
+
+    return safeOperation(operation);
+  }
 };
