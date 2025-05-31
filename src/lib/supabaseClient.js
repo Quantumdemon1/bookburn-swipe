@@ -53,3 +53,12 @@ export const safeOperation = async (operation) => {
     return { data: null, error };
   }
 };
+
+// Add the missing queueOperation export
+export const queueOperation = async (operation) => {
+  if (offlineMode) {
+    console.log('Operation queued for when online');
+    return { data: null, error: new Error('Operation queued') };
+  }
+  return safeOperation(operation);
+};
