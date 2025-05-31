@@ -2,31 +2,6 @@ import { supabase, safeOperation, queueOperation, isOffline as isOfflineMode } f
 import { books as mockBooks } from '@/data/books';
 
 export const api = {
-  // Auth operations
-  login: async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  register: async (userData) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        data: {
-          name: userData.name,
-          avatar_url: userData.avatar_url
-        }
-      }
-    });
-    if (error) throw error;
-    return data;
-  },
-
   // Book operations
   getBooks: async (filters = {}) => {
     if (isOfflineMode()) {
@@ -125,53 +100,6 @@ export const api = {
     );
   },
 
-  // Comment operations
-  getComments: async (reviewId) => {
-    return safeOperation(() =>
-      supabase
-        .from('comments')
-        .select(`
-          *,
-          user:profiles!comments_user_id_fkey(name, avatar_url),
-          reactions:reactions(*)
-        `)
-        .eq('review_id', reviewId)
-        .order('created_at', { ascending: true })
-    );
-  },
-
-  addComment: async (reviewId, userId, content, parentId = null) => {
-    const comment = {
-      review_id: reviewId,
-      user_id: userId,
-      content,
-      parent_id: parentId,
-      created_at: new Date().toISOString()
-    };
-
-    if (isOfflineMode()) {
-      const tempId = `temp_${Date.now()}`;
-      await queueOperation({
-        type: 'insert',
-        table: 'comments',
-        data: comment,
-        tempId
-      });
-      return { data: { ...comment, id: tempId }, error: null };
-    }
-
-    return safeOperation(() =>
-      supabase
-        .from('comments')
-        .insert(comment)
-        .select(`
-          *,
-          user:profiles!comments_user_id_fkey(name, avatar_url)
-        `)
-        .single()
-    );
-  },
-
   // User preferences operations
   getUserPreferences: async (userId) => {
     return safeOperation(() =>
@@ -203,65 +131,6 @@ export const api = {
       supabase
         .from('user_preferences')
         .upsert(data)
-        .select()
-        .single()
-    );
-  },
-
-  // Reaction operations
-  addReaction: async (reviewId, commentId, userId, type) => {
-    const reaction = {
-      user_id: userId,
-      type,
-      created_at: new Date().toISOString()
-    };
-
-    if (commentId) {
-      reaction.comment_id = commentId;
-    } else {
-      reaction.review_id = reviewId;
-    }
-
-    if (isOfflineMode()) {
-      await queueOperation({
-        type: 'insert',
-        table: 'reactions',
-        data: reaction
-      });
-      return { data: reaction, error: null };
-    }
-
-    return safeOperation(() =>
-      supabase
-        .from('reactions')
-        .insert(reaction)
-        .select()
-        .single()
-    );
-  },
-
-  // Book interaction operations
-  recordBookInteraction: async (userId, bookId, action) => {
-    const interaction = {
-      user_id: userId,
-      book_id: bookId,
-      action,
-      created_at: new Date().toISOString()
-    };
-
-    if (isOfflineMode()) {
-      await queueOperation({
-        type: 'insert',
-        table: 'book_interactions',
-        data: interaction
-      });
-      return { data: interaction, error: null };
-    }
-
-    return safeOperation(() =>
-      supabase
-        .from('book_interactions')
-        .insert(interaction)
         .select()
         .single()
     );
