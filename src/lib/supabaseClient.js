@@ -15,6 +15,30 @@ const cacheStore = localforage.createInstance({
   storeName: 'dataCache'
 });
 
+// Retry configuration
+const RETRY_COUNT = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+// Helper function to delay execution
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry mechanism for fetch
+const retryFetch = async (url, options, retries = RETRY_COUNT) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      await delay(RETRY_DELAY);
+      return retryFetch(url, options, retries - 1);
+    }
+    throw error;
+  }
+};
+
 // Create Supabase client with custom fetch handling
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -26,27 +50,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: { 'x-application-name': 'bookburn' },
     fetch: async (...args) => {
       try {
-        const response = await fetch(...args);
-        if (!response.ok) {
-          // Return a proper Response object for non-OK responses
-          return new Response(JSON.stringify({
-            error: `HTTP error! status: ${response.status}`
-          }), {
-            status: response.status,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
+        // Try fetching with retry mechanism
+        const response = await retryFetch(...args);
         return response;
       } catch (error) {
-        // Try to handle offline operation
+        // If all retries fail, try offline handling
         const offlineResponse = await handleOfflineOperation(args[0], args[1]);
         if (offlineResponse) {
           return offlineResponse;
         }
         
-        // Return a proper Response object for network errors
+        // If offline handling fails, return error response
         return new Response(JSON.stringify({
-          error: 'Network error or offline'
+          error: 'Network error or offline',
+          details: error.message
         }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
@@ -56,14 +73,26 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Offline state management
-let isOfflineMode = !navigator.onLine;
+// Offline state management using sessionStorage for persistence
+const getOfflineState = () => {
+  return sessionStorage.getItem('isOffline') === 'true' || !navigator.onLine;
+};
+
+const setOfflineState = (state) => {
+  sessionStorage.setItem('isOffline', state.toString());
+};
+
+let isOfflineMode = getOfflineState();
+
 window.addEventListener('online', () => {
   isOfflineMode = false;
+  setOfflineState(false);
   processSyncQueue().catch(console.error);
 });
+
 window.addEventListener('offline', () => {
   isOfflineMode = true;
+  setOfflineState(true);
 });
 
 // Check if we're offline
@@ -143,7 +172,6 @@ const handleOfflineOperation = async (url, options) => {
       data
     });
     
-    // Return a success response for offline mutations
     return new Response(JSON.stringify({
       status: 'queued',
       message: 'Operation queued for sync'
@@ -156,15 +184,19 @@ const handleOfflineOperation = async (url, options) => {
   return null;
 };
 
-// Safe operation wrapper
+// Safe operation wrapper with enhanced error handling
 export const safeOperation = async (operation) => {
   try {
     const result = await operation();
     
-    // Handle offline/error responses
     if (result.error) {
       if (result.status === 503) {
-        return { data: null, error: 'Offline mode', isOffline: true };
+        console.warn('Operation failed due to network issues, falling back to offline mode');
+        return { 
+          data: null, 
+          error: 'Offline mode', 
+          isOffline: true 
+        };
       }
       return { data: null, error: result.error };
     }
