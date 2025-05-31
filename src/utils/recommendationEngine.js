@@ -3,9 +3,11 @@ import { calculateBookScore } from './bookScoring';
 import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesManager';
 
 // Get book recommendations based on user preferences and genre filter
-export const getRecommendations = async (page = 1, limit = 10, selectedGenre = 'all') => {
+export const getRecommendations = async (userId, page = 1, limit = 10, selectedGenre = 'all') => {
   try {
-    const { data: preferences, error: preferencesError } = await api.getUserPreferences(1); // TODO: Get actual user ID
+    if (!userId) throw new Error('User ID is required');
+    
+    const { data: preferences, error: preferencesError } = await api.getUserPreferences(userId);
     if (preferencesError) throw preferencesError;
     
     // Get books from Supabase and ensure we have an array
@@ -36,14 +38,16 @@ export const getRecommendations = async (page = 1, limit = 10, selectedGenre = '
 };
 
 // Get next recommended book
-export const getNextRecommendation = async (currentBookId) => {
+export const getNextRecommendation = async (userId, currentBookId) => {
   try {
+    if (!userId) throw new Error('User ID is required');
+
     // Mark current book as shown
     if (currentBookId) {
       addToShownBooks(currentBookId);
     }
 
-    const { data: preferences, error: preferencesError } = await api.getUserPreferences(1); // TODO: Get actual user ID
+    const { data: preferences, error: preferencesError } = await api.getUserPreferences(userId);
     if (preferencesError) throw preferencesError;
     
     // Get all books from Supabase and ensure we have an array
@@ -65,7 +69,7 @@ export const getNextRecommendation = async (currentBookId) => {
     // If no more unshown books, reset and try again
     if (availableBooks.length === 0) {
       clearShownBooks();
-      return getNextRecommendation();
+      return getNextRecommendation(userId);
     }
 
     return availableBooks[0];

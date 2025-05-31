@@ -6,19 +6,30 @@ import { updateUserPreferences } from '@/utils/interactionWeights';
 import { getNextRecommendation } from '@/utils/recommendationEngine';
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "lucide-react";
+import { useUser } from '@/contexts/UserContext';
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dragDirection, setDragDirection] = useState(0);
   const { toast } = useToast();
+  const { user } = useUser();
 
   useEffect(() => {
     const loadInitialBook = async () => {
       try {
+        if (!user?.id) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to view book recommendations.",
+            variant: "destructive"
+          });
+          return;
+        }
+
         initializeUserPreferences();
         setIsLoading(true);
-        const nextBook = await getNextRecommendation();
+        const nextBook = await getNextRecommendation(user.id);
         if (nextBook) {
           setCurrentBook(nextBook);
         } else {
@@ -59,10 +70,10 @@ const Match = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [user]);
 
   const handleAction = async (action) => {
-    if (!currentBook || isLoading) return;
+    if (!currentBook || isLoading || !user?.id) return;
     
     try {
       setIsLoading(true);
@@ -73,7 +84,7 @@ const Match = () => {
         description: `${currentBook.title} by ${currentBook.author}`
       });
 
-      const nextBook = await getNextRecommendation(currentBook.id);
+      const nextBook = await getNextRecommendation(user.id, currentBook.id);
       if (nextBook) {
         setCurrentBook(nextBook);
       } else {
@@ -106,6 +117,15 @@ const Match = () => {
     }
     setDragDirection(0);
   };
+
+  if (!user?.id) {
+    return (
+      <div className="w-full text-center py-8">
+        <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+        <p className="text-gray-600">Please sign in to view book recommendations.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -155,5 +175,3 @@ const Match = () => {
     </div>
   );
 };
-
-export default Match;

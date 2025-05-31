@@ -1,14 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/services/api';
+import { useUser } from '@/contexts/UserContext';
 
 export const useReviews = (selectedBook) => {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest');
   const { toast } = useToast();
-  const dummyUserId = 1;
+  const { user } = useUser();
 
   const loadReviews = async () => {
     if (!selectedBook) return;
@@ -47,8 +47,17 @@ export const useReviews = (selectedBook) => {
   };
 
   const handleLike = async (reviewId) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to like reviews.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      await api.toggleLike(reviewId, dummyUserId);
+      await api.toggleLike(reviewId, user.id);
       await loadReviews();
     } catch (error) {
       toast({
@@ -60,8 +69,17 @@ export const useReviews = (selectedBook) => {
   };
 
   const handleReaction = async (reviewId, commentId, type) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to react to reviews.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      await api.addReaction(reviewId, commentId, dummyUserId, type);
+      await api.addReaction(reviewId, commentId, user.id, type);
       await loadReviews();
     } catch (error) {
       toast({

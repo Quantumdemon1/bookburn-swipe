@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import RatingStars from './reviews/RatingStars';
 import FormatToolbar from './reviews/FormatToolbar';
 import ShareButtons from './reviews/ShareButtons';
 import { useTextFormat } from '@/hooks/useTextFormat';
+import { useUser } from '@/contexts/UserContext';
 
 const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
   const [rating, setRating] = useState(0);
@@ -16,6 +16,7 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { handleTextSelect, applyFormat } = useTextFormat(content, setContent);
+  const { user } = useUser();
 
   const handleShare = async (platform) => {
     const shareData = {
@@ -49,6 +50,15 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to post a review.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!content.trim()) {
       toast({
         title: "Error",
@@ -75,7 +85,7 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
         createdAt: new Date().toISOString()
       };
 
-      await api.addReview(1, bookId, reviewData);
+      await api.addReview(user.id, bookId, reviewData);
       toast({
         title: "Success",
         description: "Your review has been posted!"
@@ -95,6 +105,16 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
       setIsSubmitting(false);
     }
   };
+
+  if (!user?.id) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <p className="text-center text-gray-600">Please sign in to write a review.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-6">
@@ -125,5 +145,3 @@ const ReviewEditor = ({ bookId, onReviewSubmitted }) => {
     </Card>
   );
 };
-
-export default ReviewEditor;
