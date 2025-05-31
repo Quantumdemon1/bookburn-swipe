@@ -1,19 +1,20 @@
-
-import { books } from '../data/books';
-import { initializeUserPreferences } from './preferencesManager';
+import { api } from '@/services/api';
 import { calculateBookScore } from './bookScoring';
 import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesManager';
 
 // Get book recommendations based on user preferences and genre filter
-export const getRecommendations = (page = 1, limit = 10, selectedGenre = 'all') => {
-  const preferences = initializeUserPreferences();
+export const getRecommendations = async (page = 1, limit = 10, selectedGenre = 'all') => {
+  const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
   
+  // Get books from Supabase
+  const { data: books } = await api.getBooks({ genre: selectedGenre });
+  if (!books) return [];
+
   // Filter and score books
   let availableBooks = books
-    .filter(book => selectedGenre === 'all' || book.tags.includes(selectedGenre))
     .map(book => ({
       ...book,
-      score: calculateBookScore(book, preferences)
+      score: calculateBookScore(book, preferences?.data?.preferences || {})
     }))
     .sort((a, b) => b.score - a.score);
 
@@ -26,20 +27,24 @@ export const getRecommendations = (page = 1, limit = 10, selectedGenre = 'all') 
 };
 
 // Get next recommended book
-export const getNextRecommendation = (currentBookId) => {
+export const getNextRecommendation = async (currentBookId) => {
   // Mark current book as shown
   if (currentBookId) {
     addToShownBooks(currentBookId);
   }
 
-  const preferences = initializeUserPreferences();
+  const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
   
+  // Get all books from Supabase
+  const { data: books } = await api.getBooks();
+  if (!books) return null;
+
   // Get all unshown books and score them
   const availableBooks = books
     .filter(book => !getShownBooks().has(book.id))
     .map(book => ({
       ...book,
-      score: calculateBookScore(book, preferences)
+      score: calculateBookScore(book, preferences?.data?.preferences || {})
     }))
     .sort((a, b) => b.score - a.score);
 
@@ -53,11 +58,7 @@ export const getNextRecommendation = (currentBookId) => {
 };
 
 // Search books
-export const searchBooks = (query) => {
-  const lowercaseQuery = query.toLowerCase();
-  return books.filter(book => 
-    book.title.toLowerCase().includes(lowercaseQuery) ||
-    book.author.toLowerCase().includes(lowercaseQuery) ||
-    book.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
-  );
+export const searchBooks = async (query) => {
+  const { data: books } = await api.getBooks({ searchQuery: query });
+  return books || [];
 };

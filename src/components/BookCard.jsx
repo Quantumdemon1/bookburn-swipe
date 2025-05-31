@@ -7,15 +7,9 @@ import BookContent from './book/BookContent';
 import ActionButton from './book/ActionButton';
 import CartButton from './book/CartButton';
 import { useBookActions } from '@/hooks/useBookActions';
-const BookCard = ({
-  book,
-  onBurn,
-  onLike,
-  onFavorite
-}) => {
-  const {
-    addToCart
-  } = useCart();
+
+const BookCard = ({ book, onBurn, onLike, onFavorite }) => {
+  const { addToCart } = useCart();
   const {
     burnClicked,
     saveClicked,
@@ -25,13 +19,13 @@ const BookCard = ({
     handleAction,
     handleAddToCart
   } = useBookActions(book, addToCart);
+
   const actions = [{
     icon: Flame,
     label: 'BURN',
     onClick: () => handleAction('burn', onBurn),
     isClicked: burnClicked,
     color: '#ea384c',
-    // Red color for burn
     animation: {
       rotate: [0, -10, 10, -10, 0],
       scale: [1, 1.2, 0.8, 1.1, 1]
@@ -42,7 +36,6 @@ const BookCard = ({
     onClick: () => handleAction('save', onFavorite),
     isClicked: saveClicked,
     color: '#FFFFFF',
-    // White color for save
     animation: {
       scale: [1, 1.4, 0.8, 1.2, 1],
       rotate: [0, 15, -15, 15, 0]
@@ -53,37 +46,44 @@ const BookCard = ({
     onClick: () => handleAction('like', onLike),
     isClicked: likeClicked,
     color: '#1EAEDB',
-    // Blue color for like
     animation: {
       scale: [1, 1.5, 1],
       y: [0, -10, 0]
     }
   }];
-  return <motion.div initial={{
-    opacity: 0,
-    scale: 0.95
-  }} animate={{
-    opacity: 1,
-    scale: 1
-  }} exit={{
-    opacity: 0,
-    scale: 0.95
-  }} transition={{
-    duration: 0.3
-  }} className="w-full sm:w-auto" whileTap={{
-    scale: 0.98
-  }}>
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3 }}
+      className="w-full sm:w-auto"
+      whileTap={{ scale: 0.98 }}
+    >
       <Card className="w-full max-w-sm mx-auto bg-black text-white overflow-hidden touch-manipulation">
         <CardContent className="p-4 sm:p-6 px-[9px] py-[10px]">
-          <BookContent book={book} />
+          <BookContent book={{
+            ...book,
+            coverUrl: book.cover_url // Map Supabase field to component prop
+          }} />
           
           <div className="flex justify-between items-center gap-2">
-            {actions.map((action, index) => <ActionButton key={index} {...action} isLoading={isLoading} isRetrying={isLoading && retryAction?.action === action.label.toLowerCase()} />)}
+            {actions.map((action, index) => (
+              <ActionButton 
+                key={index} 
+                {...action} 
+                isLoading={isLoading}
+                isRetrying={isLoading && retryAction?.action === action.label.toLowerCase()}
+              />
+            ))}
           </div>
 
           <CartButton onClick={handleAddToCart} isLoading={isLoading} />
         </CardContent>
       </Card>
-    </motion.div>;
+    </motion.div>
+  );
 };
+
 export default BookCard;
