@@ -15,15 +15,9 @@ export const bookService = {
   },
 
   searchBooks: async (query: string): Promise<Book[]> => {
-    const { data, error } = await api.getBooks();
+    const { data, error } = await api.getBooks({ searchQuery: query });
     if (error) throw error;
-    
-    const lowercaseQuery = query.toLowerCase();
-    return (data || []).filter(book => 
-      book.title.toLowerCase().includes(lowercaseQuery) ||
-      book.author.toLowerCase().includes(lowercaseQuery) ||
-      book.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
-    );
+    return data || [];
   },
 
   getFavorites: async (userId: string): Promise<Book[]> => {
