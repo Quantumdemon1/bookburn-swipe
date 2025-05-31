@@ -45,7 +45,6 @@ const fetchWithRetry = async (url, options = {}, retries = RETRY_COUNT) => {
       });
     }
     
-    // For any other endpoint, return a generic success response
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
