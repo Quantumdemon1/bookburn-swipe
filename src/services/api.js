@@ -47,11 +47,32 @@ export const api = {
         );
       }
       
-      // Return in consistent format with online mode
       return { data: filteredBooks, error: null };
     }
 
-    let query = supabase.from('books').select('*');
+    let query = supabase
+      .from('books')
+      .select(`
+        id,
+        title,
+        author,
+        price,
+        tags,
+        preview,
+        cover_url,
+        created_at,
+        updated_at,
+        (
+          select count(*)
+          from reviews
+          where book_id = books.id
+        ) as review_count,
+        (
+          select avg(rating)
+          from reviews
+          where book_id = books.id
+        ) as avg_rating
+      `);
     
     if (filters.searchQuery) {
       query = query.or(`title.ilike.%${filters.searchQuery}%,author.ilike.%${filters.searchQuery}%`);
@@ -67,14 +88,25 @@ export const api = {
   getBookById: async (id) => {
     if (isOfflineMode()) {
       const book = mockBooks.find(book => book.id === id);
-      // Return in consistent format with online mode
       return { data: book || null, error: null };
     }
 
     return safeOperation(() => 
       supabase
         .from('books')
-        .select('*')
+        .select(`
+          *,
+          reviews (
+            id,
+            content,
+            rating,
+            created_at,
+            user:profiles (
+              name,
+              avatar_url
+            )
+          )
+        `)
         .eq('id', id)
         .single()
     );

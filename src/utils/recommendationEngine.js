@@ -4,7 +4,7 @@ import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesMa
 
 // Get book recommendations based on user preferences and genre filter
 export const getRecommendations = async (page = 1, limit = 10, selectedGenre = 'all') => {
-  const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
+  const { data: preferences } = await api.getUserPreferences(1); // TODO: Get actual user ID
   
   // Get books from Supabase and ensure we have an array
   const { data: booksData } = await api.getBooks({ genre: selectedGenre });
@@ -16,7 +16,7 @@ export const getRecommendations = async (page = 1, limit = 10, selectedGenre = '
   let availableBooks = books
     .map(book => ({
       ...book,
-      score: calculateBookScore(book, preferences?.data?.preferences || {})
+      score: calculateBookScore(book, preferences?.preferences || {})
     }))
     .sort((a, b) => b.score - a.score);
 
@@ -35,7 +35,7 @@ export const getNextRecommendation = async (currentBookId) => {
     addToShownBooks(currentBookId);
   }
 
-  const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
+  const { data: preferences } = await api.getUserPreferences(1); // TODO: Get actual user ID
   
   // Get all books from Supabase and ensure we have an array
   const { data: booksData } = await api.getBooks();
@@ -48,7 +48,7 @@ export const getNextRecommendation = async (currentBookId) => {
     .filter(book => !getShownBooks().has(book.id))
     .map(book => ({
       ...book,
-      score: calculateBookScore(book, preferences?.data?.preferences || {})
+      score: calculateBookScore(book, preferences?.preferences || {})
     }))
     .sort((a, b) => b.score - a.score);
 
