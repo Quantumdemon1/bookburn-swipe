@@ -1,11 +1,11 @@
-// This file is now deprecated - import from supabaseClient.js instead
-import { supabase, safeOperation, queueOperation, isOffline, processSyncQueue, clearOfflineData } from './supabaseClient';
+// This file is deprecated - import from supabaseClient.js instead
+import { supabase, safeOperation, queueOperation, isOfflineMode, processSyncQueue, clearOfflineData } from './supabaseClient';
 
 export {
   supabase,
   safeOperation,
   queueOperation,
-  isOffline,
+  isOfflineMode,
   processSyncQueue,
   clearOfflineData
 };
