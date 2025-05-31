@@ -6,9 +6,11 @@ import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesMa
 export const getRecommendations = async (page = 1, limit = 10, selectedGenre = 'all') => {
   const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
   
-  // Get books from Supabase
-  const { data: books } = await api.getBooks({ genre: selectedGenre });
-  if (!books) return [];
+  // Get books from Supabase and ensure we have an array
+  const { data: booksData } = await api.getBooks({ genre: selectedGenre });
+  const books = Array.isArray(booksData) ? booksData : [];
+  
+  if (books.length === 0) return [];
 
   // Filter and score books
   let availableBooks = books
@@ -35,9 +37,11 @@ export const getNextRecommendation = async (currentBookId) => {
 
   const preferences = await api.getUserPreferences(1); // TODO: Get actual user ID
   
-  // Get all books from Supabase
-  const { data: books } = await api.getBooks();
-  if (!books) return null;
+  // Get all books from Supabase and ensure we have an array
+  const { data: booksData } = await api.getBooks();
+  const books = Array.isArray(booksData) ? booksData : [];
+  
+  if (books.length === 0) return null;
 
   // Get all unshown books and score them
   const availableBooks = books
@@ -59,6 +63,6 @@ export const getNextRecommendation = async (currentBookId) => {
 
 // Search books
 export const searchBooks = async (query) => {
-  const { data: books } = await api.getBooks({ searchQuery: query });
-  return books || [];
+  const { data: booksData } = await api.getBooks({ searchQuery: query });
+  return Array.isArray(booksData) ? booksData : [];
 };
