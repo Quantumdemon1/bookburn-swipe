@@ -5,6 +5,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Track offline status
+let offline = false;
+
+export const isOffline = () => offline;
+
+export const setOffline = (status) => {
+  offline = status;
+};
+
 // Utility function to safely handle Supabase operations
 export const safeOperation = async (operation, fallback = null) => {
   try {
