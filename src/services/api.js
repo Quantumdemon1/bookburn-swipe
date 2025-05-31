@@ -30,15 +30,31 @@ export const api = {
   // Book operations
   getBooks: async (filters = {}) => {
     if (isOffline()) {
-      return mockBooks.filter(book => {
-        if (filters.genre && filters.genre !== 'all') {
-          return book.tags.includes(filters.genre);
-        }
-        return true;
-      });
+      let filteredBooks = [...mockBooks];
+      
+      if (filters.searchQuery) {
+        const query = filters.searchQuery.toLowerCase();
+        filteredBooks = filteredBooks.filter(book => 
+          book.title.toLowerCase().includes(query) ||
+          book.author.toLowerCase().includes(query) ||
+          book.tags.some(tag => tag.toLowerCase().includes(query))
+        );
+      }
+      
+      if (filters.genre && filters.genre !== 'all') {
+        filteredBooks = filteredBooks.filter(book => 
+          book.tags.includes(filters.genre)
+        );
+      }
+      
+      return filteredBooks;
     }
 
     let query = supabase.from('books').select('*');
+    
+    if (filters.searchQuery) {
+      query = query.or(`title.ilike.%${filters.searchQuery}%,author.ilike.%${filters.searchQuery}%`);
+    }
     
     if (filters.genre && filters.genre !== 'all') {
       query = query.contains('tags', [filters.genre]);
@@ -68,11 +84,13 @@ export const api = {
         .from('reviews')
         .select(`
           *,
-          user:user_id (name, avatar_url),
-          comments (
+          user:profiles!reviews_user_id_fkey(name, avatar_url),
+          comments:comments(
             *,
-            user:user_id (name, avatar_url)
-          )
+            user:profiles!comments_user_id_fkey(name, avatar_url),
+            reactions:reactions(*)
+          ),
+          reactions:reactions(*)
         `)
         .eq('book_id', bookId)
         .order('created_at', { ascending: false })
@@ -107,6 +125,20 @@ export const api = {
   },
 
   // Comment operations
+  getComments: async (reviewId) => {
+    return safeOperation(() =>
+      supabase
+        .from('comments')
+        .select(`
+          *,
+          user:profiles!comments_user_id_fkey(name, avatar_url),
+          reactions:reactions(*)
+        `)
+        .eq('review_id', reviewId)
+        .order('created_at', { ascending: true })
+    );
+  },
+
   addComment: async (reviewId, userId, content, parentId = null) => {
     const comment = {
       review_id: reviewId,
@@ -117,19 +149,24 @@ export const api = {
     };
 
     if (isOffline()) {
+      const tempId = `temp_${Date.now()}`;
       await queueOperation({
         type: 'insert',
         table: 'comments',
-        data: comment
+        data: comment,
+        tempId
       });
-      return { data: comment, error: null };
+      return { data: { ...comment, id: tempId }, error: null };
     }
 
     return safeOperation(() =>
       supabase
         .from('comments')
         .insert(comment)
-        .select()
+        .select(`
+          *,
+          user:profiles!comments_user_id_fkey(name, avatar_url)
+        `)
         .single()
     );
   },
