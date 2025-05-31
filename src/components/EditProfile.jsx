@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, safeOperation } from '@/lib/supabaseClient';
 
 const EditProfile = ({ user, onSave, onCancel }) => {
   const [editedUser, setEditedUser] = useState({ ...user });
@@ -30,9 +30,11 @@ const EditProfile = ({ user, onSave, onCancel }) => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
+      const { error: uploadError } = await safeOperation(
+        () => supabase.storage
+          .from('avatars')
+          .upload(filePath, file)
+      );
 
       if (uploadError) throw uploadError;
 
@@ -54,7 +56,7 @@ const EditProfile = ({ user, onSave, onCancel }) => {
       console.error('Error uploading avatar:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload avatar. Please try again.",
+        description: "Failed to upload avatar. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {

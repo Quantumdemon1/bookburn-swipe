@@ -12,7 +12,7 @@ import Ratings from './Ratings';
 import Reviews from './Reviews';
 import Favorites from './Favorites';
 import { useUser } from '@/contexts/UserContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, safeOperation, profileFallback } from '@/lib/supabaseClient';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -28,43 +28,54 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select(`
-            name,
-            avatar_url,
-            bio,
-            is_verified,
-            member_number,
-            (
-              select count(*)
-              from reviews
-              where user_id = profiles.id
-            ) as reviews_count,
-            (
-              select avg(rating)
-              from reviews
-              where user_id = profiles.id
-            ) as avg_rating,
-            (
-              select count(distinct book_id)
-              from book_interactions
-              where user_id = profiles.id
-            ) as books_read
-          `)
-          .eq('id', user.id)
-          .single();
+        const { data, error } = await safeOperation(
+          () => supabase
+            .from('profiles')
+            .select(`
+              name,
+              avatar_url,
+              bio,
+              is_verified,
+              member_number,
+              (
+                select count(*)
+                from reviews
+                where user_id = profiles.id
+              ) as reviews_count,
+              (
+                select avg(rating)
+                from reviews
+                where user_id = profiles.id
+              ) as avg_rating,
+              (
+                select count(distinct book_id)
+                from book_interactions
+                where user_id = profiles.id
+              ) as books_read
+            `)
+            .eq('id', user.id)
+            .single(),
+          profileFallback
+        );
 
-        if (error) throw error;
-
-        setProfile(data);
+        if (error) {
+          toast({
+            title: "Connection Error",
+            description: error.message,
+            variant: "destructive"
+          });
+          setProfile(profileFallback);
+        } else {
+          setProfile(data);
+        }
       } catch (error) {
         console.error('Error fetching profile:', error);
         toast({
           title: "Error",
-          description: "Failed to load profile data",
+          description: "Failed to load profile data. Using offline data.",
           variant: "destructive"
         });
+        setProfile(profileFallback);
       } finally {
         setIsLoading(false);
       }
@@ -98,15 +109,17 @@ const Profile = () => {
 
   const handleSaveProfile = async (updatedProfile) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updatedProfile.name,
-          bio: updatedProfile.bio,
-          avatar_url: updatedProfile.avatar_url,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+      const { error } = await safeOperation(
+        () => supabase
+          .from('profiles')
+          .update({
+            name: updatedProfile.name,
+            bio: updatedProfile.bio,
+            avatar_url: updatedProfile.avatar_url,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+      );
 
       if (error) throw error;
 
@@ -125,7 +138,7 @@ const Profile = () => {
       console.error('Error updating profile:', error);
       toast({
         title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
+        description: "Failed to update profile. Please try again when you're back online.",
         variant: "destructive"
       });
     }
@@ -177,7 +190,7 @@ const Profile = () => {
             <CardTitle className="text-3xl mb-1">
               {profile?.name}
               {isVerified() && (
-                <Badge className="ml-2 bg-blue-500\" variant="secondary">
+                <Badge className="ml-2 bg-blue-500" variant="secondary">
                   <Shield className="w-3 h-3 mr-1" />
                   Member #{getMemberNumber()}
                 </Badge>
