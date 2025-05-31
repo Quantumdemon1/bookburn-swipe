@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -13,11 +12,9 @@ export const UserProvider = ({ children }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       const sessionUser = session?.user;
       if (sessionUser) {
-        // Set admin role for specific email
         if (sessionUser.email === 'kellis209@gmail.com') {
           sessionUser.user_metadata = {
             ...sessionUser.user_metadata,
@@ -29,11 +26,9 @@ export const UserProvider = ({ children }) => {
       setLoading(false);
     });
 
-    // Listen for changes on auth state (login, signup, signout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const sessionUser = session?.user;
       if (sessionUser) {
-        // Set admin role for specific email
         if (sessionUser.email === 'kellis209@gmail.com') {
           sessionUser.user_metadata = {
             ...sessionUser.user_metadata,
@@ -57,7 +52,6 @@ export const UserProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Set admin role for specific email after login
       if (data.user.email === 'kellis209@gmail.com') {
         data.user.user_metadata = {
           ...data.user.user_metadata,
@@ -95,9 +89,64 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  const requestVerification = async () => {
+    if (!user) throw new Error('Must be logged in to request verification');
+
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_verified, member_number')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile?.is_verified) {
+        throw new Error('User is already verified');
+      }
+
+      // Get the next available member number
+      const { data: maxMember, error: maxError } = await supabase
+        .from('profiles')
+        .select('member_number')
+        .order('member_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (maxError && maxError.code !== 'PGRST116') throw maxError;
+
+      const nextMemberNumber = (maxMember?.member_number || 0) + 1;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          is_verified: true,
+          member_number: nextMemberNumber,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update local user state
+      setUser(prev => ({
+        ...prev,
+        user_metadata: {
+          ...prev.user_metadata,
+          is_verified: true,
+          member_number: nextMemberNumber
+        }
+      }));
+
+      return { memberNumber: nextMemberNumber };
+    } catch (error) {
+      console.error('Verification request error:', error);
+      throw error;
+    }
+  };
+
   const isAdmin = () => {
     if (!user) return false;
-    // Check for specific email or admin role in metadata
     return user.email === 'kellis209@gmail.com' || user?.user_metadata?.role === 'admin';
   };
   
@@ -115,7 +164,8 @@ export const UserProvider = ({ children }) => {
       isAdmin,
       isAuthenticated,
       isVerified,
-      getMemberNumber
+      getMemberNumber,
+      requestVerification
     }}>
       {children}
     </UserContext.Provider>

@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -8,9 +7,10 @@ export interface User {
 
 export interface Comment {
   id: string;
-  text: string;
+  content: string;
   userId: string;
-  bookId: string;
+  reviewId: number;
+  parentId?: number;
   createdAt: string;
   user?: User;
 }
