@@ -190,7 +190,7 @@ const Profile = () => {
             <CardTitle className="text-3xl mb-1">
               {profile?.name}
               {isVerified() && (
-                <Badge className="ml-2 bg-blue-500" variant="secondary">
+                <Badge className="ml-2 bg-blue-500\" variant="secondary">
                   <Shield className="w-3 h-3 mr-1" />
                   Member #{getMemberNumber()}
                 </Badge>
