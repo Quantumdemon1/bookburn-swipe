@@ -4,65 +4,86 @@ import { addToShownBooks, clearShownBooks, getShownBooks } from './preferencesMa
 
 // Get book recommendations based on user preferences and genre filter
 export const getRecommendations = async (page = 1, limit = 10, selectedGenre = 'all') => {
-  const { data: preferences } = await api.getUserPreferences(1); // TODO: Get actual user ID
-  
-  // Get books from Supabase and ensure we have an array
-  const { data: booksData } = await api.getBooks({ genre: selectedGenre });
-  const books = Array.isArray(booksData) ? booksData : [];
-  
-  if (books.length === 0) return [];
+  try {
+    const { data: preferences, error: preferencesError } = await api.getUserPreferences(1); // TODO: Get actual user ID
+    if (preferencesError) throw preferencesError;
+    
+    // Get books from Supabase and ensure we have an array
+    const { data: booksData, error: booksError } = await api.getBooks({ genre: selectedGenre });
+    if (booksError) throw booksError;
+    
+    const books = Array.isArray(booksData) ? booksData : [];
+    if (books.length === 0) return [];
 
-  // Filter and score books
-  let availableBooks = books
-    .map(book => ({
-      ...book,
-      score: calculateBookScore(book, preferences?.preferences || {})
-    }))
-    .sort((a, b) => b.score - a.score);
+    // Filter and score books
+    let availableBooks = books
+      .map(book => ({
+        ...book,
+        score: calculateBookScore(book, preferences?.preferences || {})
+      }))
+      .sort((a, b) => b.score - a.score);
 
-  // If all books have been shown, reset
-  if (availableBooks.length === getShownBooks().size) {
-    clearShownBooks();
+    // If all books have been shown, reset
+    if (availableBooks.length === getShownBooks().size) {
+      clearShownBooks();
+    }
+
+    return availableBooks.slice((page - 1) * limit, page * limit);
+  } catch (error) {
+    console.error('Error getting recommendations:', error);
+    throw error; // Re-throw to allow handling by the UI layer
   }
-
-  return availableBooks.slice((page - 1) * limit, page * limit);
 };
 
 // Get next recommended book
 export const getNextRecommendation = async (currentBookId) => {
-  // Mark current book as shown
-  if (currentBookId) {
-    addToShownBooks(currentBookId);
+  try {
+    // Mark current book as shown
+    if (currentBookId) {
+      addToShownBooks(currentBookId);
+    }
+
+    const { data: preferences, error: preferencesError } = await api.getUserPreferences(1); // TODO: Get actual user ID
+    if (preferencesError) throw preferencesError;
+    
+    // Get all books from Supabase and ensure we have an array
+    const { data: booksData, error: booksError } = await api.getBooks();
+    if (booksError) throw booksError;
+    
+    const books = Array.isArray(booksData) ? booksData : [];
+    if (books.length === 0) return null;
+
+    // Get all unshown books and score them
+    const availableBooks = books
+      .filter(book => !getShownBooks().has(book.id))
+      .map(book => ({
+        ...book,
+        score: calculateBookScore(book, preferences?.preferences || {})
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    // If no more unshown books, reset and try again
+    if (availableBooks.length === 0) {
+      clearShownBooks();
+      return getNextRecommendation();
+    }
+
+    return availableBooks[0];
+  } catch (error) {
+    console.error('Error getting next recommendation:', error);
+    throw error; // Re-throw to allow handling by the UI layer
   }
-
-  const { data: preferences } = await api.getUserPreferences(1); // TODO: Get actual user ID
-  
-  // Get all books from Supabase and ensure we have an array
-  const { data: booksData } = await api.getBooks();
-  const books = Array.isArray(booksData) ? booksData : [];
-  
-  if (books.length === 0) return null;
-
-  // Get all unshown books and score them
-  const availableBooks = books
-    .filter(book => !getShownBooks().has(book.id))
-    .map(book => ({
-      ...book,
-      score: calculateBookScore(book, preferences?.preferences || {})
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  // If no more unshown books, reset and try again
-  if (availableBooks.length === 0) {
-    clearShownBooks();
-    return getNextRecommendation();
-  }
-
-  return availableBooks[0];
 };
 
 // Search books
 export const searchBooks = async (query) => {
-  const { data: booksData } = await api.getBooks({ searchQuery: query });
-  return Array.isArray(booksData) ? booksData : [];
+  try {
+    const { data: booksData, error: booksError } = await api.getBooks({ searchQuery: query });
+    if (booksError) throw booksError;
+    
+    return Array.isArray(booksData) ? booksData : [];
+  } catch (error) {
+    console.error('Error searching books:', error);
+    throw error; // Re-throw to allow handling by the UI layer
+  }
 };
