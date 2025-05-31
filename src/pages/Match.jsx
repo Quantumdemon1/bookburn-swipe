@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import BookCard from '@/components/BookCard';
 import { useToast } from "@/components/ui/use-toast";
 import { initializeUserPreferences } from '@/utils/preferencesManager';
 import { updateUserPreferences } from '@/utils/interactionWeights';
@@ -7,6 +6,7 @@ import { getNextRecommendation } from '@/utils/recommendationEngine';
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "lucide-react";
 import { useUser } from '@/contexts/UserContext';
+import BookCard from '@/components/BookCard';
 
 const Match = () => {
   const [currentBook, setCurrentBook] = useState(null);
@@ -17,16 +17,16 @@ const Match = () => {
 
   useEffect(() => {
     const loadInitialBook = async () => {
-      try {
-        if (!user?.id) {
-          toast({
-            title: "Authentication Required",
-            description: "Please sign in to view book recommendations.",
-            variant: "destructive"
-          });
-          return;
-        }
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to view book recommendations.",
+          variant: "destructive"
+        });
+        return;
+      }
 
+      try {
         initializeUserPreferences();
         setIsLoading(true);
         const nextBook = await getNextRecommendation(user.id);
@@ -176,4 +176,4 @@ const Match = () => {
   );
 };
 
-export default Match
+export default Match;
