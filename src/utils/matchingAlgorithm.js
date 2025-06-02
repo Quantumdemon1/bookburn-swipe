@@ -13,7 +13,7 @@ export const initializeMatchingPreferences = async (userId) => {
         .from('matching_preferences')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
     );
 
     if (existingPrefs) return existingPrefs;
@@ -54,7 +54,7 @@ export const updateMatchHistory = async (userId, matchResult) => {
         .select('*')
         .eq('user_id', userId)
         .eq('algorithm_version', ALGORITHM_VERSION)
-        .single()
+        .maybeSingle()
     );
 
     const updates = {
@@ -115,19 +115,16 @@ export const getNextMatch = async (userId) => {
       };
     }
 
-    // Get user preferences and books in parallel
-    const [{ data: preferences }, { data: books }] = await Promise.all([
-      safeOperation(() =>
-        supabase
-          .from('matching_preferences')
-          .select('*')
-          .eq('user_id', userId)
-          .single()
-      ),
-      safeOperation(() =>
-        supabase.rpc('get_books_with_ratings')
-      )
-    ]);
+    // Initialize preferences if they don't exist
+    const preferences = await initializeMatchingPreferences(userId);
+    if (!preferences) {
+      throw new Error('Failed to initialize matching preferences');
+    }
+
+    // Get books
+    const { data: books } = await safeOperation(() =>
+      supabase.rpc('get_books_with_ratings')
+    );
 
     // Get previously shown books
     const { data: shownBooks } = await safeOperation(() =>
