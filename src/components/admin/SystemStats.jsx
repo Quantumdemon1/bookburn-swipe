@@ -42,7 +42,6 @@ const SystemStats = () => {
             .from('reactions')
             .select('id', { count: 'exact', head: true })
             .eq('type', 'report')
-            .is('resolved', false)
         )
       ]);
 

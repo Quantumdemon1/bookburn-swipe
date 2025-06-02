@@ -44,14 +44,14 @@ const UserManagement = () => {
       const { data: profiles, error } = await safeOperation(() =>
         supabase
           .from('profiles')
-          .select('*, user:auth.users(email)')
+          .select('*')
       );
 
       if (error) throw error;
 
       setUsers(profiles.map(profile => ({
         ...profile,
-        email: profile.user?.email,
+        email: profile.email,
         role: profile.role || 'user',
         status: profile.status || 'active'
       })));
