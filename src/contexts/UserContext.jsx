@@ -11,8 +11,38 @@ export const UserProvider = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const ensureUserProfile = async (userId, email) => {
+    try {
+      // First try to get the existing profile
+      const { data: existingProfile, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      // If no profile exists (PGRST116 error) or there's no data, create one
+      if ((!existingProfile && error?.code === 'PGRST116') || !existingProfile) {
+        const defaultName = email.split('@')[0];
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: userId,
+              name: defaultName,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ]);
+
+        if (insertError) throw insertError;
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const sessionUser = session?.user;
       if (sessionUser) {
         if (sessionUser.email === 'kellis209@gmail.com') {
@@ -21,12 +51,13 @@ export const UserProvider = ({ children }) => {
             role: 'admin'
           };
         }
+        await ensureUserProfile(sessionUser.id, sessionUser.email);
       }
       setUser(sessionUser ?? null);
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const sessionUser = session?.user;
       if (sessionUser) {
         if (sessionUser.email === 'kellis209@gmail.com') {
@@ -35,6 +66,7 @@ export const UserProvider = ({ children }) => {
             role: 'admin'
           };
         }
+        await ensureUserProfile(sessionUser.id, sessionUser.email);
       }
       setUser(sessionUser ?? null);
       setLoading(false);
@@ -59,6 +91,7 @@ export const UserProvider = ({ children }) => {
         };
       }
 
+      await ensureUserProfile(data.user.id, data.user.email);
       setUser(data.user);
       return true;
     } catch (error) {
