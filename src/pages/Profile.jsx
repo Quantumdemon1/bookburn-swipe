@@ -28,46 +28,52 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await safeOperation(
+        // First fetch the basic profile data
+        const { data: profileData, error: profileError } = await safeOperation(
           () => supabase
             .from('profiles')
-            .select(`
-              name,
-              avatar_url,
-              bio,
-              is_verified,
-              member_number,
-              (
-                select count(*)
-                from reviews
-                where user_id = profiles.id
-              ) as reviews_count,
-              (
-                select avg(rating)
-                from reviews
-                where user_id = profiles.id
-              ) as avg_rating,
-              (
-                select count(distinct book_id)
-                from book_interactions
-                where user_id = profiles.id
-              ) as books_read
-            `)
+            .select('name, avatar_url, bio, is_verified, member_number')
             .eq('id', user.id)
-            .single(),
-          profileFallback
+            .single()
         );
 
-        if (error) {
-          toast({
-            title: "Connection Error",
-            description: error.message,
-            variant: "destructive"
-          });
-          setProfile(profileFallback);
-        } else {
-          setProfile(data);
-        }
+        if (profileError) throw profileError;
+
+        // Fetch review statistics
+        const { data: reviewStats, error: reviewError } = await safeOperation(
+          () => supabase
+            .from('reviews')
+            .select('rating')
+            .eq('user_id', user.id)
+        );
+
+        if (reviewError) throw reviewError;
+
+        // Fetch book interactions count
+        const { count: booksRead, error: booksError } = await safeOperation(
+          () => supabase
+            .from('book_interactions')
+            .select('book_id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+        );
+
+        if (booksError) throw booksError;
+
+        // Calculate review statistics
+        const reviewsCount = reviewStats?.length || 0;
+        const avgRating = reviewStats?.length 
+          ? reviewStats.reduce((sum, review) => sum + review.rating, 0) / reviewStats.length 
+          : 0;
+
+        // Combine all data
+        const combinedData = {
+          ...profileData,
+          reviews_count: reviewsCount,
+          avg_rating: avgRating,
+          books_read: booksRead || 0
+        };
+
+        setProfile(combinedData);
       } catch (error) {
         console.error('Error fetching profile:', error);
         toast({
