@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import confetti from 'canvas-confetti';
-import { supabase, safeOperation, isOffline } from '@/lib/supabaseClient';
+import { supabase, safeOperation, isOffline, isValidUUID } from '@/lib/supabaseClient';
 import { useUser } from '@/contexts/UserContext';
 
 export const useBookActions = (book, addToCart) => {
@@ -62,7 +62,7 @@ export const useBookActions = (book, addToCart) => {
 
       updateLocalActionHistory(action, book.id);
       
-      if (!isOffline()) {
+      if (!isOffline() && isValidUUID(user.id)) {
         const { data: existingBook, error: checkError } = await safeOperation(
           () => supabase.from('books').select('id').eq('id', book.id).single()
         );
@@ -106,7 +106,7 @@ export const useBookActions = (book, addToCart) => {
 
       toast({
         title: `${action.charAt(0).toUpperCase() + action.slice(1)} Successful`,
-        description: `You have ${action}ed "${book.title}"${isOffline() ? ' (offline mode)' : ''}`,
+        description: `You have ${action}ed "${book.title}"${isOffline() || !isValidUUID(user.id) ? ' (offline mode)' : ''}`,
       });
 
     } catch (error) {
@@ -174,7 +174,7 @@ export const useBookActions = (book, addToCart) => {
         origin: { y: 0.6 }
       });
       
-      if (!isOffline()) {
+      if (!isOffline() && isValidUUID(user.id)) {
         const { data: existingBook, error: checkError } = await safeOperation(
           () => supabase.from('books').select('id').eq('id', book.id).single()
         );
@@ -205,7 +205,7 @@ export const useBookActions = (book, addToCart) => {
       
       toast({
         title: "Added to Cart",
-        description: `${book.title} has been added to your cart${isOffline() ? ' (offline mode)' : ''}`,
+        description: `${book.title} has been added to your cart${isOffline() || !isValidUUID(user.id) ? ' (offline mode)' : ''}`,
       });
     } catch (error) {
       console.error('Error adding to cart:', error);

@@ -9,6 +9,11 @@ export const isOffline = () => {
   return !window.navigator.onLine || !supabaseUrl || !supabaseAnonKey;
 };
 
+export const isValidUUID = (uuid) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 export const safeOperation = async (operation) => {
   if (isOffline()) {
     console.warn('Operating in offline mode');

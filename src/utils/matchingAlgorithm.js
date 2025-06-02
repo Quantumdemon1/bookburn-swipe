@@ -1,10 +1,11 @@
-import { supabase, safeOperation } from '@/lib/supabaseClient';
+import { supabase, safeOperation, isValidUUID } from '@/lib/supabaseClient';
 import { calculateBookScore } from './bookScoring';
 
 const ALGORITHM_VERSION = '1.0.0';
 
 export const initializeMatchingPreferences = async (userId) => {
   if (!userId) throw new Error('User ID is required');
+  if (!isValidUUID(userId)) return null;
 
   try {
     const { data: existingPrefs } = await safeOperation(() =>
@@ -44,6 +45,8 @@ export const initializeMatchingPreferences = async (userId) => {
 };
 
 export const updateMatchHistory = async (userId, matchResult) => {
+  if (!isValidUUID(userId)) return null;
+
   try {
     const { data: history } = await safeOperation(() =>
       supabase
@@ -74,6 +77,8 @@ export const updateMatchHistory = async (userId, matchResult) => {
 };
 
 export const recordBookMatch = async (userId, bookId, matchScore, userResponse = null) => {
+  if (!isValidUUID(userId)) return null;
+
   try {
     const { error } = await safeOperation(() =>
       supabase
@@ -100,6 +105,16 @@ export const recordBookMatch = async (userId, bookId, matchScore, userResponse =
 
 export const getNextMatch = async (userId) => {
   try {
+    if (!isValidUUID(userId)) {
+      // Return mock data for demo users
+      return {
+        id: 'demo-1',
+        title: 'Sample Book',
+        author: 'Demo Author',
+        matchScore: 0.85
+      };
+    }
+
     const [{ data: preferences }, { data: books }] = await Promise.all([
       safeOperation(() =>
         supabase
