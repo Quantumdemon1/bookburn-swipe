@@ -1,110 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { initializeUserPreferences } from '@/utils/preferencesManager';
-import { updateUserPreferences } from '@/utils/interactionWeights';
-import { getNextRecommendation } from '@/utils/recommendationEngine';
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader } from "lucide-react";
 import { useUser } from '@/contexts/UserContext';
 import BookCard from '@/components/BookCard';
+import { useMatching } from '@/hooks/useMatching';
 
 const Match = () => {
-  const [currentBook, setCurrentBook] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [dragDirection, setDragDirection] = useState(0);
-  const { toast } = useToast();
   const { user } = useUser();
+  const { toast } = useToast();
+  const { currentBook, isLoading, loadNextMatch, handleAction } = useMatching();
+  const [dragDirection, setDragDirection] = React.useState(0);
 
   useEffect(() => {
-    const loadInitialBook = async () => {
-      if (!user?.id) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to view book recommendations.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      try {
-        initializeUserPreferences();
-        setIsLoading(true);
-        const nextBook = await getNextRecommendation(user.id);
-        if (nextBook) {
-          setCurrentBook(nextBook);
-        } else {
-          toast({
-            title: "No Books Available",
-            description: "Unable to load book recommendations at this time.",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error loading initial book:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load book recommendations",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialBook();
-
-    const handleKeyPress = e => {
-      if (!currentBook) return;
-      switch (e.key) {
-        case 'ArrowLeft':
-          handleAction('burn');
-          break;
-        case 'ArrowRight':
-          handleAction('like');
-          break;
-        case 'ArrowUp':
-          handleAction('favorite');
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [user]);
-
-  const handleAction = async (action) => {
-    if (!currentBook || isLoading || !user?.id) return;
-    
-    try {
-      setIsLoading(true);
-      await updateUserPreferences(currentBook.id, action);
-      
-      toast({
-        title: action === 'burn' ? "Book Burned" : action === 'favorite' ? "Added to Favorites" : "Book Liked",
-        description: `${currentBook.title} by ${currentBook.author}`
-      });
-
-      const nextBook = await getNextRecommendation(user.id, currentBook.id);
-      if (nextBook) {
-        setCurrentBook(nextBook);
-      } else {
-        toast({
-          title: "No More Books",
-          description: "No more recommendations available at this time.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error(`Error handling ${action} action:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to ${action} the book`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+    if (user?.id) {
+      loadNextMatch();
     }
-  };
+  }, [user?.id, loadNextMatch]);
 
   const handleDragEnd = (_, info) => {
     const offset = info.offset.x;

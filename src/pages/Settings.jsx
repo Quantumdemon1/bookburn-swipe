@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import {
   Bell, 
   Shield, 
   Palette, 
-  Volume2 
+  Volume2,
+  BookOpen 
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import MatchingPreferencesForm from '@/components/matching/MatchingPreferencesForm';
 
 const Settings = () => {
   return (
@@ -19,7 +20,9 @@ const Settings = () => {
         <h1 className="text-3xl font-bold">Settings</h1>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6">
+        <MatchingPreferencesForm />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
