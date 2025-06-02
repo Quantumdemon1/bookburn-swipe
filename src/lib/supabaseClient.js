@@ -22,8 +22,38 @@ export const safeOperation = async (operation) => {
 
   try {
     const result = await operation();
+    
+    // Handle the case where no rows are found for a single() query
+    if (result.error?.message?.includes('JSON object requested, multiple (or no) rows returned')) {
+      return { 
+        data: null, 
+        error: {
+          code: 'PGRST116',
+          message: 'No data found',
+          details: 'The requested resource does not exist'
+        }
+      };
+    }
+
+    // Handle authentication errors
+    if (result.error?.message?.includes('Invalid login credentials')) {
+      return {
+        data: null,
+        error: {
+          code: 'auth/invalid-credentials',
+          message: 'Invalid email or password',
+          details: 'Please check your credentials and try again'
+        }
+      };
+    }
+
     return result;
   } catch (error) {
+    // If it's already a structured Supabase error, pass it through
+    if (error.code || error.statusCode) {
+      return { data: null, error };
+    }
+
     console.error('Supabase operation failed:', error);
     return {
       data: null,
