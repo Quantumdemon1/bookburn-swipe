@@ -12,7 +12,7 @@ import Ratings from './Ratings';
 import Reviews from './Reviews';
 import Favorites from './Favorites';
 import { useUser } from '@/contexts/UserContext';
-import { supabase, safeOperation, profileFallback } from '@/lib/supabaseClient';
+import { supabase, safeOperation, profileFallback, isValidUUID } from '@/lib/supabaseClient';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -28,6 +28,20 @@ const Profile = () => {
       if (!user) return;
 
       try {
+        // Handle demo users or invalid UUIDs
+        if (!isValidUUID(user.id)) {
+          setProfile({
+            ...profileFallback,
+            name: user.email?.split('@')[0] || 'Demo User',
+            email: user.email || 'demo@example.com',
+            reviews_count: 0,
+            avg_rating: 0,
+            books_read: 0
+          });
+          setIsLoading(false);
+          return;
+        }
+
         // First fetch the basic profile data
         const { data: profileData, error: profileError } = await safeOperation(
           () => supabase
@@ -115,6 +129,20 @@ const Profile = () => {
 
   const handleSaveProfile = async (updatedProfile) => {
     try {
+      // Don't attempt to save profile for demo users
+      if (!isValidUUID(user.id)) {
+        setProfile(prev => ({
+          ...prev,
+          ...updatedProfile
+        }));
+        setIsEditing(false);
+        toast({
+          title: "Profile Updated",
+          description: "Profile updated in demo mode (changes won't persist)."
+        });
+        return;
+      }
+
       const { error } = await safeOperation(
         () => supabase
           .from('profiles')
@@ -196,7 +224,7 @@ const Profile = () => {
             <CardTitle className="text-3xl mb-1">
               {profile?.name}
               {isVerified() && (
-                <Badge className="ml-2 bg-blue-500\" variant="secondary">
+                <Badge className="ml-2 bg-blue-500" variant="secondary">
                   <Shield className="w-3 h-3 mr-1" />
                   Member #{getMemberNumber()}
                 </Badge>
