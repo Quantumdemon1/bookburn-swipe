@@ -115,6 +115,7 @@ export const getNextMatch = async (userId) => {
       };
     }
 
+    // Get user preferences and books in parallel
     const [{ data: preferences }, { data: books }] = await Promise.all([
       safeOperation(() =>
         supabase
@@ -124,12 +125,11 @@ export const getNextMatch = async (userId) => {
           .single()
       ),
       safeOperation(() =>
-        supabase
-          .from('books')
-          .select('*')
+        supabase.rpc('get_books_with_ratings')
       )
     ]);
 
+    // Get previously shown books
     const { data: shownBooks } = await safeOperation(() =>
       supabase
         .from('book_matches')
@@ -138,10 +138,28 @@ export const getNextMatch = async (userId) => {
     );
 
     const shownBookIds = new Set(shownBooks?.map(match => match.book_id) || []);
-    const availableBooks = books?.filter(book => !shownBookIds.has(book.id)) || [];
+
+    // Filter books based on preferences and previously shown
+    const availableBooks = books?.filter(book => {
+      // Skip already shown books
+      if (shownBookIds.has(book.id)) return false;
+
+      // Apply min_rating filter if set
+      if (preferences?.min_rating && book.avg_rating < preferences.min_rating) {
+        return false;
+      }
+
+      // Apply max_price filter if set
+      if (preferences?.max_price && book.price > preferences.max_price) {
+        return false;
+      }
+
+      return true;
+    }) || [];
 
     if (availableBooks.length === 0) return null;
 
+    // Score and sort filtered books
     const scoredBooks = availableBooks.map(book => ({
       ...book,
       matchScore: calculateBookScore(book, preferences)
@@ -150,6 +168,7 @@ export const getNextMatch = async (userId) => {
     scoredBooks.sort((a, b) => b.matchScore - a.matchScore);
     const nextBook = scoredBooks[0];
 
+    // Record the match
     await recordBookMatch(userId, nextBook.id, nextBook.matchScore);
     return nextBook;
   } catch (error) {
