@@ -8,15 +8,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase, safeOperation } from '@/lib/supabaseClient';
 import { useUser } from '@/contexts/UserContext';
 
+const DEFAULT_PREFERENCES = {
+  genre_weights: {
+    fiction: 0.5,
+    'non-fiction': 0.5,
+    mystery: 0.5,
+    romance: 0.5,
+    'sci-fi': 0.5
+  },
+  author_weights: {},
+  min_rating: 3,
+  max_price: 50
+};
+
 const MatchingPreferencesForm = () => {
   const { user } = useUser();
   const { toast } = useToast();
-  const [preferences, setPreferences] = useState({
-    genre_weights: {},
-    author_weights: {},
-    min_rating: 3,
-    max_price: 50
-  });
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,9 +32,25 @@ const MatchingPreferencesForm = () => {
     loadPreferences();
   }, [user?.id]);
 
+  const isValidUUID = (uuid) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   const loadPreferences = async () => {
     try {
       setIsLoading(true);
+      
+      if (!isValidUUID(user.id)) {
+        setPreferences(DEFAULT_PREFERENCES);
+        toast({
+          title: "Demo Account",
+          description: "Preferences are not saved for demo accounts",
+          variant: "default"
+        });
+        return;
+      }
+
       const { data, error } = await safeOperation(() =>
         supabase
           .from('matching_preferences')
@@ -74,6 +98,15 @@ const MatchingPreferencesForm = () => {
 
   const handleSave = async () => {
     try {
+      if (!isValidUUID(user.id)) {
+        toast({
+          title: "Demo Account",
+          description: "Preferences cannot be saved in demo mode",
+          variant: "default"
+        });
+        return;
+      }
+
       const { error } = await safeOperation(() =>
         supabase
           .from('matching_preferences')
