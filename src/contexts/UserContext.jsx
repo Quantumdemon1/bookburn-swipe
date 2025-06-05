@@ -14,30 +14,33 @@ export const UserProvider = ({ children }) => {
   const ensureUserProfile = async (userId, email) => {
     try {
       // First try to get the existing profile
-      const { data: existingProfile, error } = await supabase
+      const { data: existingProfile, error: selectError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid PGRST116
 
-      // If no profile exists (PGRST116 error) or there's no data, create one
-      if ((!existingProfile && error?.code === 'PGRST116') || !existingProfile) {
+      // If no profile exists or there's an error, create one
+      if (!existingProfile || selectError) {
         const defaultName = email.split('@')[0];
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              id: userId,
-              name: defaultName,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ]);
+          .upsert({ // Use upsert instead of insert to handle race conditions
+            id: userId,
+            name: defaultName,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+          throw insertError;
+        }
       }
     } catch (error) {
       console.error('Error ensuring user profile:', error);
+      // Don't throw the error here - we want to continue even if profile creation fails
+      // The RLS policies will ensure security
     }
   };
 
@@ -130,7 +133,7 @@ export const UserProvider = ({ children }) => {
         .from('profiles')
         .select('is_verified, member_number')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
       if (profileError) throw profileError;
 
@@ -143,7 +146,7 @@ export const UserProvider = ({ children }) => {
         .select('member_number')
         .order('member_number', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
       if (maxError && maxError.code !== 'PGRST116') throw maxError;
 
